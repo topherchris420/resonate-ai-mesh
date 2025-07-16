@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { fontFamily } from "tailwindcss/defaultTheme";
 
 export default {
 	darkMode: ["class"],
@@ -18,6 +19,10 @@ export default {
 			}
 		},
 		extend: {
+            fontFamily: {
+                sans: ["Inter", ...fontFamily.sans],
+                serif: ["Lora", ...fontFamily.serif],
+            },
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -67,7 +72,8 @@ export default {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-secondary': 'var(--gradient-secondary)',
 				'gradient-resonance': 'var(--gradient-resonance)',
-				'gradient-surface': 'var(--gradient-surface)'
+				'gradient-surface': 'var(--gradient-surface)',
+                'gradient-heading': 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))',
 			},
 			boxShadow: {
 				'primary': 'var(--shadow-primary)',
