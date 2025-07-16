@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Activity,
   Workflow,
@@ -11,7 +12,9 @@ import {
   Store,
   Menu,
   X,
-  Zap
+  Zap,
+  LogOut,
+  User
 } from "lucide-react";
 
 const navigationItems = [
@@ -61,6 +64,7 @@ interface NavigationProps {
 
 export function Navigation({ onNavigate, activeSection }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <>
@@ -141,15 +145,34 @@ export function Navigation({ onNavigate, activeSection }: NavigationProps) {
             })}
           </div>
 
-          {/* Status indicator */}
-          <div className="mt-8 p-4 rounded-lg bg-muted/30 border border-border/30">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse-glow"></div>
-              <span className="text-sm font-medium">System Active</span>
+          {/* User Profile & Sign Out */}
+          <div className="mt-8 space-y-3">
+            <div className="p-3 rounded-lg bg-muted/30 border border-border/30">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium truncate">{user?.email}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => signOut()}
+              >
+                <LogOut className="h-3 w-3" />
+                <span className="text-xs">Sign Out</span>
+              </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              All routing channels operational
-            </p>
+
+            {/* Status indicator */}
+            <div className="p-4 rounded-lg bg-muted/30 border border-border/30">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse-glow"></div>
+                <span className="text-sm font-medium">System Active</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                All routing channels operational
+              </p>
+            </div>
           </div>
         </div>
       </nav>
