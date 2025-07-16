@@ -2,87 +2,80 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ModelBridge Cymatic Design System - All colors MUST be HSL */
+/* Resonate AI - Modern Light Theme */
 
 @layer base {
   :root {
-    /* Core background and text */
+    --background: 0 0% 100%; /* White */
+    --foreground: 224 71.4% 4.1%; /* Dark Blue */
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71.4% 4.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
+
+    --primary: 262.1 83.3% 57.8%; /* Bright Purple */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 262.1 83.3% 57.8%;
+
+    --secondary: 221.2 83.2% 53.3%; /* Bright Blue */
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220 8.9% 46.1%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 47.9 95.8% 53.1%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262.1 83.3% 57.8%;
+
+    --radius: 0.5rem;
+
+    /* Gradients */
+    --gradient-heading: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)));
+
+    /* Shadows */
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow-glow: 0 0 30px hsl(var(--primary) / 0.2);
+  }
+
+  .dark {
     --background: 222 47% 2%;
     --foreground: 210 40% 98%;
-
-    /* Surface colors */
     --card: 222 47% 4%;
     --card-foreground: 210 40% 95%;
-
     --popover: 222 47% 6%;
     --popover-foreground: 210 40% 95%;
-
-    /* Primary cymatic colors - resonant blue-purple */
     --primary: 258 89% 66%;
     --primary-foreground: 222 47% 2%;
     --primary-glow: 258 100% 76%;
-
-    /* Secondary colors - harmonic teal */
     --secondary: 180 89% 45%;
     --secondary-foreground: 222 47% 2%;
-    --secondary-glow: 180 100% 65%;
-
-    /* Muted surfaces */
     --muted: 222 35% 8%;
     --muted-foreground: 210 20% 65%;
-
-    /* Accent colors - vibrational purple */
     --accent: 280 70% 60%;
     --accent-foreground: 222 47% 2%;
-
-    /* Status colors */
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    
     --success: 142 76% 36%;
     --success-foreground: 210 40% 98%;
-    
     --warning: 48 96% 53%;
     --warning-foreground: 222 47% 2%;
-
-    /* Borders and inputs */
     --border: 222 35% 12%;
     --input: 222 35% 8%;
     --ring: 258 89% 66%;
-
-    --radius: 0.75rem;
-
-    /* Gradients for cymatic effects */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary-glow)));
-    --gradient-resonance: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--secondary)));
-    --gradient-surface: linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted)));
-
-    /* Shadows for depth and glow effects */
-    --shadow-primary: 0 0 20px hsl(var(--primary) / 0.3);
-    --shadow-secondary: 0 0 20px hsl(var(--secondary) / 0.3);
-    --shadow-card: 0 4px 20px hsl(222 47% 2% / 0.4);
-    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
-
-    /* Animation variables */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  }
-
-  /* Light mode override - keeping dark as default */
-  .light {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 2%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --primary: 258 89% 56%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 180 89% 35%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
   }
 }
 
@@ -90,8 +83,8 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
