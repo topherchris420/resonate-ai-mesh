@@ -1,73 +1,61 @@
-# Welcome to your Lovable project
+# Resonate AI 
 
-## Project info
+**Resonate AI** is a multimodal AI integration and orchestration platform designed to connect any generative model (text, image, audio, biosignal) to any system or sensor—without writing custom code. It enables ambient-aware, signal-driven workflows using standardized AI connectors, a cymatic input/output layer, and dynamic resonance visualization.
 
-**URL**: https://lovable.dev/projects/aed7f757-45aa-4289-ab3f-ac79016c1748
+---
 
-## How can I edit this code?
+## 🔍 Overview
 
-There are several ways of editing your application.
+Resonate AI Mesh enables:
 
-**Use Lovable**
+- **Model-agnostic routing** across OpenAI, Claude, Midjourney, and open-source models
+- **Ambient agent triggers** from voice, biosignals, environmental input, or temporal patterns
+- **Cymatic IO Layer** to translate vibrational, audio, or physiological signals into AI-compatible symbolic representations
+- **Visual workflow builder** to chain, switch, and monitor AI service interactions
+- **Dynamic Resonance Rooting (DRR)** visualization to observe AI adaptation over time
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/aed7f757-45aa-4289-ab3f-ac79016c1748) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🧠 Core Features
 
-**Use your preferred IDE**
+### 🧩 Model Integration Layer
+- One-click switching across AI APIs without code changes
+- Unified input/output formatting across heterogeneous AI services
+- Native support for LLMs, image generators, voice models, and transcription tools
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 🌀 Cymatic IO Layer
+- Converts ambient frequencies, speech, or breath into structured prompts or tokens
+- Visual representations of vibrational input/output for creative and wellness use cases
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 📡 Ambient Agent Mesh
+- Real-time workflows triggered by sound, tone, biosignals (HRV, GSR), motion, and IoT
+- WebSocket and MQTT support for environmental sensing
 
-Follow these steps:
+### 📊 Analytics + DRR View
+- Cost and performance tracking per model
+- Time-based DRR graphs visualizing system resonance and model dominance patterns
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🛠️ Tech Stack
 
-# Step 3: Install the necessary dependencies.
-npm i
+| Layer        | Stack                                  |
+|--------------|-----------------------------------------|
+| Frontend     | Next.js + Tailwind + Shadcn/ui          |
+| Backend      | Node.js + Express + Plugin Gateway      |
+| Visualization| D3.js for DRR graphs and signal mapping |
+| Realtime     | WebSocket + MQTT                        |
+| Storage      | PostgreSQL + Redis + InfluxDB           |
+| Auth         | JWT + optional ZK credential proof      |
+| Payments     | Stripe (tiered + metered billing)       |
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+---
+
+## 📦 Deployment
+
+```bash
+git clone https://github.com/topherchris420/resonate-ai-mesh.git
+cd resonate-ai-mesh
+npm install
+cp .env.example .env # fill in credentials
 npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/aed7f757-45aa-4289-ab3f-ac79016c1748) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
