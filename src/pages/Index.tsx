@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigation } from "@/components/Navigation";
+import { Header } from "@/components/Header";
 import { Dashboard } from "@/components/Dashboard";
 import { WorkflowBuilder } from "@/components/WorkflowBuilder";
-import { ResonanceView, AmbientMonitor, TrustSecurity, Marketplace } from "@/components/PlaceholderSections";
+import {
+  ResonanceView,
+  AmbientMonitor,
+  TrustSecurity,
+  Marketplace,
+} from "@/components/PlaceholderSections";
 import { Loader } from "lucide-react";
+import { OmniBar } from "@/components/OmniBar";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("dashboard");
@@ -20,8 +26,8 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cyber-background flex items-center justify-center">
-        <Loader className="h-8 w-8 animate-spin text-cyber-primary" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -33,7 +39,7 @@ const Index = () => {
   const renderContent = () => {
     switch (activeSection) {
       case "dashboard":
-        return <Dashboard />;
+        return <Dashboard onNavigate={setActiveSection} />;
       case "workflows":
         return <WorkflowBuilder />;
       case "resonance":
@@ -45,15 +51,16 @@ const Index = () => {
       case "marketplace":
         return <Marketplace />;
       default:
-        return <Dashboard />;
+        return <Dashboard onNavigate={setActiveSection} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation onNavigate={setActiveSection} activeSection={activeSection} />
+    <div className="min-h-screen bg-background text-foreground">
+      <Header onNavigate={setActiveSection} activeSection={activeSection} />
       
-      <main className="lg:ml-80 p-6">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeSection === "dashboard" && <OmniBar onNavigate={setActiveSection} />}
         <div className="max-w-7xl mx-auto">
           {renderContent()}
         </div>
