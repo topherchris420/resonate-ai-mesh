@@ -1,6 +1,6 @@
 # Resonate AI
 
-**Resonate AI** is a multimodal AI integration and orchestration platform designed to connect any generative model (text, image, audio, biosignal) to any system or sensor—without writing custom code. It enables ambient-aware, signal-driven workflows using standardized AI connectors, a cymatic input/output layer, and dynamic resonance visualization.
+**Resonate AI** is a multimodal AI integration and orchestration platform from Vers3Dynamics designed to connect any generative model (text, image, audio, biosignal) to any system or sensor—without writing custom code. It enables ambient-aware, signal-driven workflows using standardized AI connectors, a cymatic input/output layer, and dynamic resonance visualization.
 
 ![Resonate AI Platform](https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=600&fit=crop&auto=format)
 
