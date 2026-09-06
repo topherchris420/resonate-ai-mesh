@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package pordenone.events;
+
+import "proto/telemetry.proto";
+import "proto/agent.proto";
+import "proto/spatial.proto";
+
+message ValidationResultPayload {
+  string proposal_id = 1;
+  string agent_id = 2;
+  bool accepted = 3;
+  double feasibility = 4;
+  repeated string contradictions = 5;
+  double confidence = 6;
+  repeated string reasons = 7;
+  string provenance = 8;
+  int64 timestamp = 9;
+}
+
+message CanonicalEventEnvelope {
+  string event_id = 1;
+  string event_type = 2;            // telemetry, agent_state, proposal, validation, spatial, adaptive_state
+  string schema_version = 3;
+  int64 timestamp = 4;
+  string source = 5;
+  string subject_id = 6;
+  string correlation_id = 7;
+  string causation_id = 8;
+  string provenance = 9;
+
+  oneof payload {
+    pordenone.telemetry.OperatorStateTelemetry operator_telemetry = 10;
+    pordenone.telemetry.AdaptiveState adaptive_state = 11;
+    pordenone.agent.AgentState agent_state = 12;
+    pordenone.agent.ActionProposal action_proposal = 13;
+    pordenone.spatial.SpatialState spatial_state = 14;
+    ValidationResultPayload validation_result = 15;
+    string custom_json_payload = 16;
+  }
+}

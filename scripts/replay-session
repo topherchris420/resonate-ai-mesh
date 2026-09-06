@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+import sys
+import os
+import json
+
+def replay_session(input_file="session_recording.json"):
+    if not os.path.exists(input_file):
+        print(f"Error: Session file {input_file} does not exist.")
+        sys.exit(1)
+
+    print(f"Replaying session from {input_file}...")
+    with open(input_file, "r") as f:
+        data = json.load(f)
+
+    seed = data.get("seed", 42)
+    recorded_events = data.get("events", [])
+
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services/biometric-pipeline"))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services/sim-engine"))
+
+    from biometric_generator import BiometricPipeline
+    from emergence_sim import SwarmEmergenceSimulator
+
+    bio_replayed = BiometricPipeline(seed=seed)
+    sim_replayed = SwarmEmergenceSimulator(num_agents=3, seed=seed)
+
+    mismatches = 0
+    sim_steps = 0
+
+    for event in recorded_events:
+        evt_type = event.get("event_type")
+        timestamp = event.get("timestamp")
+
+        if evt_type == "telemetry":
+            recorded_bio = event["payload"]["operator_telemetry"]
+            sample = bio_replayed.generate_sample(timestamp=timestamp)
+            if sample["cognitive_load"] != recorded_bio["cognitive_load"]:
+                print(f"Mismatch in bio telemetry at t={timestamp}: {sample['cognitive_load']} vs {recorded_bio['cognitive_load']}")
+                mismatches += 1
+
+        elif evt_type == "spatial":
+            recorded_sim = event["payload"]["sim_step"]
+            replayed_sim = sim_replayed.step()
+            sim_steps += 1
+            if replayed_sim["environmental_entropy"] != recorded_sim["environmental_entropy"]:
+                print(f"Mismatch in sim entropy at step {sim_steps}: {replayed_sim['environmental_entropy']} vs {recorded_sim['environmental_entropy']}")
+                mismatches += 1
+
+    if mismatches == 0:
+        print(f"REPLAY SUCCESSFUL: {len(recorded_events)} events verified with 0 mismatches!")
+        return True
+    else:
+        print(f"REPLAY FAILED: {mismatches} mismatches detected!")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    inp = sys.argv[1] if len(sys.argv) > 1 else "session_recording.json"
+    replay_session(inp)

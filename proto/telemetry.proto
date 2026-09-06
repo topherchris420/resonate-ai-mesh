@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package pordenone.telemetry;
+
+message OperatorStateTelemetry {
+  string operator_id = 1;
+  double cognitive_load = 2;
+  double arousal = 3;
+  double hrv = 4;
+  double heart_rate = 5;
+  double attention = 6;
+  double stress = 7;
+  double confidence = 8;
+  int64 timestamp = 9;
+  string sensor_provenance = 10;
+  bool is_simulated = 11;
+}
+
+message AdaptiveState {
+  string state = 1;          // e.g. NORMAL, ELEVATED, HIGH, CRITICAL
+  double stability = 2;
+  double resonance = 3;
+  double adaptation_rate = 4;
+  double confidence = 5;
+  int64 timestamp = 6;
+}
