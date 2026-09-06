@@ -1,0 +1,83 @@
+name: Pordenone CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  rust-checks:
+    name: Rust (Format, Test, Workspace)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Protoc
+        run: |
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --workspace -- -D warnings
+      - name: Run Cargo Tests
+        run: cargo test --workspace --all-targets
+
+  python-checks:
+    name: Python Services & Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest numpy torch protobuf grpcio grpcio-tools fastapi uvicorn
+      - name: Run Python Tests
+        run: pytest services/ tests/
+
+  typescript-checks:
+    name: TypeScript, Lint & Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Install Dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Build Dashboard
+        run: pnpm build
+
+  integration-tests:
+    name: Integration & Replay Tests
+    needs: [rust-checks, python-checks, typescript-checks]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+          pip install pytest numpy protobuf
+      - name: Run Contract & Integration Tests
+        run: |
+          cargo test --workspace
+          pytest tests/integration tests/contract tests/replay

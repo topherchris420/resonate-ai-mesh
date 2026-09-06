@@ -1,0 +1,9 @@
+FROM rust:1.80-slim as builder
+WORKDIR /app
+COPY . .
+RUN cargo build --release --bin telemetry-bridge
+
+FROM debian:bookworm-slim
+WORKDIR /app
+COPY --from=builder /app/target/release/telemetry-bridge /app/
+CMD ["/app/telemetry-bridge"]

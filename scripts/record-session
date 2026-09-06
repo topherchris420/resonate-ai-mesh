@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+import sys
+import os
+import json
+import time
+
+def record_session(output_file="session_recording.json", duration_sec=5):
+    print(f"Starting session recording for {duration_sec}s -> {output_file}")
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services/biometric-pipeline"))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services/sim-engine"))
+
+    from biometric_generator import BiometricPipeline
+    from emergence_sim import SwarmEmergenceSimulator
+
+    bio = BiometricPipeline(seed=42)
+    sim = SwarmEmergenceSimulator(num_agents=3, seed=42)
+
+    recording = []
+    start_time = int(time.time() * 1000)
+
+    for step in range(duration_sec * 10):
+        t = start_time + step * 100
+        bio_sample = bio.generate_sample(timestamp=t)
+        sim_step = sim.step()
+
+        event_bio = {
+            "event_id": f"rec_bio_{step}",
+            "event_type": "telemetry",
+            "schema_version": "1.0.0",
+            "timestamp": t,
+            "source": "biometric_pipeline",
+            "subject_id": bio_sample["operator_id"],
+            "correlation_id": f"corr_{step}",
+            "causation_id": f"caus_{step}",
+            "provenance": bio_sample["sensor_provenance"],
+            "payload": {"operator_telemetry": bio_sample}
+        }
+
+        event_sim = {
+            "event_id": f"rec_sim_{step}",
+            "event_type": "spatial",
+            "schema_version": "1.0.0",
+            "timestamp": t,
+            "source": "sim_engine",
+            "subject_id": "swarm_01",
+            "correlation_id": f"corr_{step}",
+            "causation_id": f"caus_{step}",
+            "provenance": "SimEngine:IonsLab",
+            "payload": {"sim_step": sim_step}
+        }
+
+        recording.append(event_bio)
+        recording.append(event_sim)
+
+    with open(output_file, "w") as f:
+        json.dump({"session_id": "rec_001", "seed": 42, "events": recording}, f, indent=2)
+
+    print(f"Recorded {len(recording)} events into {output_file}")
+
+if __name__ == "__main__":
+    out = sys.argv[1] if len(sys.argv) > 1 else "session_recording.json"
+    record_session(out)

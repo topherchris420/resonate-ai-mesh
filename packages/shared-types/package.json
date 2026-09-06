@@ -1,0 +1,14 @@
+{
+  "name": "@pordenone/shared-types",
+  "version": "0.1.0",
+  "description": "Shared type definitions for Pordenone",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  kernel:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.kernel
+    ports:
+      - "50051:50051"
+    environment:
+      - RUST_LOG=info
+      - BIND_ADDR=0.0.0.0:50051
+
+  telemetry-bridge:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.telemetry-bridge
+    ports:
+      - "8080:8080"
+    environment:
+      - RUST_LOG=info
+      - WS_BIND_ADDR=0.0.0.0:8080
+      - KERNEL_ADDR=http://kernel:50051
+    depends_on:
+      - kernel
+
+  biometric-pipeline:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.biometric-pipeline
+    environment:
+      - TELEMETRY_BRIDGE_WS=ws://telemetry-bridge:8080/ingest
+      - MODE=SIMULATED
+      - SAMPLE_RATE_HZ=10
+    depends_on:
+      - telemetry-bridge
+
+  sim-engine:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.sim-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - SEED=42
+      - TELEMETRY_BRIDGE_WS=ws://telemetry-bridge:8080/ingest
+    depends_on:
+      - telemetry-bridge
+
+  c2-dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.c2-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8080/ws
+      - NEXT_PUBLIC_SIM_ENGINE_URL=http://localhost:8000
+    depends_on:
+      - telemetry-bridge
+      - sim-engine

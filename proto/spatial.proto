@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package pordenone.spatial;
+
+import "proto/agent.proto";
+
+message SpatialState {
+  string entity_id = 1;
+  pordenone.agent.Vector3 position = 2;
+  pordenone.agent.Vector3 orientation = 3;
+  pordenone.agent.Vector3 velocity = 4;
+  string terrain_reference = 5;
+  string coordinate_system = 6;
+  int64 timestamp = 7;
+  double confidence = 8;
+}
+
+message TerrainSync {
+  string terrain_id = 1;
+  pordenone.agent.Vector3 bounds_min = 2;
+  pordenone.agent.Vector3 bounds_max = 3;
+  double elevation_scale = 4;
+  double resolution_meters = 5;
+  string data_url = 6;
+}

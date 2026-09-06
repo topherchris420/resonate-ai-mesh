@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package pordenone.agent;
+
+message Vector3 {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
+
+message AgentState {
+  string agent_id = 1;
+  string state = 2;                     // IDLE, BUSY, EXECUTING, FAILED, COMPLETED
+  repeated string capabilities = 3;
+  repeated string task_assignments = 4;
+  int32 priority = 5;
+  Vector3 position = 6;
+  Vector3 velocity = 7;
+  double confidence = 8;
+  int64 timestamp = 9;
+}
+
+message ActionProposal {
+  string proposal_id = 1;
+  string agent_id = 2;
+  string action_type = 3;
+  string parameters_json = 4;
+  Vector3 target_position = 5;
+  int32 priority = 6;
+  int64 timestamp = 7;
+  string correlation_id = 8;
+  string source_observation = 9;
+}
