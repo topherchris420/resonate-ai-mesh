@@ -1,6 +1,6 @@
 # Pordenone: Unified Cognitive Cyber-Physical Command-and-Control Research Platform
 
-Pordenone is a research monorepo integrating capabilities across 8 specialized domain repositories into a unified cognitive cyber-physical command-and-control (C2) architecture.
+Pordenone is a research monorepo integrating capabilities across 9 specialized domain repositories into a unified cognitive cyber-physical command-and-control (C2) architecture.
 
 ## Conceptual Pipeline
 
