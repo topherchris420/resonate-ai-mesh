@@ -32,7 +32,10 @@ impl TelemetryBridge {
 
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         let listener = TcpListener::bind(&self.config.ws_bind_addr).await?;
-        info!("Telemetry Bridge listening on WebSocket address: {}", self.config.ws_bind_addr);
+        info!(
+            "Telemetry Bridge listening on WebSocket address: {}",
+            self.config.ws_bind_addr
+        );
 
         while let Ok((stream, addr)) = listener.accept().await {
             let bus = self.event_bus.clone();

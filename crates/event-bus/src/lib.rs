@@ -53,7 +53,11 @@ impl EventBus {
         Self { sender }
     }
 
-    pub fn publish(&self, event: EventEnvelope) -> Result<usize, broadcast::error::SendError<EventEnvelope>> {
+    #[allow(clippy::result_large_err)]
+    pub fn publish(
+        &self,
+        event: EventEnvelope,
+    ) -> Result<usize, broadcast::error::SendError<EventEnvelope>> {
         info!(
             event_id = %event.event_id,
             event_type = %event.event_type,

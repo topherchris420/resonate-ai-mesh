@@ -67,7 +67,11 @@ mod tests {
         let mut idx = SpatialIndex::new();
         let entity = SpatialEntity {
             entity_id: "unit_01".into(),
-            position: Vector3 { x: 10.0, y: 0.0, z: 10.0 },
+            position: Vector3 {
+                x: 10.0,
+                y: 0.0,
+                z: 10.0,
+            },
             orientation: Vector3::default(),
             velocity: Vector3::default(),
             terrain_reference: "lop_nur_sector_1".into(),
@@ -79,10 +83,24 @@ mod tests {
         idx.upsert_entity(entity.clone());
         assert_eq!(idx.get_entity("unit_01"), Some(&entity));
 
-        let nearby = idx.find_entities_in_radius(&Vector3 { x: 10.0, y: 0.0, z: 0.0 }, 15.0);
+        let nearby = idx.find_entities_in_radius(
+            &Vector3 {
+                x: 10.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            15.0,
+        );
         assert_eq!(nearby.len(), 1);
 
-        let far = idx.find_entities_in_radius(&Vector3 { x: 500.0, y: 0.0, z: 0.0 }, 15.0);
+        let far = idx.find_entities_in_radius(
+            &Vector3 {
+                x: 500.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            15.0,
+        );
         assert_eq!(far.len(), 0);
     }
 }

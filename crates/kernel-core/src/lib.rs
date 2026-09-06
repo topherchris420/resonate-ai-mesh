@@ -87,7 +87,10 @@ impl KernelEngine {
         map.get(agent_id).cloned()
     }
 
-    pub async fn update_policy_for_cognitive_load(&self, cognitive_load: f64) -> PolicyConfiguration {
+    pub async fn update_policy_for_cognitive_load(
+        &self,
+        cognitive_load: f64,
+    ) -> PolicyConfiguration {
         let level = if cognitive_load < 0.4 {
             CognitiveLoadPolicyLevel::Normal
         } else if cognitive_load < 0.65 {
@@ -153,11 +156,20 @@ impl KernelEngine {
                 capabilities: vec!["generic".to_string()],
                 current_task: None,
                 priority: proposal.priority,
-                position: SpatialVector3 { x: 0.0, y: 0.0, z: 0.0 },
-                velocity: SpatialVector3 { x: 0.0, y: 0.0, z: 0.0 },
+                position: SpatialVector3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
+                velocity: SpatialVector3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
                 confidence: 0.9,
                 last_updated: current_time,
-            }).await;
+            })
+            .await;
         }
 
         let val_result = self.validator.validate(&proposal, current_time);
@@ -183,8 +195,16 @@ impl KernelEngine {
                     y: proposal.target_position.y,
                     z: proposal.target_position.z,
                 },
-                orientation: SpatialVector3 { x: 0.0, y: 0.0, z: 0.0 },
-                velocity: SpatialVector3 { x: 0.0, y: 0.0, z: 0.0 },
+                orientation: SpatialVector3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
+                velocity: SpatialVector3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
                 terrain_reference: "default".into(),
                 coordinate_system: "ECEF".into(),
                 timestamp: current_time,
@@ -237,7 +257,11 @@ mod tests {
             agent_id: "agent_001".into(),
             action_type: "MOVE".into(),
             parameters_json: "{}".into(),
-            target_position: epistemic_validator::Vector3 { x: 100.0, y: 200.0, z: 0.0 },
+            target_position: epistemic_validator::Vector3 {
+                x: 100.0,
+                y: 200.0,
+                z: 0.0,
+            },
             priority: 1,
             timestamp: chrono::Utc::now().timestamp_millis(),
             correlation_id: "corr_001".into(),
@@ -260,7 +284,11 @@ mod tests {
             agent_id: "agent_001".into(),
             action_type: "MOVE".into(),
             parameters_json: "{}".into(),
-            target_position: epistemic_validator::Vector3 { x: 999999.0, y: 0.0, z: 0.0 },
+            target_position: epistemic_validator::Vector3 {
+                x: 999999.0,
+                y: 0.0,
+                z: 0.0,
+            },
             priority: 1,
             timestamp: chrono::Utc::now().timestamp_millis(),
             correlation_id: "corr_002".into(),

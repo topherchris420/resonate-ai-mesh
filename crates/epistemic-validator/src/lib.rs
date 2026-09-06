@@ -84,13 +84,19 @@ impl EpistemicValidator {
         let valid_actions = ["MOVE", "PATROL", "INSPECT", "STANDBY", "HOLD"];
         if !valid_actions.contains(&proposal.action_type.as_str()) {
             feasibility = 0.0;
-            contradictions.push(format!("Unknown or prohibited action type: {}", proposal.action_type));
+            contradictions.push(format!(
+                "Unknown or prohibited action type: {}",
+                proposal.action_type
+            ));
         }
 
         let accepted = feasibility > 0.5 && contradictions.is_empty() && confidence > 0.5;
 
         if accepted {
-            reasons.push("Action proposal passed deterministic feasibility and non-contradiction checks.".to_string());
+            reasons.push(
+                "Action proposal passed deterministic feasibility and non-contradiction checks."
+                    .to_string(),
+            );
         } else {
             reasons.push("Action proposal failed epistemic validation checks.".to_string());
         }
@@ -122,7 +128,11 @@ mod tests {
             agent_id: "agent_alpha".into(),
             action_type: "PATROL".into(),
             parameters_json: "{}".into(),
-            target_position: Vector3 { x: 100.0, y: 50.0, z: 0.0 },
+            target_position: Vector3 {
+                x: 100.0,
+                y: 50.0,
+                z: 0.0,
+            },
             priority: 1,
             timestamp: now - 1000,
             correlation_id: "corr_1".into(),
@@ -144,7 +154,11 @@ mod tests {
             agent_id: "agent_beta".into(),
             action_type: "MOVE".into(),
             parameters_json: "{}".into(),
-            target_position: Vector3 { x: 999999.0, y: 0.0, z: 0.0 },
+            target_position: Vector3 {
+                x: 999999.0,
+                y: 0.0,
+                z: 0.0,
+            },
             priority: 1,
             timestamp: now - 1000,
             correlation_id: "corr_2".into(),
