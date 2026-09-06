@@ -19,6 +19,69 @@ const SpatialCanvas = dynamic(() => import("@/components/SpatialCanvas"), {
   loading: () => <div className="w-full h-full bg-[#090d13] flex items-center justify-center text-xs text-[#8b949e]">Loading 3D Spatial Canvas...</div>,
 });
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isVector3(value: unknown): value is { x: number; y: number; z: number } {
+  return (
+    isRecord(value) &&
+    typeof value.x === "number" &&
+    typeof value.y === "number" &&
+    typeof value.z === "number"
+  );
+}
+
+function isOperatorStateTelemetry(value: unknown): value is OperatorStateTelemetry {
+  return (
+    isRecord(value) &&
+    typeof value.heart_rate === "number" &&
+    typeof value.hrv === "number" &&
+    typeof value.arousal === "number" &&
+    typeof value.attention === "number" &&
+    typeof value.stress === "number" &&
+    typeof value.confidence === "number" &&
+    typeof value.cognitive_load === "number" &&
+    typeof value.sensor_provenance === "string" &&
+    typeof value.is_simulated === "boolean" &&
+    typeof value.timestamp === "number"
+  );
+}
+
+function isAgentState(value: unknown): value is AgentState {
+  return (
+    isRecord(value) &&
+    typeof value.agent_id === "string" &&
+    typeof value.state === "string" &&
+    Array.isArray(value.capabilities) &&
+    value.capabilities.every((item) => typeof item === "string") &&
+    Array.isArray(value.task_assignments) &&
+    value.task_assignments.every((item) => typeof item === "string") &&
+    typeof value.priority === "number" &&
+    isVector3(value.position) &&
+    isVector3(value.velocity) &&
+    typeof value.confidence === "number" &&
+    typeof value.timestamp === "number"
+  );
+}
+
+function isValidationResultPayload(value: unknown): value is ValidationResultPayload {
+  return (
+    isRecord(value) &&
+    typeof value.proposal_id === "string" &&
+    typeof value.agent_id === "string" &&
+    typeof value.accepted === "boolean" &&
+    typeof value.feasibility === "number" &&
+    Array.isArray(value.contradictions) &&
+    value.contradictions.every((item) => typeof item === "string") &&
+    typeof value.confidence === "number" &&
+    Array.isArray(value.reasons) &&
+    value.reasons.every((item) => typeof item === "string") &&
+    typeof value.provenance === "string" &&
+    typeof value.timestamp === "number"
+  );
+}
+
 export default function C2DashboardPage() {
   const [wsConnected, setWsConnected] = useState(false);
   const [telemetry, setTelemetry] = useState<OperatorStateTelemetry | null>(null);
@@ -75,8 +138,9 @@ export default function C2DashboardPage() {
           const envelope: CanonicalEventEnvelope = JSON.parse(event.data);
           setEvents((prev) => [envelope, ...prev.slice(0, 49)]);
 
-          if (envelope.event_type === "telemetry" && envelope.payload?.operator_telemetry) {
-            const t = envelope.payload.operator_telemetry;
+          const operatorTelemetry = envelope.payload?.operator_telemetry;
+          if (envelope.event_type === "telemetry" && isOperatorStateTelemetry(operatorTelemetry)) {
+            const t = operatorTelemetry;
             setTelemetry(t);
 
             const cogLoad = t.cognitive_load;
@@ -91,12 +155,14 @@ export default function C2DashboardPage() {
             });
           }
 
-          if (envelope.event_type === "validation" && envelope.payload?.validation_result) {
-            setLatestValidation(envelope.payload.validation_result);
+          const validationResult = envelope.payload?.validation_result;
+          if (envelope.event_type === "validation" && isValidationResultPayload(validationResult)) {
+            setLatestValidation(validationResult);
           }
 
-          if (envelope.event_type === "agent_state" && envelope.payload?.agent_state) {
-            const newAgent = envelope.payload.agent_state;
+          const agentState = envelope.payload?.agent_state;
+          if (envelope.event_type === "agent_state" && isAgentState(agentState)) {
+            const newAgent = agentState;
             setAgents((prev) => {
               const idx = prev.findIndex((a) => a.agent_id === newAgent.agent_id);
               if (idx >= 0) {
