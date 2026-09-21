@@ -3,6 +3,9 @@ use tokio::sync::broadcast;
 use tracing::info;
 use uuid::Uuid;
 
+pub const EVENT_SCHEMA_V1: &str = "1.0.0";
+pub const EVENT_SCHEMA_V1_1: &str = "1.1.0";
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EventEnvelope {
     pub event_id: String,
@@ -30,7 +33,7 @@ impl EventEnvelope {
         Self {
             event_id: Uuid::new_v4().to_string(),
             event_type: event_type.into(),
-            schema_version: "1.0.0".to_string(),
+            schema_version: EVENT_SCHEMA_V1.to_string(),
             timestamp: chrono::Utc::now().timestamp_millis(),
             source: source.into(),
             subject_id: subject_id.into(),
@@ -39,6 +42,11 @@ impl EventEnvelope {
             provenance: provenance.into(),
             payload_json: payload_json.into(),
         }
+    }
+
+    pub fn with_schema_version(mut self, version: impl Into<String>) -> Self {
+        self.schema_version = version.into();
+        self
     }
 }
 

@@ -15,11 +15,13 @@ def replay_session(input_file="session_recording.json"):
     seed = data.get("seed", 42)
     recorded_events = data.get("events", [])
 
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services"))
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services/biometric-pipeline"))
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services/sim-engine"))
 
     from biometric_generator import BiometricPipeline
     from emergence_sim import SwarmEmergenceSimulator
+    from judgment.replay import replay_recorded_judgment
 
     bio_replayed = BiometricPipeline(seed=seed)
     sim_replayed = SwarmEmergenceSimulator(num_agents=3, seed=seed)
@@ -36,6 +38,22 @@ def replay_session(input_file="session_recording.json"):
             sample = bio_replayed.generate_sample(timestamp=timestamp)
             if sample["cognitive_load"] != recorded_bio["cognitive_load"]:
                 print(f"Mismatch in bio telemetry at t={timestamp}: {sample['cognitive_load']} vs {recorded_bio['cognitive_load']}")
+                mismatches += 1
+
+        elif evt_type == "judgment":
+            recorded_judgment = event["payload"]["judgment"]
+            replayed_judgment = replay_recorded_judgment(event)
+            if replayed_judgment.get("evaluation_mode") != "RECORDED_JUDGMENT":
+                print("Judgment replay did not mark the copy RECORDED_JUDGMENT")
+                mismatches += 1
+            if replayed_judgment.get("answers") != recorded_judgment.get("answers"):
+                print("Judgment replay changed recorded answers")
+                mismatches += 1
+            if replayed_judgment.get("disposition") != recorded_judgment.get("disposition"):
+                print("Judgment replay changed the recorded disposition")
+                mismatches += 1
+            if event["payload"]["judgment"].get("evaluation_mode") != recorded_judgment.get("evaluation_mode"):
+                print("Judgment replay overwrote the stored envelope")
                 mismatches += 1
 
         elif evt_type == "spatial":

@@ -15,16 +15,18 @@ NEXUS Event Bus
         ↓
 Pordenone Kernel
         ↓
-Epistemic Validation (Observe → Propose → Validate → Commit → Publish)
+Deterministic epistemic validation
         ↓
-DRR Adaptive Dynamics
+Typed judgment (opt-in; off by default)
         ↓
-Agent / Simulation Actions
+Deterministic judgment policy
         ↓
-Spatial World State
+Commit or withhold, then publish
         ↓
-C2 Dashboard
+DRR Adaptive Dynamics / spatial state / C2 dashboard
 ```
+
+Typed judgment is documented in [`docs/typed-judgment.md`](docs/typed-judgment.md). TypeSafe Jev is the first remote provider. It cannot override a failed deterministic check, and Pordenone runs with judgment disabled when `JUDGMENT_ENABLED` is unset.
 
 ## Repository Map & Architecture Matrix
 
@@ -77,5 +79,7 @@ docker compose up --build
 ## Security & Safety Boundaries
 - Defaults to **SIMULATION** mode and local execution.
 - Unvalidated agent actions CANNOT mutate authoritative state.
+- Typed judgment defaults off. A remote model cannot commit state or override a deterministic rejection.
 - Simulated physiological telemetry is explicitly labeled as `SIMULATED`.
+- Raw biosignals are not included in remote judgment state.
 - No real-world autonomous weapon or irreversible physical actuation is implemented.

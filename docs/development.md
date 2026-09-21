@@ -30,6 +30,20 @@ PYTHONPATH=services/biometric-pipeline:services/sim-engine pytest services/ test
 pnpm --filter c2-dashboard dev
 ```
 
+### Typed judgment
+
+Remote judgment is off by default. CI does not need `TYPESAFE_API_KEY`.
+
+```bash
+# Optional live provider
+export JUDGMENT_ENABLED=true
+export JUDGMENT_PROVIDER=typesafe
+export JUDGMENT_MODEL=jev-latest
+export TYPESAFE_API_KEY=...
+```
+
+`JUDGMENT_TIMEOUT_MS` defaults to `10000`. `JUDGMENT_MINIMUM_CONFIDENCE` defaults to `0.70`. See [`typed-judgment.md`](typed-judgment.md).
+
 ### Containerized Environment
 
 Launch all services using Docker Compose:

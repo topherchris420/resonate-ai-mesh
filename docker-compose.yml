@@ -10,6 +10,12 @@ services:
     environment:
       - RUST_LOG=info
       - BIND_ADDR=0.0.0.0:50051
+      - JUDGMENT_ENABLED=false
+      - JUDGMENT_PROVIDER=disabled
+      - JUDGMENT_MODEL=jev-latest
+      - JUDGMENT_TIMEOUT_MS=10000
+      - JUDGMENT_MINIMUM_CONFIDENCE=0.70
+      - JUDGMENT_POLICY_VERSION=pordenone.judgment.policy.v1
 
   telemetry-bridge:
     build:

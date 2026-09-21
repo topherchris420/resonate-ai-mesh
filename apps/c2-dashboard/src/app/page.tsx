@@ -12,6 +12,9 @@ import {
   AgentState,
   CanonicalEventEnvelope,
   ValidationResultPayload,
+  JudgmentEnvelope,
+  disabledJudgmentEnvelope,
+  isJudgmentEnvelope,
 } from "@pordenone/shared-types";
 
 const SpatialCanvas = dynamic(() => import("@/components/SpatialCanvas"), {
@@ -65,6 +68,21 @@ function isAgentState(value: unknown): value is AgentState {
   );
 }
 
+function parseIncomingEnvelope(raw: string): CanonicalEventEnvelope {
+  const parsed: CanonicalEventEnvelope = JSON.parse(raw);
+  if (!parsed.payload && typeof parsed.payload_json === "string") {
+    try {
+      const payload = JSON.parse(parsed.payload_json) as unknown;
+      if (typeof payload === "object" && payload !== null) {
+        parsed.payload = payload as Record<string, unknown>;
+      }
+    } catch {
+      parsed.payload = undefined;
+    }
+  }
+  return parsed;
+}
+
 function isValidationResultPayload(value: unknown): value is ValidationResultPayload {
   return (
     isRecord(value) &&
@@ -113,6 +131,8 @@ export default function C2DashboardPage() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>("agent_alpha");
   const [events, setEvents] = useState<CanonicalEventEnvelope[]>([]);
   const [latestValidation, setLatestValidation] = useState<ValidationResultPayload | null>(null);
+  const [latestJudgment, setLatestJudgment] = useState<JudgmentEnvelope | null>(null);
+  const [humanDecision, setHumanDecision] = useState<"approve" | "reject" | null>(null);
   const [isRecording, setIsRecording] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -135,7 +155,7 @@ export default function C2DashboardPage() {
 
       ws.onmessage = (event) => {
         try {
-          const envelope: CanonicalEventEnvelope = JSON.parse(event.data);
+          const envelope = parseIncomingEnvelope(event.data);
           setEvents((prev) => [envelope, ...prev.slice(0, 49)]);
 
           const operatorTelemetry = envelope.payload?.operator_telemetry;
@@ -155,9 +175,19 @@ export default function C2DashboardPage() {
             });
           }
 
-          const validationResult = envelope.payload?.validation_result;
+          const validationResult = envelope.payload?.validation_result ?? envelope.payload;
           if (envelope.event_type === "validation" && isValidationResultPayload(validationResult)) {
             setLatestValidation(validationResult);
+            setHumanDecision(null);
+            if (!validationResult.accepted) {
+              setLatestJudgment(null);
+            }
+          }
+
+          const judgmentResult = envelope.payload?.judgment ?? envelope.payload;
+          if (envelope.event_type === "judgment" && isJudgmentEnvelope(judgmentResult)) {
+            setLatestJudgment(judgmentResult);
+            setHumanDecision(null);
           }
 
           const agentState = envelope.payload?.agent_state;
@@ -233,6 +263,17 @@ export default function C2DashboardPage() {
       };
 
       setLatestValidation(validationPayload);
+      setHumanDecision(null);
+      setLatestJudgment(
+        isOutOfBounds
+          ? null
+          : disabledJudgmentEnvelope({
+              proposal_id: proposalId,
+              correlation_id: correlationId,
+              causation_id: proposalId,
+              timestamp: Date.now(),
+            })
+      );
 
       if (!isOutOfBounds) {
         setAgents((prev) =>
@@ -243,6 +284,45 @@ export default function C2DashboardPage() {
           )
         );
       }
+    }
+  };
+
+  const handleResolveHumanReview = (proposalId: string, decision: "approve" | "reject") => {
+    if (!latestJudgment || latestJudgment.proposal_id !== proposalId || latestJudgment.disposition !== "HUMAN_REVIEW") {
+      return;
+    }
+    setHumanDecision(decision);
+    const resolution: CanonicalEventEnvelope = {
+      event_id: `human_${Date.now()}`,
+      event_type: "human_resolution",
+      schema_version: "1.1.0",
+      timestamp: Date.now(),
+      source: "c2_dashboard",
+      subject_id: latestValidation?.agent_id ?? "operator_console",
+      correlation_id: latestJudgment.correlation_id,
+      causation_id: latestJudgment.judgment_id,
+      provenance: "HumanReview:operator_console",
+      payload: {
+        human_resolution: {
+          proposal_id: proposalId,
+          decision,
+          operator_ref: "operator_console",
+          judgment_id: latestJudgment.judgment_id,
+          committed: decision === "approve",
+        },
+      },
+    };
+    setEvents((prev) => [resolution, ...prev.slice(0, 49)]);
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(resolution));
+    }
+    if (decision === "approve" && latestValidation?.accepted) {
+      const agentId = latestValidation.agent_id;
+      setAgents((prev) =>
+        prev.map((agent) =>
+          agent.agent_id === agentId ? { ...agent, state: "EXECUTING" } : agent
+        )
+      );
     }
   };
 
@@ -306,7 +386,10 @@ export default function C2DashboardPage() {
         <div className="col-span-3 flex flex-col gap-2 overflow-hidden">
           <ValidationInspector
             latestValidation={latestValidation}
+            latestJudgment={latestJudgment}
+            humanDecision={humanDecision}
             onDispatchProposal={handleDispatchProposal}
+            onResolveHumanReview={handleResolveHumanReview}
           />
           <div className="flex-1 overflow-hidden">
             <EventFeed events={events} aggregateAlerts={aggregateAlerts} />

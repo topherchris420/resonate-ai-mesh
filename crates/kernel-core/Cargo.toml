@@ -7,6 +7,7 @@ edition = "2021"
 event-bus = { path = "../event-bus" }
 epistemic-validator = { path = "../epistemic-validator" }
 spatial-state = { path = "../spatial-state" }
+typed-judgment = { path = "../typed-judgment" }
 tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

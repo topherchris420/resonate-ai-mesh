@@ -40,6 +40,15 @@ pub struct EpistemicValidator {
 }
 
 impl EpistemicValidator {
+    pub fn checked_constraints(&self) -> Vec<String> {
+        vec![
+            "coordinate_bounds".to_string(),
+            "priority_non_negative".to_string(),
+            "observation_freshness".to_string(),
+            "action_allowlist".to_string(),
+        ]
+    }
+
     pub fn new() -> Self {
         Self {
             max_spatial_bound: 10000.0,

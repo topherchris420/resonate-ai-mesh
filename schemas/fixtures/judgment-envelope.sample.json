@@ -1,0 +1,93 @@
+{
+  "schema_version": "pordenone.judgment.envelope.v1",
+  "judgment_id": "jdg_sample_001",
+  "provider": "typesafe",
+  "model": "jev-latest",
+  "provider_model_version": "jev-1.13.0",
+  "question_set_version": "pordenone.judgment.questions.v1",
+  "state_hash": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "state_schema_version": "pordenone.judgment.state.v1",
+  "truncated": false,
+  "proposal_id": "prop_sample",
+  "correlation_id": "corr_sample",
+  "causation_id": "val_sample",
+  "answers": [
+    {
+      "question_id": "proposal_support",
+      "primitive": "choice",
+      "choice": "supported",
+      "score": null,
+      "noul": null,
+      "probabilities": {
+        "insufficient_evidence": 0.02,
+        "mixed": 0.05,
+        "supported": 0.91,
+        "unsupported": 0.02
+      },
+      "confidence": 0.88,
+      "legend": {}
+    },
+    {
+      "question_id": "evidence_quality",
+      "primitive": "score",
+      "choice": null,
+      "score": 2.1,
+      "noul": null,
+      "probabilities": {
+        "0": 0.05,
+        "1": 0.1,
+        "2": 0.55,
+        "3": 0.3
+      },
+      "confidence": 0.86,
+      "legend": {
+        "0": "insufficient evidence",
+        "1": "weak or indirect",
+        "2": "adequate but limited",
+        "3": "strong and directly relevant"
+      }
+    },
+    {
+      "question_id": "contradiction_present",
+      "primitive": "noul",
+      "choice": null,
+      "score": null,
+      "noul": 0.07,
+      "probabilities": {},
+      "confidence": null,
+      "legend": {}
+    },
+    {
+      "question_id": "scope_violation",
+      "primitive": "noul",
+      "choice": null,
+      "score": null,
+      "noul": 0.11,
+      "probabilities": {},
+      "confidence": null,
+      "legend": {}
+    },
+    {
+      "question_id": "human_review",
+      "primitive": "noul",
+      "choice": null,
+      "score": null,
+      "noul": 0.16,
+      "probabilities": {},
+      "confidence": null,
+      "legend": {}
+    }
+  ],
+  "disposition": "PASS",
+  "reason_codes": ["ELIGIBLE_PASS"],
+  "policy_version": "pordenone.judgment.policy.v1",
+  "requested_at": 1700000000000,
+  "completed_at": 1700000000120,
+  "latency_ms": 120,
+  "provider_status": "ok",
+  "evaluation_mode": "LIVE",
+  "simulation_label": "SIMULATED",
+  "provider_request_id": "req_sample",
+  "input_tokens": 120,
+  "output_tokens": 18
+}

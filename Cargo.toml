@@ -6,6 +6,7 @@ members = [
     "crates/spatial-state",
     "crates/kernel-core",
     "crates/telemetry-bridge",
+    "crates/typed-judgment",
 ]
 
 [workspace.dependencies]
@@ -23,3 +24,5 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.8", features = ["v4", "serde"] }
 tokio-tungstenite = "0.21"
 futures-util = "0.3"
+sha2 = "0.10"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }

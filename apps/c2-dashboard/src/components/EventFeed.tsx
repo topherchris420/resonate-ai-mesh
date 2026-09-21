@@ -40,6 +40,8 @@ export default function EventFeed({ events, aggregateAlerts }: EventFeedProps) {
         {displayEvents.map((evt, idx) => {
           const dateStr = new Date(evt.timestamp).toLocaleTimeString();
           const isValidation = evt.event_type === "validation";
+          const isJudgment = evt.event_type === "judgment";
+          const isHuman = evt.event_type === "human_resolution";
           const isTelemetry = evt.event_type === "telemetry";
 
           return (
@@ -47,7 +49,11 @@ export default function EventFeed({ events, aggregateAlerts }: EventFeedProps) {
               key={evt.event_id || idx}
               className={`p-1.5 rounded border ${
                 isValidation
-                  ? "bg-purple-950/20 border-purple-800/40 text-purple-200"
+                  ? "bg-cyanGlow/5 border-cyanGlow/30 text-cyan-100"
+                  : isJudgment
+                  ? "bg-amberAlert/10 border-amberAlert/40 text-amber-100"
+                  : isHuman
+                  ? "bg-white/5 border-white/30 text-white"
                   : isTelemetry
                   ? "bg-[#0d1117] border-panelBorder text-[#8b949e]"
                   : "bg-[#1f242d] border-panelBorder text-white"

@@ -6,11 +6,13 @@ import time
 
 def record_session(output_file="session_recording.json", duration_sec=5):
     print(f"Starting session recording for {duration_sec}s -> {output_file}")
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services"))
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services/biometric-pipeline"))
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../services/sim-engine"))
 
     from biometric_generator import BiometricPipeline
     from emergence_sim import SwarmEmergenceSimulator
+    from judgment.replay import local_mock_judgment_event
 
     bio = BiometricPipeline(seed=42)
     sim = SwarmEmergenceSimulator(num_agents=3, seed=42)
@@ -51,6 +53,8 @@ def record_session(output_file="session_recording.json", duration_sec=5):
 
         recording.append(event_bio)
         recording.append(event_sim)
+
+    recording.append(local_mock_judgment_event(start_time + duration_sec * 1000))
 
     with open(output_file, "w") as f:
         json.dump({"session_id": "rec_001", "seed": 42, "events": recording}, f, indent=2)

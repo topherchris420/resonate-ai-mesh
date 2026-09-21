@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package pordenone.judgment;
+
+// Typed judgment envelope. Field additions stay backward compatible.
+// Deterministic validation remains a separate event and is not encoded here.
+
+message JudgmentProbability {
+  string key = 1;
+  double value = 2;
+}
+
+message JudgmentLegendEntry {
+  string key = 1;
+  string label = 2;
+}
+
+message JudgmentAnswer {
+  string question_id = 1;
+  string primitive = 2;          // choice, score, noul
+  string choice = 3;
+  double score = 4;
+  bool has_score = 5;
+  double noul = 6;
+  bool has_noul = 7;
+  repeated JudgmentProbability probabilities = 8;
+  double confidence = 9;
+  bool has_confidence = 10;      // false for Noul and for absent Choice/Score confidence
+  repeated JudgmentLegendEntry legend = 11;
+}
+
+message JudgmentEnvelope {
+  string schema_version = 1;
+  string judgment_id = 2;
+  string provider = 3;
+  string model = 4;
+  string provider_model_version = 5;
+  string question_set_version = 6;
+  string state_hash = 7;
+  string state_schema_version = 8;
+  bool truncated = 9;
+  string proposal_id = 10;
+  string correlation_id = 11;
+  string causation_id = 12;
+  repeated JudgmentAnswer answers = 13;
+  string disposition = 14;       // PASS, REVISE, HUMAN_REVIEW, UNAVAILABLE, SKIPPED
+  repeated string reason_codes = 15;
+  string policy_version = 16;
+  int64 requested_at = 17;
+  int64 completed_at = 18;
+  uint64 latency_ms = 19;
+  string provider_status = 20;
+  string evaluation_mode = 21;   // LIVE, RECORDED_JUDGMENT, LIVE_REEVALUATION, DISABLED
+  string simulation_label = 22;
+  string provider_request_id = 23;
+  uint64 input_tokens = 24;
+  uint64 output_tokens = 25;
+  bool has_usage = 26;
+}

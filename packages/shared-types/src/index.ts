@@ -1,3 +1,13 @@
+export type {
+  EvaluationMode,
+  JudgmentAnswer,
+  JudgmentDisposition,
+  JudgmentEnvelope,
+  JudgmentPrimitive,
+  JudgmentProviderStatus,
+} from "./judgment";
+export { disabledJudgmentEnvelope, isJudgmentEnvelope } from "./judgment";
+
 export interface CanonicalEventEnvelope {
   event_id: string;
   event_type: string;
@@ -9,6 +19,7 @@ export interface CanonicalEventEnvelope {
   causation_id: string;
   provenance: string;
   payload?: Record<string, unknown>;
+  payload_json?: string;
 }
 
 export interface OperatorStateTelemetry {

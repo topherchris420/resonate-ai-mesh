@@ -18,3 +18,9 @@ Pordenone supports dual-layer communication: Protobuf high-performance IPC and W
 3. **Simulation Engine REST API (`services/sim-engine`)**
    - Port `8000` (`http://0.0.0.0:8000`)
    - Endpoints: `/health`, `/state`, `/step`, `/scenario/load`, `/drr/evaluate`.
+
+4. **Typed judgment provider (optional)**
+   - Not required for local telemetry, simulation, or dashboard operation.
+   - When `JUDGMENT_ENABLED=true` and `JUDGMENT_PROVIDER=typesafe`, the kernel calls `POST {TYPESAFE_BASE_URL}/v1/systemone` with `Authorization: Bearer $TYPESAFE_API_KEY`.
+   - Default base URL is `https://api.typesafe.ai`. Default model alias is `jev-latest`.
+   - The request body is `{ state, model, questions }`. Questions use TypeSafe `choice`, `score`, and `noul` objects. Pordenone's internal types do not expose that JSON to other crates.
