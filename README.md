@@ -2,7 +2,9 @@
 
 A proposal has to pass a hard rule-check before an optional model check, and the session can be recorded and replayed.
 
-The research dashboard (`apps/c2-dashboard`) can run with no backend. Heart rate and cognitive load are labeled simulated. Agents are drawn on a 3D canvas. The last proposal either passed the rule check or was rejected. Nothing in this repository moves physical hardware.
+![Research dashboard: simulated human-state telemetry, a 3D agent canvas, and a proposal that passed the hard check](docs/images/dashboard.png)
+
+The picture is that dashboard (`apps/c2-dashboard`) with no backend connected. Heart rate and cognitive load are labeled `SIMULATED`. Two agents sit on the 3D canvas. The proposal on the right passed the hard check; the model check stayed off. Nothing in this repository moves physical hardware.
 
 [![Rust Workspace](https://img.shields.io/badge/Rust-1.80%2B-orange.svg)](https://www.rust-lang.org/)
 [![Node.js & pnpm](https://img.shields.io/badge/Node.js-20%2B%20%7C%20pnpm-blue.svg)](https://pnpm.io/)
