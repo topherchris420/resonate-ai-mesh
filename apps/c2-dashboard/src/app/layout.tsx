@@ -2,8 +2,8 @@ import "./globals.css";
 import React from "react";
 
 export const metadata = {
-  title: "Pordenone NEXUS C2 Dashboard",
-  description: "Cognitive Cyber-Physical Command & Control Research Platform",
+  title: "Pordenone Research Dashboard",
+  description: "Deterministic validation kernel, simulated telemetry, and a 3D state view",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

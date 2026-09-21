@@ -1,6 +1,6 @@
 # Architecture Overview: Pordenone
 
-Pordenone is a unified cognitive cyber-physical command-and-control (C2) research platform integrating 8 domain-specific repositories behind clean, versioned interfaces.
+Pordenone is research software: a deterministic validation kernel, simulated telemetry, and a 3D dashboard. The repositories named in the [integration matrix](integration-matrix.md) are a conceptual map. Their ideas are reimplemented in this repository. Nothing here commands physical hardware.
 
 ## Conceptual Pipeline
 
@@ -18,7 +18,7 @@ graph TD
     P -->|REVISE / HUMAN_REVIEW / UNAVAILABLE| W[Withhold commit]
     G --> H[DRR Adaptive Dynamics and spatial state]
     W --> H
-    H --> J[C2 Dashboard]
+    H --> J[Research dashboard]
 ```
 
 ## Core Components
@@ -41,15 +41,16 @@ graph TD
 4. **Event Bus (`crates/event-bus`)**
    - Asynchronous in-memory event bus providing fan-out broadcast, correlation tracking, and structured tracing.
 
-5. **Biometric Telemetry Pipeline (`services/biometric-pipeline`)**
-   - Adapts CIRCLE physiological models.
-   - Labels all data as `SIMULATED` vs `LIVE`.
+5. **Simulated human-state telemetry (`services/biometric-pipeline`)**
+   - Local stand-in for the human-state ideas associated with `circle`.
+   - Labels samples `SIMULATED` unless the process is started in `LIVE` mode.
 
-6. **Simulation Engine (`services/sim-engine`)**
-   - Adapts `ions-x-deep-emergence-lab` swarm dynamics and `dynamic-resonance-rooting` (DRR) adaptive state calculations.
+6. **Simulation engine (`services/sim-engine`)**
+   - Local swarm step (`SwarmEmergenceSimulator`) and adaptive-state calculator (`DynamicResonanceRootingAdapter`).
 
-7. **Spatial State (`crates/spatial-state`)**
-   - Canonical 3D spatial index adapted from `lop-nur-twin` and `cognisync-terrain-weaver`.
+7. **Spatial state (`crates/spatial-state`)**
+   - In-repository spatial index (`SpatialIndex`).
 
-8. **C2 Dashboard (`apps/c2-dashboard`)**
-   - Next.js application with React Three Fiber 3D spatial canvas, real-time operator panel, agent panel, event feed, and validation inspector.
+8. **Research dashboard (`apps/c2-dashboard`)**
+   - Next.js application with a React Three Fiber spatial canvas, human-state panel, agent list, event feed, and validation inspector.
+   - The directory name is historical. The view does not issue commands to physical systems.

@@ -1,71 +1,60 @@
-# Pordenone: Unified Cognitive Cyber-Physical Command-and-Control Research Platform
+# Pordenone
+
+A proposal has to pass a hard rule-check before an optional model check, and the session can be recorded and replayed.
+
+The research dashboard (`apps/c2-dashboard`) can run with no backend. Heart rate and cognitive load are labeled simulated. Agents are drawn on a 3D canvas. The last proposal either passed the rule check or was rejected. Nothing in this repository moves physical hardware.
 
 [![Rust Workspace](https://img.shields.io/badge/Rust-1.80%2B-orange.svg)](https://www.rust-lang.org/)
 [![Node.js & pnpm](https://img.shields.io/badge/Node.js-20%2B%20%7C%20pnpm-blue.svg)](https://pnpm.io/)
 [![Python](https://img.shields.io/badge/Python-3.11%2B-yellow.svg)](https://www.python.org/)
-[![License: Research](https://img.shields.io/badge/License-Research-green.svg)](#security--safety-boundaries)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Pordenone** is a research monorepo integrating capabilities across 9 domain-specific repositories into a unified cognitive cyber-physical command-and-control (C2) architecture.
+## What this is for
 
-The platform provides deterministic epistemic validation of agent proposal loops, closed-loop operator state telemetry, real-time spatial digital twin rendering, and an opt-in typed judgment fabric backed by deterministic disposition policies.
+Stored state should not change because a model felt confident. Pordenone keeps three steps in that order:
 
----
+1. **Hard check.** A deterministic validator rejects coordinates outside bounds, stale observations, and actions that are not on the allow-list. A failure stops the proposal. No model is called.
+2. **Soft check, off by default.** If the hard check passes and `JUDGMENT_ENABLED=true`, a model answers a fixed set of questions. It cannot override a failed hard check, and it cannot write state.
+3. **Replay.** Record a session and play it back with no network calls. See [`docs/replay.md`](docs/replay.md).
 
-## Conceptual Pipeline & Architecture
+The code is [MIT licensed](LICENSE). Citation metadata is in [`CITATION.cff`](CITATION.cff).
 
-The execution pipeline enforces strict ordering: no unvalidated agent proposal can mutate authoritative state. Deterministic epistemic checks run first; optional remote typed judgment is evaluated second; deterministic disposition policy makes the commit/withhold decision.
+## Names in the code
+
+A few labels in the source are shorter than their meaning. They are names in this repository, not packages you have to install:
+
+| Name in the code | What it is here |
+| :--- | :--- |
+| **CIRCLE** | The simulated human-state stream: heart rate, heart-rate variability, cognitive load, and stress. Samples are marked `SIMULATED` unless that process is started in `LIVE` mode. |
+| **NEXUS** | The in-memory event bus. It fans events out to the dashboard. |
+| **DRR** | A small local formula that maps cognitive load onto `NORMAL`, `ELEVATED`, `HIGH`, or `CRITICAL`. |
+
+## How a proposal moves
 
 ```
-Human / Sensor Inputs
-        │
-        ▼
-CIRCLE Operator-State Layer (Biometric & Cognitive Telemetry)
-        │
-        ▼
-Telemetry Normalization
-        │
-        ▼
-NEXUS Event Bus (Async In-Memory Fan-out & Correlation)
-        │
-        ▼
-Pordenone Kernel Engine (Observe ➔ Propose ➔ Validate ➔ Judge ➔ Policy ➔ Commit/Withhold)
-        │
-  ┌─────┴────────────────────────────────┐
-  ▼                                      ▼
-[Deterministic Epistemic Validation]  [Typed Judgment Fabric] (Opt-in; off by default)
-  │ (Must Pass)                          │ (TypeSafe / Jev / Mock)
-  └─────┬────────────────────────────────┘
-        │
-        ▼
-Deterministic Judgment Policy (Evaluates Support vs Contradiction & Gate Thresholds)
-        │
-   ┌────┴────────────────────────┐
-   ▼                             ▼
-Commit Authoritative State     Withhold Commit & Log Rejection
-   │                             │
-   └──────────────┬──────────────┘
-                  │
-                  ▼
-DRR Adaptive Dynamics ➔ Spatial State Sync ➔ C2 Dashboard (3D R3F Canvas & Tactical HUD)
+proposal
+   │
+   ▼
+hard check (always on)
+   │
+   ├── fail → reject, publish, stop
+   │
+   └── pass → soft check (optional; off unless JUDGMENT_ENABLED=true)
+                 │
+                 ▼
+              policy commits or withholds
+                 │
+                 ▼
+              event bus (NEXUS) → dashboard
 ```
-
-### Flowchart (Mermaid)
 
 ```mermaid
 graph TD
-    A[Human / Sensor Inputs] --> B[CIRCLE Operator-State Layer]
-    B --> C[Telemetry Normalization]
-    C --> D[NEXUS Event Bus]
-    D --> E[Pordenone Kernel Engine]
-    E --> F[Deterministic Epistemic Validation]
-    F -->|fail| R[Reject Proposal & Publish Event]
-    F -->|pass| TJ[Typed Judgment Fabric]
-    TJ --> P[Deterministic Judgment Policy]
-    P -->|PASS or judgment disabled| G[Commit Authoritative State]
-    P -->|REVISE / HUMAN_REVIEW / UNAVAILABLE| W[Withhold Commit]
-    G --> H[DRR Adaptive Dynamics & Spatial Index]
-    W --> H
-    H --> J[C2 Dashboard]
+    A[Proposal] --> F[Hard check]
+    F -->|fail| R[Reject and publish]
+    F -->|pass| TJ[Soft check, off by default]
+    TJ --> P[Policy: commit or withhold]
+    P --> J[Dashboard]
 ```
 
 ---
@@ -75,7 +64,7 @@ graph TD
 ```
 pordenone/
 ├── apps/
-│   └── c2-dashboard/          # Next.js 14 C2 Dashboard with React Three Fiber 3D spatial canvas & HUD
+│   └── c2-dashboard/          # Next.js 14 research dashboard: React Three Fiber spatial canvas and status panels
 ├── crates/                    # Rust core kernel workspace crates
 │   ├── epistemic-validator/   # Deterministic epistemic & physical constraint validation
 │   ├── event-bus/             # Asynchronous fan-out event bus with correlation tracking
@@ -84,8 +73,8 @@ pordenone/
 │   ├── telemetry-bridge/      # WebSocket bridge streaming telemetry & kernel events
 │   └── typed-judgment/        # Remote/mock/replay typed judgment provider & disposition policy
 ├── services/                  # Python simulation & telemetry services
-│   ├── biometric-pipeline/    # CIRCLE operator state generator & telemetry stream producer
-│   ├── sim-engine/            # Ions Lab swarm emergence simulator & DRR state calculator
+│   ├── biometric-pipeline/    # Simulated human-state stream (named CIRCLE in source)
+│   ├── sim-engine/            # Swarm step and load-to-level formula (named DRR in source)
 │   └── judgment/              # Python replay & judgment recorded session utilities
 ├── packages/
 │   └── shared-types/          # Shared TypeScript interfaces & Protobuf type bindings
@@ -105,22 +94,22 @@ pordenone/
 
 ---
 
-## Repository Map & Integration Matrix
+## Conceptual Map
 
-The platform integrates capabilities from 9 domain repositories behind clean, versioned interfaces. For full mapping details, see [`docs/integration-matrix.md`](docs/integration-matrix.md).
+You can skip this table if you only want to run the dashboard. It maps nine other repositories onto code that lives here. None of them are git submodules, path dependencies, or imported packages. The "Reimplemented here" column is local code, not an upstream import. TypeSafe is the exception: an optional remote model, disabled unless `JUDGMENT_ENABLED=true`. The same notes are in [`docs/integration-matrix.md`](docs/integration-matrix.md).
 
-| Domain Repository | Integrated Role | Imported Components | Required Adapter | Canonical Interface |
-| :--- | :--- | :--- | :--- | :--- |
-| **`james_library`** | Agent / Epistemic Kernel | Multi-agent execution loop, state machine | Rust trait adapter | `pordenone::kernel::AgentLifecycle`, `pordenone::validator::EpistemicValidator` |
-| **`dynamic-resonance-rooting`** | Adaptive Dynamics | Nonlinear adaptation & resonance metrics | Python `DRRAdapter` | `AdaptiveState`, `proto.telemetry.AdaptiveState` |
-| **`ions-x-deep-emergence-lab`** | Emergent Multi-Agent Sim | Vector-field evolution, agent swarm state | Python gRPC/REST adapter | `proto.spatial.SpatialState`, `sim_engine.step()` |
-| **`waveform-shift-quantum`** | Physical / Falsifiable Sim | Physical parameter bounds & validation | Rust physical checker | `pordenone::validator::PhysicalConstraintChecker` |
-| **`circle`** | Human-State Sensing | Biometric telemetry & HRV/arousal models | Python biometric pipeline | `proto.telemetry.OperatorStateTelemetry` |
-| **`embedded-ai-validation-platform`** | Embedded Validation | HIL fault injection & sensor fusion | HIL telemetry adapter | `proto.events.CanonicalEventEnvelope` |
-| **`lop-nur-twin`** | 3D GEOINT / Digital Twin | Procedural desert terrain & shaders | React Three Fiber canvas | `packages/shared-types/spatial`, `SpatialCanvas.tsx` |
-| **`orpheus-resonance-protocol`** | Tactical HUD / Telemetry | Real-time HUD UI components & overlays | Next.js HUD components | `OperatorPanel`, `ValidationPanel` |
-| **`cognisync-terrain-weaver`** | Spatial Synchronization | Coordinate sync & scenario studio state | Rust spatial index | `pordenone::spatial::SpatialIndex` |
-| **TypeSafe Jev** | Remote Typed Judgment | System One Choice, Score & Noul evaluation | `TypeSafeJudgmentProvider` | `docs/typed-judgment.md` |
+| Conceptual source | Idea | Reimplemented here | Local interface |
+| :--- | :--- | :--- | :--- |
+| **`james_library`** | Agent proposal loop and epistemic checks | `crates/kernel-core` (`KernelEngine`) and `crates/epistemic-validator` (`EpistemicValidator`) | `ActionProposal`, `ValidationResult` |
+| **`dynamic-resonance-rooting`** | Adaptive state from load and stability | `services/sim-engine/drr_adapter.py` (`DynamicResonanceRootingAdapter`) | `AdaptiveState` |
+| **`ions-x-deep-emergence-lab`** | Multi-agent spatial simulation | `services/sim-engine/emergence_sim.py` (`SwarmEmergenceSimulator`) | `sim_engine.step()` |
+| **`waveform-shift-quantum`** | Bounds a proposal must satisfy | Coordinate, freshness, priority, and action checks inside `EpistemicValidator::validate` | `ValidationResult` |
+| **`circle`** | Human-state telemetry | `services/biometric-pipeline/biometric_generator.py` (`BiometricPipeline`). Samples are `SIMULATED` unless the process is started in `LIVE` mode | `OperatorStateTelemetry` |
+| **`embedded-ai-validation-platform`** | Fault and sensor checks before commit | No hardware adapter is included. Proposals are accepted or rejected by `EpistemicValidator` and published on `crates/event-bus` | `CanonicalEventEnvelope` |
+| **`lop-nur-twin`** | 3D spatial scene | `apps/c2-dashboard/src/components/SpatialCanvas.tsx`, a local procedural mesh | `SpatialCanvas` props |
+| **`orpheus-resonance-protocol`** | Status display for human state and validation | `OperatorPanel.tsx` and `ValidationInspector.tsx`. These panels are written in this repository | `OperatorStateTelemetry`, `AdaptiveState`, `JudgmentEnvelope` |
+| **`cognisync-terrain-weaver`** | Spatial index | `crates/spatial-state` (`SpatialIndex`) | `SpatialEntity` |
+| **TypeSafe Jev** | Optional remote typed judgment | `crates/typed-judgment` (`TypeSafeJudgmentProvider`), off by default | `JudgmentEnvelope`, [`typed-judgment.md`](docs/typed-judgment.md) |
 
 ---
 
@@ -136,8 +125,8 @@ The platform integrates capabilities from 9 domain repositories behind clean, ve
 
 ```bash
 # Clone repository
-git clone https://github.com/pordenone/pordenone.git
-cd pordenone
+git clone https://github.com/topherchris420/resonate-ai-mesh.git
+cd resonate-ai-mesh
 
 # Install Node dependencies across workspace
 pnpm install
@@ -238,9 +227,9 @@ docker compose up --build
 | :--- | :--- | :--- | :--- |
 | **`kernel`** | `docker/Dockerfile.kernel` | `50051` (gRPC) | Rust kernel engine, epistemic validator & typed judgment policy |
 | **`telemetry-bridge`** | `docker/Dockerfile.telemetry-bridge` | `8080` (WebSocket) | Event normalization, fan-out broadcast & client WS streaming |
-| **`biometric-pipeline`** | `docker/Dockerfile.biometric-pipeline` | Internal | CIRCLE operator biometric telemetry stream generator |
-| **`sim-engine`** | `docker/Dockerfile.sim-engine` | `8000` (HTTP) | Swarm emergence simulation & DRR state computation service |
-| **`c2-dashboard`** | `docker/Dockerfile.c2-dashboard` | `3000` (HTTP) | Next.js 3D spatial canvas & operator command-and-control HUD |
+| **`biometric-pipeline`** | `docker/Dockerfile.biometric-pipeline` | Internal | Simulated human-state stream (CIRCLE in the source) |
+| **`sim-engine`** | `docker/Dockerfile.sim-engine` | `8000` (HTTP) | Swarm step and the load-to-level formula (DRR in the source) |
+| **`c2-dashboard`** | `docker/Dockerfile.c2-dashboard` | `3000` (HTTP) | Next.js 3D spatial canvas and research dashboard |
 
 ---
 
@@ -255,6 +244,14 @@ docker compose up --build
 
 ---
 
+## License and Citation
+
+This project is released under the [MIT License](LICENSE). Copyright (c) 2026 Vers3Dynamics.
+
+If you use this software, cite it with the metadata in [`CITATION.cff`](CITATION.cff).
+
+---
+
 ## Documentation Directory
 
 For detailed specifications, refer to the guides in [`docs/`](docs/):
@@ -262,7 +259,7 @@ For detailed specifications, refer to the guides in [`docs/`](docs/):
 - [`docs/architecture.md`](docs/architecture.md) – Detailed architecture breakdown and component interactions
 - [`docs/development.md`](docs/development.md) – Developer setup, testing, and CI configuration
 - [`docs/event-model.md`](docs/event-model.md) – Canonical NEXUS event structure and schema specifications
-- [`docs/integration-matrix.md`](docs/integration-matrix.md) – Deep dive into the 9 domain repository adapters
+- [`docs/integration-matrix.md`](docs/integration-matrix.md) – Conceptual map of nine source ideas and the local code that reimplements them
 - [`docs/protocol.md`](docs/protocol.md) – Communication protocols (gRPC, WebSocket, Protobuf)
 - [`docs/replay.md`](docs/replay.md) – Replay engine and session recording mechanics
 - [`docs/typed-judgment.md`](docs/typed-judgment.md) – Typed judgment fabric, atomic question set, and policy engine

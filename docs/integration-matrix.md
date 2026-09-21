@@ -1,14 +1,18 @@
-# Integration Matrix: Pordenone Monorepo
+# Integration Matrix
 
-| Repository | Role | Imported Components | Required Adapter | Canonical Interface |
-| :--- | :--- | :--- | :--- | :--- |
-| **`james_library`** | Agent / Epistemic Kernel | Multi-agent execution loop, task scheduling abstractions, epistemic verification logic, state/action validation state machine | Rust trait adapter mapping agent lifecycle & logic prover output | `pordenone::kernel::AgentLifecycle`, `pordenone::validator::EpistemicValidator`, `proto.agent.ActionProposal` |
-| **`dynamic-resonance-rooting`** | Adaptive Dynamics | Nonlinear adaptation equations, state-space transitions, resonance metrics (`drr_framework`) | Python `DRRAdapter` wrapping state space & supervisory policy models | `AdaptiveState { state, stability, resonance, adaptation_rate, confidence, timestamp }`, `proto.telemetry.AdaptiveState` |
-| **`ions-x-deep-emergence-lab`** | Emergent Multi-Agent Simulation | Vector-field evolution, GPU/CPU agent swarm state, environment entropy dynamics | Python gRPC/REST simulation adapter (`sim-engine`) wrapping `ions_x_deep_emergence` stepping loop | `proto.spatial.SpatialState`, `proto.agent.AgentState`, `sim_engine.step()` |
-| **`waveform-shift-quantum`** | Physical / Falsifiable Simulation | Experimental parameterization workflows, physical parameter bounds, numerical validation | Rust feasibility adapter in `epistemic-validator` enforcing physical constraint limits | `pordenone::validator::PhysicalConstraintChecker`, `proto.events.ValidationEvent` |
-| **`circle`** | Human-State Sensing & Closed-Loop Feedback | Biometric telemetry simulation, closed-loop resonance response analyzer, HRV / arousal / cognitive load models | Python biometric pipeline service (`services/biometric-pipeline`) with `SIMULATED` vs `LIVE` flags | `proto.telemetry.OperatorStateTelemetry`, `biometric_pipeline.stream()` |
-| **`embedded-ai-validation-platform`** | Embedded Validation | Hardware-in-the-loop (HIL) testing workflows, fault injection, sensor fusion validation (`sensor_fusion_imu.py`) | HIL telemetry / fault injection adapter bridging embedded device streams into NEXUS event bus | `proto.events.CanonicalEventEnvelope`, `eaiv.hil.HILTestAdapter` |
-| **`lop-nur-twin`** | 3D GEOINT / Digital Twin | Three.js procedural desert terrain, ground detail shaders, sensor visual effects, camera controls | React Three Fiber spatial canvas component (`SpatialCanvas.tsx`) in `c2-dashboard` | `packages/shared-types/spatial`, `SpatialCanvasProps` |
-| **`orpheus-resonance-protocol`** | Tactical HUD / Cognitive Telemetry | Real-time HUD UI components (`SquadCohesionIndex`, `VisualOverlays`), cognitive load thresholds | Next.js HUD components (`OperatorPanel`, `ValidationPanel`) in `c2-dashboard` reacting to adaptive policies | `packages/shared-types/telemetry`, `AdaptivePolicyConfig` |
-| **`cognisync-terrain-weaver`** | Terrain / Spatial Synchronization | Spatial coordinate synchronization (`geo.ts`), scenario studio state (`scenario.ts`), absorption scoring algorithms | Rust spatial index & coordinate transformer (`crates/spatial-state`) syncing world/terrain coordinates | `proto.spatial.TerrainSync`, `pordenone::spatial::SpatialIndex` |
-| **TypeSafe Jev** | Optional typed judgment provider | System One Choice, Score, and Noul evaluations | `TypeSafeJudgmentProvider` behind `JudgmentProvider`; disabled unless `JUDGMENT_ENABLED=true` | `pordenone.judgment.JudgmentEnvelope`, `docs/typed-judgment.md` |
+The nine repositories below are a conceptual map. This repository does not vendor them, and it does not declare git submodules or path dependencies on them. Each idea is reimplemented locally. The "Reimplemented here" column names code in this repository, not an import from the named project.
+
+TypeSafe Jev is separate from that map. It is an optional remote HTTP provider, and it stays disabled unless `JUDGMENT_ENABLED=true`.
+
+| Conceptual source | Idea | Reimplemented here | Local interface |
+| :--- | :--- | :--- | :--- |
+| **`james_library`** | Agent proposal loop and epistemic checks | `crates/kernel-core` (`KernelEngine`) and `crates/epistemic-validator` (`EpistemicValidator`) | `ActionProposal`, `ValidationResult` |
+| **`dynamic-resonance-rooting`** | Adaptive state from load and stability | `services/sim-engine/drr_adapter.py` (`DynamicResonanceRootingAdapter`) | `AdaptiveState` |
+| **`ions-x-deep-emergence-lab`** | Multi-agent spatial simulation | `services/sim-engine/emergence_sim.py` (`SwarmEmergenceSimulator`) | `sim_engine.step()` |
+| **`waveform-shift-quantum`** | Bounds a proposal must satisfy | Coordinate, freshness, priority, and action checks inside `EpistemicValidator::validate` | `ValidationResult` |
+| **`circle`** | Human-state telemetry | `services/biometric-pipeline/biometric_generator.py` (`BiometricPipeline`). Samples are `SIMULATED` unless the process is started in `LIVE` mode | `OperatorStateTelemetry` |
+| **`embedded-ai-validation-platform`** | Fault and sensor checks before commit | No hardware adapter is included. Proposals are accepted or rejected by `EpistemicValidator` and published on `crates/event-bus` | `CanonicalEventEnvelope` |
+| **`lop-nur-twin`** | 3D spatial scene | `apps/c2-dashboard/src/components/SpatialCanvas.tsx`, a local procedural mesh | `SpatialCanvas` props |
+| **`orpheus-resonance-protocol`** | Status display for human state and validation | `OperatorPanel.tsx` and `ValidationInspector.tsx`. These panels are written in this repository | `OperatorStateTelemetry`, `AdaptiveState`, `JudgmentEnvelope` |
+| **`cognisync-terrain-weaver`** | Spatial index | `crates/spatial-state` (`SpatialIndex`) | `SpatialEntity` |
+| **TypeSafe Jev** | Optional remote typed judgment | `crates/typed-judgment` (`TypeSafeJudgmentProvider`), off by default | `JudgmentEnvelope`, [`typed-judgment.md`](typed-judgment.md) |

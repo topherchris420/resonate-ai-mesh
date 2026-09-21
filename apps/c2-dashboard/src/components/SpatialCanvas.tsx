@@ -5,6 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Text } from "@react-three/drei";
 import * as THREE from "three";
 import { AgentState } from "@pordenone/shared-types";
+import { agentsAtVisualScale } from "@/session-model";
 
 interface SpatialCanvasProps {
   agents: AgentState[];
@@ -90,12 +91,10 @@ export default function SpatialCanvas({
   onSelectAgent,
   visualDensityScale,
 }: SpatialCanvasProps) {
-  const visibleAgents = React.useMemo(() => {
-    if (visualDensityScale <= 0.3) {
-      return agents.slice(0, Math.max(1, Math.floor(agents.length * 0.3)));
-    }
-    return agents;
-  }, [agents, visualDensityScale]);
+  const visibleAgents = React.useMemo(
+    () => agentsAtVisualScale(agents, visualDensityScale),
+    [agents, visualDensityScale]
+  );
 
   return (
     <div className="relative w-full h-full bg-[#090d13]">

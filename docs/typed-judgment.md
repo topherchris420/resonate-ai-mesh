@@ -30,7 +30,7 @@ SENSORS / AGENTS / SIMULATIONS
            ↓      ↓
          EVENT BUS
              ↓
-        C2 DASHBOARD
+        RESEARCH DASHBOARD
 ```
 
 In Vers3Dynamics language: observe, relate, judge, adapt, observe again.

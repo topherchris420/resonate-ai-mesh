@@ -35,7 +35,7 @@ export default function OperatorPanel({
     <div className="bg-panel border border-panelBorder p-3 rounded flex flex-col gap-3 text-xs">
       <div className="flex items-center justify-between border-b border-panelBorder pb-2">
         <span className="font-bold tracking-wider text-cyanGlow uppercase">
-          Operator Telemetry
+          Human-State Telemetry
         </span>
         <div className="flex items-center gap-2">
           <span

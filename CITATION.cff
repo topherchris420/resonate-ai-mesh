@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using this metadata."
+title: "Pordenone: a deterministic validation kernel, simulated telemetry, and a 3D research dashboard"
+type: software
+authors:
+  - name: Vers3Dynamics
+repository-code: "https://github.com/topherchris420/resonate-ai-mesh"
+license: MIT
+version: 0.1.0
+date-released: "2026-09-21"
+abstract: >-
+  Research software that validates agent proposals with a deterministic
+  epistemic kernel, publishes simulated telemetry, and renders the result on a
+  3D dashboard. Typed judgment is optional and off by default. The stack does
+  not actuate physical systems.

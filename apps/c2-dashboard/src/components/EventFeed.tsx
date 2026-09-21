@@ -2,6 +2,7 @@
 
 import React from "react";
 import { CanonicalEventEnvelope } from "@pordenone/shared-types";
+import { selectDisplayEvents } from "./event-feed-model";
 
 interface EventFeedProps {
   events: CanonicalEventEnvelope[];
@@ -9,21 +10,10 @@ interface EventFeedProps {
 }
 
 export default function EventFeed({ events, aggregateAlerts }: EventFeedProps) {
-  const displayEvents = React.useMemo(() => {
-    if (!aggregateAlerts) return events;
-    const filtered: CanonicalEventEnvelope[] = [];
-    let telemetryCount = 0;
-
-    for (const evt of events) {
-      if (evt.event_type === "telemetry") {
-        telemetryCount++;
-        if (telemetryCount <= 3) filtered.push(evt);
-      } else {
-        filtered.push(evt);
-      }
-    }
-    return filtered;
-  }, [events, aggregateAlerts]);
+  const displayEvents = React.useMemo(
+    () => selectDisplayEvents(events, aggregateAlerts),
+    [events, aggregateAlerts]
+  );
 
   return (
     <div className="bg-panel border border-panelBorder p-3 rounded flex flex-col gap-2 text-xs h-full overflow-hidden">

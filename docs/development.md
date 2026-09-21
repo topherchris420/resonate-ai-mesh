@@ -26,6 +26,9 @@ cargo test --workspace
 # Run Python tests
 PYTHONPATH=services/biometric-pipeline:services/sim-engine pytest services/ tests/
 
+# Run dashboard tests (session model, panels, and the judgment fixture)
+pnpm --filter c2-dashboard test
+
 # Run Frontend Dashboard
 pnpm --filter c2-dashboard dev
 ```

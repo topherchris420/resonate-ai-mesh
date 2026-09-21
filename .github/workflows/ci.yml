@@ -60,6 +60,8 @@ jobs:
         run: pnpm lint
       - name: Typecheck
         run: pnpm typecheck
+      - name: Test dashboard
+        run: pnpm --filter c2-dashboard test
       - name: Build Dashboard
         run: pnpm build
 

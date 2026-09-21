@@ -13,92 +13,27 @@ import {
   CanonicalEventEnvelope,
   ValidationResultPayload,
   JudgmentEnvelope,
-  disabledJudgmentEnvelope,
   isJudgmentEnvelope,
 } from "@pordenone/shared-types";
+import {
+  adaptiveStateFromTelemetry,
+  alertsAreAggregated,
+  buildProposalEnvelope,
+  isAgentState,
+  isOperatorStateTelemetry,
+  isValidationResultPayload,
+  localStandaloneDispatch,
+  parseIncomingEnvelope,
+  prependEvent,
+  resolveHumanReview,
+  upsertAgent,
+  visualDensityScale,
+} from "@/session-model";
 
 const SpatialCanvas = dynamic(() => import("@/components/SpatialCanvas"), {
   ssr: false,
   loading: () => <div className="w-full h-full bg-[#090d13] flex items-center justify-center text-xs text-[#8b949e]">Loading 3D Spatial Canvas...</div>,
 });
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function isVector3(value: unknown): value is { x: number; y: number; z: number } {
-  return (
-    isRecord(value) &&
-    typeof value.x === "number" &&
-    typeof value.y === "number" &&
-    typeof value.z === "number"
-  );
-}
-
-function isOperatorStateTelemetry(value: unknown): value is OperatorStateTelemetry {
-  return (
-    isRecord(value) &&
-    typeof value.heart_rate === "number" &&
-    typeof value.hrv === "number" &&
-    typeof value.arousal === "number" &&
-    typeof value.attention === "number" &&
-    typeof value.stress === "number" &&
-    typeof value.confidence === "number" &&
-    typeof value.cognitive_load === "number" &&
-    typeof value.sensor_provenance === "string" &&
-    typeof value.is_simulated === "boolean" &&
-    typeof value.timestamp === "number"
-  );
-}
-
-function isAgentState(value: unknown): value is AgentState {
-  return (
-    isRecord(value) &&
-    typeof value.agent_id === "string" &&
-    typeof value.state === "string" &&
-    Array.isArray(value.capabilities) &&
-    value.capabilities.every((item) => typeof item === "string") &&
-    Array.isArray(value.task_assignments) &&
-    value.task_assignments.every((item) => typeof item === "string") &&
-    typeof value.priority === "number" &&
-    isVector3(value.position) &&
-    isVector3(value.velocity) &&
-    typeof value.confidence === "number" &&
-    typeof value.timestamp === "number"
-  );
-}
-
-function parseIncomingEnvelope(raw: string): CanonicalEventEnvelope {
-  const parsed: CanonicalEventEnvelope = JSON.parse(raw);
-  if (!parsed.payload && typeof parsed.payload_json === "string") {
-    try {
-      const payload = JSON.parse(parsed.payload_json) as unknown;
-      if (typeof payload === "object" && payload !== null) {
-        parsed.payload = payload as Record<string, unknown>;
-      }
-    } catch {
-      parsed.payload = undefined;
-    }
-  }
-  return parsed;
-}
-
-function isValidationResultPayload(value: unknown): value is ValidationResultPayload {
-  return (
-    isRecord(value) &&
-    typeof value.proposal_id === "string" &&
-    typeof value.agent_id === "string" &&
-    typeof value.accepted === "boolean" &&
-    typeof value.feasibility === "number" &&
-    Array.isArray(value.contradictions) &&
-    value.contradictions.every((item) => typeof item === "string") &&
-    typeof value.confidence === "number" &&
-    Array.isArray(value.reasons) &&
-    value.reasons.every((item) => typeof item === "string") &&
-    typeof value.provenance === "string" &&
-    typeof value.timestamp === "number"
-  );
-}
 
 export default function C2DashboardPage() {
   const [wsConnected, setWsConnected] = useState(false);
@@ -156,23 +91,13 @@ export default function C2DashboardPage() {
       ws.onmessage = (event) => {
         try {
           const envelope = parseIncomingEnvelope(event.data);
-          setEvents((prev) => [envelope, ...prev.slice(0, 49)]);
+          setEvents((prev) => prependEvent(prev, envelope));
 
           const operatorTelemetry = envelope.payload?.operator_telemetry;
           if (envelope.event_type === "telemetry" && isOperatorStateTelemetry(operatorTelemetry)) {
             const t = operatorTelemetry;
             setTelemetry(t);
-
-            const cogLoad = t.cognitive_load;
-            const policyLevel = cogLoad > 0.85 ? "CRITICAL" : cogLoad > 0.65 ? "HIGH" : cogLoad > 0.4 ? "ELEVATED" : "NORMAL";
-            setAdaptiveState({
-              state: policyLevel,
-              stability: 1.0 - cogLoad * 0.5,
-              resonance: 1.0,
-              adaptation_rate: 0.05,
-              confidence: t.confidence,
-              timestamp: t.timestamp,
-            });
+            setAdaptiveState(adaptiveStateFromTelemetry(t));
           }
 
           const validationResult = envelope.payload?.validation_result ?? envelope.payload;
@@ -193,15 +118,7 @@ export default function C2DashboardPage() {
           const agentState = envelope.payload?.agent_state;
           if (envelope.event_type === "agent_state" && isAgentState(agentState)) {
             const newAgent = agentState;
-            setAgents((prev) => {
-              const idx = prev.findIndex((a) => a.agent_id === newAgent.agent_id);
-              if (idx >= 0) {
-                const copy = [...prev];
-                copy[idx] = newAgent;
-                return copy;
-              }
-              return [...prev, newAgent];
-            });
+            setAgents((prev) => upsertAgent(prev, newAgent));
           }
         } catch (e) {
           console.warn("Error parsing WebSocket message", e);
@@ -217,124 +134,69 @@ export default function C2DashboardPage() {
   }, []);
 
   const handleDispatchProposal = (actionType: string, targetX: number, targetY: number) => {
-    const proposalId = `prop_${Date.now()}`;
+    const timestamp = Date.now();
+    const proposalId = `prop_${timestamp}`;
     const agentId = selectedAgentId || "agent_alpha";
-    const correlationId = `corr_${Date.now()}`;
+    const correlationId = `corr_${timestamp}`;
 
-    const proposalEnvelope: CanonicalEventEnvelope = {
-      event_id: proposalId,
-      event_type: "proposal",
-      schema_version: "1.0.0",
-      timestamp: Date.now(),
-      source: "c2_dashboard",
-      subject_id: agentId,
-      correlation_id: correlationId,
-      causation_id: proposalId,
-      provenance: "C2Dashboard:UserAction",
-      payload: {
-        action_proposal: {
-          proposal_id: proposalId,
-          agent_id: agentId,
-          action_type: actionType,
-          parameters_json: "{}",
-          target_position: { x: targetX, y: targetY, z: 0 },
-          priority: 1,
-          timestamp: Date.now(),
-          correlation_id: correlationId,
-          source_observation: "user_ui_command",
-        },
-      },
-    };
+    const proposalEnvelope: CanonicalEventEnvelope = buildProposalEnvelope({
+      proposalId,
+      agentId,
+      actionType,
+      targetX,
+      targetY,
+      correlationId,
+      timestamp,
+    });
 
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(proposalEnvelope));
     } else {
-      const isOutOfBounds = Math.abs(targetX) > 10000 || Math.abs(targetY) > 10000;
-      const validationPayload: ValidationResultPayload = {
-        proposal_id: proposalId,
-        agent_id: agentId,
-        accepted: !isOutOfBounds,
-        feasibility: isOutOfBounds ? 0.0 : 1.0,
-        contradictions: isOutOfBounds ? [`Target coordinates (${targetX}, ${targetY}) exceed bounds`] : [],
-        confidence: 0.95,
-        reasons: isOutOfBounds ? ["Proposal failed epistemic validation."] : ["Passed feasibility and non-contradiction checks."],
-        provenance: "LocalFallbackValidator",
-        timestamp: Date.now(),
-      };
-
-      setLatestValidation(validationPayload);
+      const fallback = localStandaloneDispatch({
+        agents,
+        proposalId,
+        agentId,
+        targetX,
+        targetY,
+        correlationId,
+        timestamp,
+      });
+      setLatestValidation(fallback.validation);
       setHumanDecision(null);
-      setLatestJudgment(
-        isOutOfBounds
-          ? null
-          : disabledJudgmentEnvelope({
-              proposal_id: proposalId,
-              correlation_id: correlationId,
-              causation_id: proposalId,
-              timestamp: Date.now(),
-            })
-      );
-
-      if (!isOutOfBounds) {
-        setAgents((prev) =>
-          prev.map((a) =>
-            a.agent_id === agentId
-              ? { ...a, state: "EXECUTING", position: { x: targetX, y: targetY, z: 0 } }
-              : a
-          )
-        );
-      }
+      setLatestJudgment(fallback.judgment);
+      setAgents(fallback.agents);
     }
   };
 
   const handleResolveHumanReview = (proposalId: string, decision: "approve" | "reject") => {
-    if (!latestJudgment || latestJudgment.proposal_id !== proposalId || latestJudgment.disposition !== "HUMAN_REVIEW") {
+    const resolution = resolveHumanReview({
+      judgment: latestJudgment,
+      validation: latestValidation,
+      agents,
+      proposalId,
+      decision,
+      timestamp: Date.now(),
+    });
+    if (!resolution.applied || !resolution.event) {
       return;
     }
     setHumanDecision(decision);
-    const resolution: CanonicalEventEnvelope = {
-      event_id: `human_${Date.now()}`,
-      event_type: "human_resolution",
-      schema_version: "1.1.0",
-      timestamp: Date.now(),
-      source: "c2_dashboard",
-      subject_id: latestValidation?.agent_id ?? "operator_console",
-      correlation_id: latestJudgment.correlation_id,
-      causation_id: latestJudgment.judgment_id,
-      provenance: "HumanReview:operator_console",
-      payload: {
-        human_resolution: {
-          proposal_id: proposalId,
-          decision,
-          operator_ref: "operator_console",
-          judgment_id: latestJudgment.judgment_id,
-          committed: decision === "approve",
-        },
-      },
-    };
-    setEvents((prev) => [resolution, ...prev.slice(0, 49)]);
+    setEvents((prev) => prependEvent(prev, resolution.event as CanonicalEventEnvelope));
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(resolution));
+      wsRef.current.send(JSON.stringify(resolution.event));
     }
-    if (decision === "approve" && latestValidation?.accepted) {
-      const agentId = latestValidation.agent_id;
-      setAgents((prev) =>
-        prev.map((agent) =>
-          agent.agent_id === agentId ? { ...agent, state: "EXECUTING" } : agent
-        )
-      );
-    }
+    setAgents(resolution.agents);
   };
 
-  const visualScale = adaptiveState?.state === "CRITICAL" ? 0.2 : adaptiveState?.state === "HIGH" ? 0.5 : 1.0;
-  const aggregateAlerts = adaptiveState?.state === "HIGH" || adaptiveState?.state === "CRITICAL";
+  const visualScale = visualDensityScale(adaptiveState?.state);
+  const aggregateAlerts = alertsAreAggregated(adaptiveState?.state);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0d1117] text-[#c9d1d9]">
       <header className="h-12 border-b border-panelBorder bg-[#161b22] px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <span className="font-extrabold tracking-widest text-cyanGlow text-sm">PORDENONE NEXUS C2</span>
-          <span className="text-xs text-[#8b949e]">| Cognitive Cyber-Physical Command Platform</span>
+          <span className="font-extrabold tracking-widest text-cyanGlow text-sm">PORDENONE</span>
+          <span className="text-xs text-[#8b949e]">| Deterministic validation · simulated telemetry</span>
         </div>
 
         <div className="flex items-center gap-4 text-xs">
