@@ -5,12 +5,13 @@ build/
 .next/
 out/
 .turbo/
+*.tsbuildinfo
 
 # Node
 node_modules/
 .pnpm-store/
 
-# Python
+# Python & Protobuf Generated Bindings
 __pycache__/
 *.pyc
 *.pyo
@@ -18,6 +19,8 @@ __pycache__/
 .venv/
 env/
 venv/
+*_pb2.py
+*_pb2_grpc.py
 
 # Environment
 .env
