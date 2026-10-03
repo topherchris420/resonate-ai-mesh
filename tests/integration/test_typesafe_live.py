@@ -1,12 +1,21 @@
+"""Manual check of the live TypeSafe System One response shape.
+
+Skipped unless MESH_LIVE_TESTS=1 and TYPESAFE_API_KEY are both set, so the
+default test run and CI never make network calls. The mesh's own bounded
+remote-judgment path is exercised with `mesh run ... --allow-network`; see
+docs/jev.md.
+"""
+
 import json
 import os
 import urllib.request
 
 import pytest
 
+
 pytestmark = pytest.mark.skipif(
-    not os.environ.get("TYPESAFE_API_KEY"),
-    reason="TYPESAFE_API_KEY not set; live TypeSafe check is manual",
+    os.environ.get("MESH_LIVE_TESTS") != "1" or not os.environ.get("TYPESAFE_API_KEY"),
+    reason="live network test: set MESH_LIVE_TESTS=1 and TYPESAFE_API_KEY to run",
 )
 
 

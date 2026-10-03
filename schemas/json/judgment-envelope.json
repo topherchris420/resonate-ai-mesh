@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:resonate-ai-mesh:schema:judgment-envelope",
+  "title": "JudgmentEnvelope",
+  "description": "Payload of a judgment event. A judgment is advisory: the policy may withhold on it, but no disposition can turn a failed deterministic validation into a commit.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "judgment_id",
+    "provider",
+    "model",
+    "provider_model_version",
+    "question_set_version",
+    "state_hash",
+    "state_schema_version",
+    "truncated",
+    "proposal_id",
+    "correlation_id",
+    "causation_id",
+    "answers",
+    "disposition",
+    "reason_codes",
+    "policy_version",
+    "requested_at",
+    "completed_at",
+    "latency_ms",
+    "provider_status",
+    "evaluation_mode",
+    "simulation_label",
+    "provider_request_id",
+    "input_tokens",
+    "output_tokens"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "pordenone.judgment.envelope.v1"
+    },
+    "judgment_id": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "provider_model_version": {
+      "type": "string"
+    },
+    "question_set_version": {
+      "type": "string"
+    },
+    "state_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "state_schema_version": {
+      "type": "string"
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "proposal_id": {
+      "type": "string"
+    },
+    "correlation_id": {
+      "type": "string"
+    },
+    "causation_id": {
+      "type": "string"
+    },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "question_id",
+          "primitive",
+          "choice",
+          "score",
+          "noul",
+          "probabilities",
+          "confidence",
+          "legend"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "question_id": {
+            "type": "string"
+          },
+          "primitive": {
+            "enum": [
+              "choice",
+              "score",
+              "noul"
+            ]
+          },
+          "choice": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "score": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "noul": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          },
+          "probabilities": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "confidence": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Provider-reported; always null for noul answers."
+          },
+          "legend": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "primitive": {
+                  "const": "noul"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "confidence": {
+                  "const": null
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "disposition": {
+      "enum": [
+        "PENDING",
+        "PASS",
+        "REVISE",
+        "HUMAN_REVIEW",
+        "UNAVAILABLE",
+        "SKIPPED"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "requested_at": {
+      "type": "integer"
+    },
+    "completed_at": {
+      "type": "integer"
+    },
+    "latency_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "provider_status": {
+      "enum": [
+        "ok",
+        "disabled",
+        "timeout",
+        "unauthorized",
+        "forbidden",
+        "rate_limited",
+        "overloaded",
+        "server_error",
+        "malformed_response",
+        "network_error",
+        "unknown_model",
+        "invalid_request",
+        "missing_credentials",
+        "state_too_large",
+        "serialization_failure",
+        "unsupported_primitive",
+        "missing_fields"
+      ]
+    },
+    "evaluation_mode": {
+      "enum": [
+        "LIVE",
+        "RECORDED_JUDGMENT",
+        "LIVE_REEVALUATION",
+        "DISABLED"
+      ],
+      "description": "How the judgment was obtained: evaluated now (LIVE), read from a recording (RECORDED_JUDGMENT), or re-evaluated against a recording. Independent of the data mode of the run."
+    },
+    "simulation_label": {
+      "type": "string"
+    },
+    "provider_request_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "input_tokens": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "output_tokens": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    }
+  }
+}

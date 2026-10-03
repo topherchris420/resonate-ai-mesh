@@ -110,6 +110,93 @@ mod tests {
         assert_eq!(hash.len(), 7 + 64);
     }
 
+    /// Representative doubles for the cross-language float-formatting
+    /// contract: boundaries of ryu's layout rules plus pseudo-random values
+    /// across the exponent range and short decimals like recorded metrics.
+    fn float_cases() -> Vec<f64> {
+        let mut cases = vec![
+            0.0,
+            -0.0,
+            1.0,
+            -1.0,
+            0.1,
+            0.5,
+            1.5,
+            100.0,
+            1e15,
+            1e16,
+            1e17,
+            9007199254740993.0,
+            123456789012345680.0,
+            1e-4,
+            1e-5,
+            1e-6,
+            1e-7,
+            0.000123,
+            1.25e-7,
+            5e-324,
+            f64::MIN_POSITIVE,
+            f64::MAX,
+            f64::EPSILON,
+            1700000000000.0,
+            0.30000000000000004,
+            2.0f64.powi(60),
+        ];
+        for exponent in -20..=20 {
+            cases.push(10f64.powi(exponent));
+            cases.push(-3.75 * 10f64.powi(exponent));
+        }
+        let mut state: u64 = 0x05ee_d0ff_10a7;
+        let mut next = || {
+            state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+            let mut z = state;
+            z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+            z ^ (z >> 31)
+        };
+        for _ in 0..200 {
+            let value = f64::from_bits(next());
+            if value.is_finite() {
+                cases.push(value);
+            }
+        }
+        for _ in 0..200 {
+            let mantissa = (next() % 2_000_000) as f64 - 1_000_000.0;
+            cases.push(quantize(mantissa / 10f64.powi((next() % 9) as i32), 6));
+        }
+        cases
+    }
+
+    /// `fixtures/canonical/floats.json` pins serde_json's float rendering so
+    /// the independent Python verifier can reproduce canonical JSON exactly.
+    /// Regenerate with `UPDATE_FIXTURES=1 cargo test -p event-bus`.
+    #[test]
+    fn float_rendering_matches_the_cross_language_fixture() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../fixtures/canonical/floats.json");
+        let rendered: Vec<Value> = float_cases()
+            .into_iter()
+            .map(|value| {
+                json!({
+                    "bits": format!("{:016x}", value.to_bits()),
+                    "json": canonical_json(&json!(value)),
+                })
+            })
+            .collect();
+        let text = serde_json::to_string_pretty(&rendered).expect("serializes") + "\n";
+        if std::env::var_os("UPDATE_FIXTURES").is_some() {
+            std::fs::create_dir_all(path.parent().expect("has parent")).expect("mkdir");
+            std::fs::write(&path, &text).expect("write fixture");
+        }
+        let committed = std::fs::read_to_string(&path).expect("fixture exists");
+        assert_eq!(
+            committed,
+            text,
+            "float rendering changed; see {}",
+            path.display()
+        );
+    }
+
     #[test]
     fn quantize_rounds_and_normalizes_negative_zero() {
         assert_eq!(quantize(1.234_567_89, 4), 1.2346);

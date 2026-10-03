@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:resonate-ai-mesh:schema:canonical-event",
-  "title": "CanonicalEventEnvelope",
-  "description": "Event envelope v1.2.0 as recorded in a run bundle's events.jsonl. Recorded lines add prev_hash and hash (the event hash chain). Ingest also accepts v1.0 envelopes whose payload is a JSON string in payload_json; those are converted on receipt and never recorded in that form.",
+  "$id": "urn:resonate-ai-mesh:schema:ingest-event",
+  "title": "IngestEvent",
+  "description": "What `mesh serve` admits on /ingest. Missing optional fields take defaults (mode defaults to SIMULATED). The server assigns run_id, seq, and tick when it records the event, and rejects messages over 64 KiB or above the per-connection rate limit.",
   "type": "object",
   "required": [
     "event_id",
@@ -12,27 +12,21 @@
     "source",
     "subject_id",
     "correlation_id",
-    "causation_id",
-    "provenance",
-    "run_id",
-    "experiment_id",
-    "seq",
-    "tick",
-    "mode",
-    "policy_version",
-    "software_version",
-    "ai_involved",
-    "payload"
+    "causation_id"
   ],
   "additionalProperties": false,
   "properties": {
     "event_id": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "maxLength": 128
     },
     "event_type": {
-      "type": "string",
-      "minLength": 1
+      "enum": [
+        "human_state",
+        "observation"
+      ],
+      "description": "The only event types accepted from outside the kernel. Proposals, validations, judgments, and commitments cannot be injected."
     },
     "schema_version": {
       "type": "string",
@@ -44,10 +38,14 @@
     },
     "source": {
       "type": "string",
-      "description": "Producing component, e.g. pordenone.kernel or mesh.lab."
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "For LIVE data this must be a source registered in MESH_LIVE_SOURCES."
     },
     "subject_id": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
     },
     "correlation_id": {
       "type": "string",
@@ -97,15 +95,52 @@
       "description": "True when a probabilistic or remote model produced or influenced the event."
     },
     "payload": {
-      "description": "Event-type specific body."
+      "type": "object",
+      "description": "For human_state: {\"datum\": HumanStateDatum}, with datum.mode equal to the envelope mode."
     },
-    "prev_hash": {
+    "payload_json": {
       "type": "string",
-      "pattern": "^sha256:[0-9a-f]{64}$"
-    },
-    "hash": {
-      "type": "string",
-      "pattern": "^sha256:[0-9a-f]{64}$"
+      "description": "Legacy v1.0 form: the payload as a JSON string."
     }
-  }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "payload"
+      ]
+    },
+    {
+      "required": [
+        "payload_json"
+      ]
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "human_state"
+          }
+        },
+        "required": [
+          "payload"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "datum"
+            ],
+            "properties": {
+              "datum": {
+                "$ref": "urn:resonate-ai-mesh:schema:human-state-datum"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

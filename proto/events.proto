@@ -2,10 +2,24 @@ syntax = "proto3";
 
 package pordenone.events;
 
+import "google/protobuf/struct.proto";
 import "proto/telemetry.proto";
 import "proto/agent.proto";
 import "proto/spatial.proto";
 import "proto/judgment.proto";
+
+// Recorded runs and the /ingest endpoint exchange the JSON form of these
+// messages (schemas/json/). tests/contract/test_proto_contract.py parses
+// recorded golden events with the generated types to keep the two in step.
+
+// One deterministic check in a validation event.
+message CheckOutcome {
+  string check = 1;                // e.g. hazard_clearance
+  string status = 2;               // PASS, FAIL, SKIPPED, DISABLED
+  string detail = 3;               // empty for a pass
+  optional double measured = 4;
+  optional double limit = 5;
+}
 
 message ValidationResultPayload {
   string proposal_id = 1;
@@ -13,31 +27,50 @@ message ValidationResultPayload {
   bool accepted = 3;
   double feasibility = 4;
   repeated string contradictions = 5;
-  double confidence = 6;
+  double confidence = 6;           // deterministic, not a model output
   repeated string reasons = 7;
   string provenance = 8;
   int64 timestamp = 9;
+  repeated CheckOutcome checks = 10;
+  string config_hash = 11;
+  int64 observation_age_ms = 12;
+  string validator_version = 13;
 }
 
 message CanonicalEventEnvelope {
   string event_id = 1;
-  string event_type = 2;            // telemetry, agent_state, proposal, validation, judgment, commitment, human_resolution, spatial, adaptive_state
-  string schema_version = 3;
-  int64 timestamp = 4;
+  string event_type = 2;           // docs/mesh-protocol.md lists the event types
+  string schema_version = 3;       // 1.2.0
+  int64 timestamp = 4;             // ms; logical time in experiments
   string source = 5;
   string subject_id = 6;
   string correlation_id = 7;
-  string causation_id = 8;
+  string causation_id = 8;         // the direct cause ("caused_by")
   string provenance = 9;
 
-  oneof payload {
-    pordenone.telemetry.OperatorStateTelemetry operator_telemetry = 10;
-    pordenone.telemetry.AdaptiveState adaptive_state = 11;
-    pordenone.agent.AgentState agent_state = 12;
-    pordenone.agent.ActionProposal action_proposal = 13;
-    pordenone.spatial.SpatialState spatial_state = 14;
-    ValidationResultPayload validation_result = 15;
-    string custom_json_payload = 16;
-    pordenone.judgment.JudgmentEnvelope judgment = 17;
+  // v1.0 typed payloads, kept for wire compatibility. v1.2 producers send the
+  // JSON `payload` (field 26) instead.
+  oneof typed_payload {
+    pordenone.telemetry.OperatorStateTelemetry operator_telemetry = 10 [deprecated = true];
+    pordenone.telemetry.AdaptiveState adaptive_state = 11 [deprecated = true];
+    pordenone.agent.AgentState agent_state = 12 [deprecated = true];
+    pordenone.agent.ActionProposal action_proposal = 13 [deprecated = true];
+    pordenone.spatial.SpatialState spatial_state = 14 [deprecated = true];
+    ValidationResultPayload validation_result = 15 [deprecated = true];
+    string custom_json_payload = 16 [deprecated = true];
+    pordenone.judgment.JudgmentEnvelope judgment = 17 [deprecated = true];
   }
+
+  // v1.2 provenance fields.
+  string run_id = 18;
+  string experiment_id = 19;
+  uint64 seq = 20;                 // position in the run's event log
+  optional uint64 tick = 21;
+  pordenone.telemetry.DataMode mode = 22;
+  string policy_version = 23;
+  string software_version = 24;
+  bool ai_involved = 25;           // a probabilistic or remote model was involved
+  google.protobuf.Value payload = 26;
+  string prev_hash = 27;           // hash chain; set on recorded events
+  string hash = 28;
 }
