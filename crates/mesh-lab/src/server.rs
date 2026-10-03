@@ -433,6 +433,43 @@ async fn api_experiments(
     Json(list).into_response()
 }
 
+/// Overrides from a network client may tune a scenario but may not choose a
+/// program to execute (an external agent's `command`) or a file to read (a
+/// recorded judge's `recorded_from`). Checked on the resolved scenario, so no
+/// spelling of the override path gets around it.
+fn guard_overrides(base: &config::Scenario, set: &BTreeMap<String, Value>) -> Result<(), String> {
+    let mut fields = set.clone();
+    fields.remove(config::REMOVE_AGENTS_KEY);
+    let candidate: config::Scenario =
+        config::apply_overrides(base, &fields).map_err(|e| e.to_string())?;
+    for agent in &candidate.agents {
+        let launches = agent.behavior == config::Behavior::External || !agent.command.is_empty();
+        let unchanged = base.agents.iter().any(|original| {
+            original.id == agent.id
+                && original.behavior == agent.behavior
+                && original.command == agent.command
+        });
+        if launches && !unchanged {
+            return Err(format!(
+                "the API cannot change which program agent `{}` runs; edit the scenario file instead",
+                agent.id
+            ));
+        }
+    }
+    if candidate.kernel.judgment.recorded_from != base.kernel.judgment.recorded_from {
+        return Err("the API cannot point a recorded judge at a file".into());
+    }
+    Ok(())
+}
+
+fn guard_scenario_file(
+    path: &std::path::Path,
+    set: &BTreeMap<String, Value>,
+) -> Result<(), String> {
+    let base = config::load_scenario(path).map_err(|e| e.to_string())?;
+    guard_overrides(&base, set)
+}
+
 fn scenario_path(state: &AppState, id: &str) -> Option<PathBuf> {
     if !config::valid_id(id) {
         return None;
@@ -685,6 +722,9 @@ async fn api_create_run(
     let Some(path) = scenario_path(&state, &request.scenario) else {
         return error(StatusCode::NOT_FOUND, "unknown scenario");
     };
+    if let Err(e) = guard_scenario_file(&path, &request.set) {
+        return error(StatusCode::FORBIDDEN, e);
+    }
     let target = match crate::cli::load_target(&path) {
         Ok(t) => t,
         Err(e) => return error(StatusCode::BAD_REQUEST, e),
@@ -775,6 +815,9 @@ async fn api_counterfactual(
         Ok(b) => b,
         Err(e) => return error(StatusCode::BAD_REQUEST, e.to_string()),
     };
+    if let Err(e) = guard_overrides(&bundle.config.scenario, &request.set) {
+        return error(StatusCode::FORBIDDEN, e);
+    }
     let branch = match crate::counterfactual::run_branch(
         &bundle,
         request.set.clone(),
@@ -940,6 +983,9 @@ async fn api_live_start(
     let Some(path) = scenario_path(&state, &request.scenario) else {
         return error(StatusCode::NOT_FOUND, "unknown scenario");
     };
+    if let Err(e) = guard_scenario_file(&path, &request.set) {
+        return error(StatusCode::FORBIDDEN, e);
+    }
     let mut set = request.set.clone();
     // A person at the console decides reviews unless the request says otherwise.
     set.entry("human_review.mode".to_string())
@@ -1203,6 +1249,83 @@ async fn ingest(mut socket: WebSocket, state: Shared) {
         };
         if socket.send(Message::Text(reply.to_string())).await.is_err() {
             break;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::guard_overrides;
+    use serde_json::json;
+    use std::collections::BTreeMap;
+
+    fn scenario(name: &str) -> crate::config::Scenario {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../scenarios");
+        crate::config::load_scenario(&root.join(format!("{name}.yaml"))).expect("scenario loads")
+    }
+
+    fn set(pairs: &[(&str, serde_json::Value)]) -> BTreeMap<String, serde_json::Value> {
+        pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.clone()))
+            .collect()
+    }
+
+    #[test]
+    fn ordinary_tuning_is_allowed() {
+        let base = scenario("perturbed-mesh");
+        assert!(guard_overrides(
+            &base,
+            &set(&[("kernel.judgment.provider", json!("disabled"))])
+        )
+        .is_ok());
+        assert!(guard_overrides(
+            &base,
+            &set(&[
+                ("ticks", json!(20)),
+                ("kernel.validator.min_separation", json!(4))
+            ])
+        )
+        .is_ok());
+        assert!(guard_overrides(&base, &set(&[("agents.scout_01.speed", json!(2.0))])).is_ok());
+    }
+
+    #[test]
+    fn no_override_can_choose_a_program_to_run() {
+        let base = scenario("perturbed-mesh");
+        let attempts = [
+            set(&[
+                ("agents.scout_01.behavior", json!("external")),
+                ("agents.scout_01.command", json!(["sh", "-c", "id"])),
+            ]),
+            set(&[("agents.0.command", json!(["sh", "-c", "id"]))]),
+            set(&[(
+                "agents",
+                json!([{"id": "x", "behavior": "external", "start": [0.0, 0.0], "command": ["sh"]}]),
+            )]),
+        ];
+        for attempt in attempts {
+            assert!(guard_overrides(&base, &attempt).is_err(), "{attempt:?}");
+        }
+        // An external agent defined in the scenario file itself still runs as written.
+        let external = scenario("external-agent");
+        assert!(guard_overrides(&external, &set(&[("ticks", json!(5))])).is_ok());
+        let swapped = set(&[("agents.rain_01.command", json!(["sh", "-c", "id"]))]);
+        assert!(guard_overrides(&external, &swapped).is_err());
+    }
+
+    #[test]
+    fn no_override_can_choose_a_file_to_read() {
+        let base = scenario("perturbed-mesh");
+        let attempts = [
+            set(&[("kernel.judgment.recorded_from", json!("/etc"))]),
+            set(&[(
+                "kernel.judgment",
+                json!({"provider": "recorded", "recorded_from": "/etc"}),
+            )]),
+        ];
+        for attempt in attempts {
+            assert!(guard_overrides(&base, &attempt).is_err(), "{attempt:?}");
         }
     }
 }
