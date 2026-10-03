@@ -4,7 +4,8 @@
 //! * binds to 127.0.0.1; a non-loopback bind without `MESH_API_TOKEN` is refused;
 //! * with a token, every `/api`, `/ws`, and `/ingest` request must present it
 //!   (`Authorization: Bearer <token>`, or `?token=` for browser WebSockets);
-//! * CORS allows only the configured origins;
+//! * CORS allows only the configured origins, and WebSocket upgrades (which
+//!   CORS does not cover) are refused from any other browser origin;
 //! * request bodies are limited to 256 KiB and ingest messages to 64 KiB;
 //! * run ids are validated before any path is built and only bundle files on an
 //!   allow-list are served;
@@ -91,6 +92,8 @@ struct LiveSession {
 }
 
 struct AppState {
+    /// Browser origins allowed to call the API and open WebSockets.
+    origins: Vec<String>,
     root: PathBuf,
     artifacts: PathBuf,
     token: Option<String>,
@@ -135,6 +138,17 @@ fn authorized(state: &AppState, headers: &HeaderMap, query: &BTreeMap<String, St
     }
 }
 
+/// CORS does not apply to WebSocket upgrades, so a page on any site could
+/// otherwise open them against a loopback server. Browsers always send
+/// `Origin` on a WebSocket handshake; non-browser clients usually do not.
+fn origin_allowed(origins: &[String], headers: &HeaderMap) -> bool {
+    match headers.get(header::ORIGIN).map(|v| v.to_str()) {
+        None => true,
+        Some(Ok(origin)) => origins.iter().any(|allowed| allowed == origin),
+        Some(Err(_)) => false,
+    }
+}
+
 macro_rules! guard {
     ($state:expr, $headers:expr, $query:expr) => {
         if !authorized(&$state, &$headers, &$query) {
@@ -154,6 +168,7 @@ pub async fn serve(cli: &Cli, args: &ServeArgs) -> Result<i32, String> {
         ));
     }
     let state: Shared = Arc::new(AppState {
+        origins: args.allow_origin.clone(),
         root: cli.root.clone(),
         artifacts: cli.artifacts.clone(),
         token,
@@ -238,7 +253,9 @@ async fn health(State(state): State<Shared>) -> Response {
         })),
         "components": {
             "kernel": "in-process",
-            "judgment": if std::env::var(typed_judgment::API_KEY_ENV).is_ok() { "remote available (opt-in per run)" } else { "local only" },
+            // Unauthenticated, so it does not reveal whether credentials are
+            // configured; /api/capabilities (token-protected) does.
+            "judgment": "configured per run",
             "event_bus": { "subscribers": state.bus.subscriber_count(), "queue_depth": state.bus.queue_depth() },
         },
     }))
@@ -1150,6 +1167,9 @@ async fn ws_events(
     upgrade: WebSocketUpgrade,
 ) -> Response {
     guard!(state, headers, q);
+    if !origin_allowed(&state.origins, &headers) {
+        return error(StatusCode::FORBIDDEN, "origin not allowed");
+    }
     upgrade
         .max_message_size(4 * 1024)
         .on_upgrade(move |socket| stream_events(socket, state))
@@ -1192,6 +1212,9 @@ async fn ws_ingest(
     upgrade: WebSocketUpgrade,
 ) -> Response {
     guard!(state, headers, q);
+    if !origin_allowed(&state.origins, &headers) {
+        return error(StatusCode::FORBIDDEN, "origin not allowed");
+    }
     let limit = state.ingest_policy.max_message_bytes;
     upgrade
         .max_message_size(limit)
@@ -1255,7 +1278,26 @@ async fn ingest(mut socket: WebSocket, state: Shared) {
 
 #[cfg(test)]
 mod tests {
-    use super::guard_overrides;
+    use super::{guard_overrides, origin_allowed};
+    use axum::http::{header, HeaderMap, HeaderValue};
+
+    #[test]
+    fn websocket_upgrades_from_other_sites_are_refused() {
+        let origins = vec!["http://localhost:3000".to_string()];
+        let with = |origin: &str| {
+            let mut headers = HeaderMap::new();
+            headers.insert(header::ORIGIN, HeaderValue::from_str(origin).unwrap());
+            headers
+        };
+        assert!(origin_allowed(&origins, &with("http://localhost:3000")));
+        assert!(!origin_allowed(&origins, &with("https://evil.example")));
+        assert!(!origin_allowed(
+            &origins,
+            &with("http://localhost:3000.evil.example")
+        ));
+        // Non-browser clients (the Python pipeline, curl) send no Origin.
+        assert!(origin_allowed(&origins, &HeaderMap::new()));
+    }
     use serde_json::json;
     use std::collections::BTreeMap;
 
