@@ -1,0 +1,72 @@
+{
+  "bundle_format": "resonate-ai-mesh.run-bundle.v1",
+  "software_version": "resonate-ai-mesh/0.2.0",
+  "git_commit": "0ccdcd1e961550f1ba1b2a76557d46750c102f31",
+  "git_dirty": true,
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "os": "linux",
+  "arch": "x86_64",
+  "command": [
+    "mesh",
+    "export-web"
+  ],
+  "started_at_wall": "2026-10-03T18:41:35.671217378+00:00",
+  "finished_at_wall": "2026-10-03T18:41:35.739052798+00:00",
+  "run_config_hash": "sha256:cecfe9d60546655843fcb8718b109761c89135699acba5fb3ab55bfe7ab0d072",
+  "validator_version": "pordenone.validator.v2",
+  "validator_config_hash": "sha256:5a88c22808add5b9b336fa555d28c4aea2c3091abfca88e4b5732181eb4b05d3",
+  "kernel_policy_version": "pordenone.kernel.policy.v2",
+  "judgment_policy_version": "pordenone.judgment.policy.v1",
+  "question_set_version": "pordenone.judgment.questions.v1",
+  "judgment_state_schema": "pordenone.judgment.state.v2",
+  "event_schema_version": "1.2.0",
+  "judge": {
+    "name": "deterministic_mock",
+    "model": "evidence-heuristic-v1",
+    "kind": "deterministic",
+    "networked": false
+  },
+  "agents": [
+    {
+      "agent_id": "medic_05",
+      "adapter": "builtin:scripted",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "patrol_04",
+      "adapter": "builtin:patrol",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "runner_02",
+      "adapter": "builtin:greedy",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "scout_01",
+      "adapter": "builtin:cautious",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "tuner_03",
+      "adapter": "builtin:oscillating",
+      "deterministic": true,
+      "networked": false
+    }
+  ],
+  "parent": null,
+  "file_hashes": {
+    "decisions.jsonl": "sha256:db3beb1cb9833d0647aca07b211a093f909df40890204135f246b9edc5a4bf84",
+    "environment.json": "sha256:09ca1d01abb674318ba5641a3fe82fc83ab7be33a8c217bf6c5ce033b4f0b2e9",
+    "events.jsonl": "sha256:c960899e368bed984879f44d33256ed30c7573ec58086adb40fcbc6944460a6b",
+    "intents.jsonl": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest.json": "sha256:2c92a00aab0e082663b8b8c10a949b8429232f6e5ed0dd30245ac71227e03906",
+    "metrics.json": "sha256:6a7021d16b7f42d872769679a041683fe5038e9cf2f0a5112dc9ed8461a16e2e",
+    "replay.json": "sha256:aa27f31adc7321b2c8c7f2415851ad221cdc991fdefefdba651b6c401f2a4629",
+    "topology.json": "sha256:54f7ded1326ac711dd591700c71d4825d16bb36da34c0203e5ace5f55319c364"
+  }
+}

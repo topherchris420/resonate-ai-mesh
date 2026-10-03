@@ -1,0 +1,853 @@
+{
+  "capabilities": "capabilities.json",
+  "claims": "claims.json",
+  "experiments": [
+    {
+      "id": "baseline",
+      "raw": "experiments/baseline/runs.csv",
+      "report": "experiments/baseline/report.md",
+      "summary": "experiments/baseline/summary.json",
+      "title": "Baseline reference values"
+    },
+    {
+      "id": "fault-injection",
+      "raw": "experiments/fault-injection/runs.csv",
+      "report": "experiments/fault-injection/report.md",
+      "summary": "experiments/fault-injection/summary.json",
+      "title": "Authority boundaries under injected faults"
+    },
+    {
+      "id": "human-state-adaptation",
+      "raw": "experiments/human-state-adaptation/runs.csv",
+      "report": "experiments/human-state-adaptation/report.md",
+      "summary": "experiments/human-state-adaptation/summary.json",
+      "title": "Operator-load gating"
+    },
+    {
+      "id": "judgment-ablation",
+      "raw": "experiments/judgment-ablation/runs.csv",
+      "report": "experiments/judgment-ablation/report.md",
+      "summary": "experiments/judgment-ablation/summary.json",
+      "title": "Judgment ablation on the perturbed mesh"
+    },
+    {
+      "id": "multi-agent-coordination",
+      "raw": "experiments/multi-agent-coordination/runs.csv",
+      "report": "experiments/multi-agent-coordination/report.md",
+      "summary": "experiments/multi-agent-coordination/summary.json",
+      "title": "Separation as the only coordination mechanism"
+    },
+    {
+      "id": "resonance-routing",
+      "raw": "experiments/resonance-routing/runs.csv",
+      "report": "experiments/resonance-routing/report.md",
+      "summary": "experiments/resonance-routing/summary.json",
+      "title": "Routing judgment by measured agent instability"
+    },
+    {
+      "id": "validator-stress",
+      "raw": "experiments/validator-stress/runs.csv",
+      "report": "experiments/validator-stress/report.md",
+      "summary": "experiments/validator-stress/summary.json",
+      "title": "Validator ablation under adversarial proposals"
+    }
+  ],
+  "format": "resonate-ai-mesh.web-export.v1",
+  "manifests": [
+    {
+      "conditions": [
+        {
+          "description": "Scenario as written.",
+          "id": "reference",
+          "requires": [],
+          "set": {}
+        }
+      ],
+      "hypothesis": "Without faults or perturbations, deterministic validation rejects only occasional separation conflicts, no unsafe proposal is committed, and every agent with a goal reaches it.",
+      "id": "baseline",
+      "path": "experiments/baseline/manifest.yaml",
+      "prediction": null,
+      "question": "Under normal operation (static hazards, no faults, no operator-load perturbation), what values do the run metrics and resonance dimensions take, and how much do they vary with the seed alone?",
+      "repetitions": 30,
+      "title": "Baseline reference values"
+    },
+    {
+      "conditions": [
+        {
+          "description": "Perturbed mesh with its faults removed.",
+          "id": "no_faults",
+          "requires": [],
+          "set": {}
+        },
+        {
+          "description": "",
+          "id": "sensor_dropout",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 20,
+                "duration_ticks": 8,
+                "kind": "sensor_dropout",
+                "target": "all"
+              }
+            ]
+          }
+        },
+        {
+          "description": "",
+          "id": "stale_telemetry",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 20,
+                "duration_ticks": 8,
+                "kind": "stale_telemetry",
+                "target": "all"
+              }
+            ]
+          }
+        },
+        {
+          "description": "",
+          "id": "corrupt_observation",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 20,
+                "duration_ticks": 4,
+                "kind": "corrupt_observation",
+                "magnitude": 25,
+                "target": "all"
+              }
+            ]
+          }
+        },
+        {
+          "description": "",
+          "id": "duplicate_proposal",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 20,
+                "duration_ticks": 8,
+                "kind": "duplicate_proposal",
+                "target": "all"
+              }
+            ]
+          }
+        },
+        {
+          "description": "",
+          "id": "clock_skew",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 20,
+                "duration_ticks": 8,
+                "kind": "clock_skew",
+                "magnitude": 3000,
+                "target": "all"
+              }
+            ]
+          }
+        },
+        {
+          "description": "",
+          "id": "freeze_agent",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 20,
+                "duration_ticks": 12,
+                "kind": "freeze_agent",
+                "target": "runner_02"
+              }
+            ]
+          }
+        },
+        {
+          "description": "",
+          "id": "judge_timeout",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 20,
+                "duration_ticks": 8,
+                "kind": "judge_timeout"
+              }
+            ]
+          }
+        },
+        {
+          "description": "",
+          "id": "network_unavailable",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 20,
+                "duration_ticks": 8,
+                "kind": "network_unavailable"
+              }
+            ]
+          }
+        },
+        {
+          "description": "The operator-load signal is lost just before the load spike; the level fails closed to HIGH (default).",
+          "id": "human_state_dropout",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 38,
+                "duration_ticks": 16,
+                "kind": "human_state_dropout"
+              }
+            ]
+          }
+        },
+        {
+          "description": "Same fault with the earlier behavior, keeping the last level. This silently disables gating.",
+          "id": "human_state_dropout_hold_last",
+          "requires": [],
+          "set": {
+            "faults": [
+              {
+                "at_tick": 38,
+                "duration_ticks": 16,
+                "kind": "human_state_dropout"
+              }
+            ],
+            "kernel.policy.adaptive.on_signal_loss": "hold_last"
+          }
+        }
+      ],
+      "hypothesis": "No fault produces an unsafe commit or a commit without a passing validation. Faults reduce throughput while active and the run recovers after they clear.",
+      "id": "fault-injection",
+      "path": "experiments/fault-injection/manifest.yaml",
+      "prediction": {
+        "baseline": "no_faults",
+        "direction": "no_change",
+        "metric": "unsafe_commits",
+        "treatment": "corrupt_observation"
+      },
+      "question": "Under each injected fault, does the kernel keep every authority invariant, and how much throughput and task progress does the fault cost compared with the same seed and no fault?",
+      "repetitions": 40,
+      "title": "Authority boundaries under injected faults"
+    },
+    {
+      "conditions": [
+        {
+          "description": "",
+          "id": "gating_off",
+          "requires": [],
+          "set": {
+            "kernel.policy.adaptive.enabled": false
+          }
+        },
+        {
+          "description": "",
+          "id": "gating_on",
+          "requires": [],
+          "set": {
+            "kernel.policy.adaptive.enabled": true
+          }
+        }
+      ],
+      "hypothesis": "With gating enabled, fewer proposals are committed while load is high, and the load index itself is coupled to the rate of uncommitted proposals.",
+      "id": "human-state-adaptation",
+      "path": "experiments/human-state-adaptation/manifest.yaml",
+      "prediction": {
+        "baseline": "gating_off",
+        "direction": "decrease",
+        "metric": "committed",
+        "treatment": "gating_on"
+      },
+      "question": "When the simulated operator-load index reaches HIGH or CRITICAL, does deferring background proposals reduce the commits the operator must absorb, and what does it cost in background progress?",
+      "repetitions": 50,
+      "title": "Operator-load gating"
+    },
+    {
+      "conditions": [
+        {
+          "description": "Validation and policy only; judgment is not consulted.",
+          "id": "deterministic_only",
+          "requires": [],
+          "set": {
+            "kernel.judgment.provider": "disabled"
+          }
+        },
+        {
+          "description": "Deterministic evidence-heuristic judge (offline stand-in, not a model).",
+          "id": "mock_judgment",
+          "requires": [],
+          "set": {
+            "kernel.judgment.profile": "evidence_heuristic",
+            "kernel.judgment.provider": "mock"
+          }
+        },
+        {
+          "description": "Judgments recorded in mock_judgment, replayed for the same seed.",
+          "id": "replayed_judgment",
+          "requires": [],
+          "set": {
+            "kernel.judgment.provider": "recorded",
+            "kernel.judgment.recorded_from_condition": "mock_judgment"
+          }
+        },
+        {
+          "description": "A judge that disagrees with a fixed third of valid proposals.",
+          "id": "contrarian_judgment",
+          "requires": [],
+          "set": {
+            "kernel.judgment.profile": "contrarian",
+            "kernel.judgment.provider": "mock"
+          }
+        },
+        {
+          "description": "TypeSafe Jev over the network. Runs only with credentials and --allow-network.",
+          "id": "jev",
+          "requires": [
+            "typesafe"
+          ],
+          "set": {
+            "kernel.judgment.provider": "typesafe"
+          }
+        }
+      ],
+      "hypothesis": "With the evidence-heuristic judge, proposals made on degraded evidence (observations older than half the staleness limit) are withheld instead of committed. Replaying the recorded judgments reproduces the judged condition exactly. No judge can cause an unsafe commit, because judgment is only consulted after validation passes.",
+      "id": "judgment-ablation",
+      "path": "experiments/judgment-ablation/manifest.yaml",
+      "prediction": {
+        "baseline": "deterministic_only",
+        "direction": "decrease",
+        "metric": "degraded_evidence_commits",
+        "treatment": "mock_judgment"
+      },
+      "question": "Does a bounded judgment stage after deterministic validation change which proposals are committed, and at what cost in throughput and task progress?",
+      "repetitions": 100,
+      "title": "Judgment ablation on the perturbed mesh"
+    },
+    {
+      "conditions": [
+        {
+          "description": "",
+          "id": "separation_2",
+          "requires": [],
+          "set": {
+            "kernel.validator.min_separation": 2
+          }
+        },
+        {
+          "description": "",
+          "id": "separation_3",
+          "requires": [],
+          "set": {
+            "kernel.validator.min_separation": 3
+          }
+        },
+        {
+          "description": "",
+          "id": "separation_4",
+          "requires": [],
+          "set": {
+            "kernel.validator.min_separation": 4
+          }
+        }
+      ],
+      "hypothesis": "A larger minimum separation keeps agents farther apart but rejects more proposals and lowers task success within the time limit.",
+      "id": "multi-agent-coordination",
+      "path": "experiments/multi-agent-coordination/manifest.yaml",
+      "prediction": {
+        "baseline": "separation_2",
+        "direction": "decrease",
+        "metric": "task_success",
+        "treatment": "separation_4"
+      },
+      "question": "In a crowded crossing, how does the minimum-separation rule trade conflicts for progress, and how do coherence and convergence respond?",
+      "repetitions": 40,
+      "title": "Separation as the only coordination mechanism"
+    },
+    {
+      "conditions": [
+        {
+          "description": "",
+          "id": "judge_always",
+          "requires": [],
+          "set": {
+            "kernel.policy.routing": {
+              "mode": "always"
+            }
+          }
+        },
+        {
+          "description": "",
+          "id": "judge_never",
+          "requires": [],
+          "set": {
+            "kernel.judgment.provider": "disabled"
+          }
+        },
+        {
+          "description": "",
+          "id": "judge_on_instability",
+          "requires": [],
+          "set": {
+            "kernel.policy.routing": {
+              "mode": "on_agent_instability",
+              "threshold": 0.15,
+              "window": 6
+            }
+          }
+        }
+      ],
+      "hypothesis": "Instability routing makes fewer judgment calls than consulting judgment on every valid proposal.",
+      "id": "resonance-routing",
+      "path": "experiments/resonance-routing/manifest.yaml",
+      "prediction": {
+        "baseline": "judge_always",
+        "direction": "decrease",
+        "metric": "judgment_calls",
+        "treatment": "judge_on_instability"
+      },
+      "question": "Can judgment be consulted only for agents whose recent proposals were often not committed, cutting judgment calls while keeping its effect on commits made from degraded evidence?",
+      "repetitions": 100,
+      "title": "Routing judgment by measured agent instability"
+    },
+    {
+      "conditions": [
+        {
+          "description": "Every check enabled.",
+          "id": "full_validation",
+          "requires": [],
+          "set": {}
+        },
+        {
+          "description": "hazard_clearance disabled.",
+          "id": "no_hazard_check",
+          "requires": [],
+          "set": {
+            "kernel.validator.disabled_checks": [
+              "hazard_clearance"
+            ]
+          }
+        },
+        {
+          "description": "max_step disabled.",
+          "id": "no_step_limit",
+          "requires": [],
+          "set": {
+            "kernel.validator.disabled_checks": [
+              "max_step"
+            ]
+          }
+        },
+        {
+          "description": "hazard_clearance, max_step, and separation disabled. Core checks cannot be disabled.",
+          "id": "no_domain_checks",
+          "requires": [],
+          "set": {
+            "kernel.validator.disabled_checks": [
+              "hazard_clearance",
+              "max_step",
+              "separation"
+            ]
+          }
+        }
+      ],
+      "hypothesis": "With every check enabled, no unsafe proposal is committed. Removing the hazard-clearance check lets unsafe proposals through, which shows the check (not some other part of the pipeline) is what blocks them.",
+      "id": "validator-stress",
+      "path": "experiments/validator-stress/manifest.yaml",
+      "prediction": {
+        "baseline": "full_validation",
+        "direction": "increase",
+        "metric": "unsafe_commits",
+        "treatment": "no_hazard_check"
+      },
+      "question": "How many proposals that an independent geometric oracle classifies as unsafe reach authoritative state when each domain check of the validator is removed?",
+      "repetitions": 50,
+      "title": "Validator ablation under adversarial proposals"
+    }
+  ],
+  "metric_definitions": [
+    {
+      "definition": "Proposals submitted to the kernel (duplicates included).",
+      "id": "proposals",
+      "unit": "count"
+    },
+    {
+      "definition": "Proposals that passed every deterministic check on first submission.",
+      "id": "accepted_proposals",
+      "unit": "count"
+    },
+    {
+      "definition": "Proposals rejected by deterministic validation.",
+      "id": "rejected_proposals",
+      "unit": "count"
+    },
+    {
+      "definition": "Proposals whose commit changed authoritative state (including after human approval).",
+      "id": "committed",
+      "unit": "count"
+    },
+    {
+      "definition": "Proposals that passed validation but were not committed (judgment, operator-load gating, or human rejection).",
+      "id": "withheld",
+      "unit": "count"
+    },
+    {
+      "definition": "Proposals routed to human review.",
+      "id": "human_reviews",
+      "unit": "count"
+    },
+    {
+      "definition": "Human reviews resolved by approval that then committed.",
+      "id": "human_approved",
+      "unit": "count"
+    },
+    {
+      "definition": "Proposals the independent oracle classifies unsafe (non-finite, out of bounds, or path through an active hazard).",
+      "id": "unsafe_proposals",
+      "unit": "count"
+    },
+    {
+      "definition": "Unsafe proposals that were not committed.",
+      "id": "unsafe_proposals_blocked",
+      "unit": "count"
+    },
+    {
+      "definition": "Unsafe proposals that were committed. Expected 0 whenever hazard checks are enabled.",
+      "id": "unsafe_commits",
+      "unit": "count"
+    },
+    {
+      "definition": "Oracle-safe proposals rejected by deterministic validation (staleness, separation, step size, duplicates, registration).",
+      "id": "safe_rejections",
+      "unit": "count"
+    },
+    {
+      "definition": "Commits whose displacement reverses the same agent's previous committed displacement (dot product < 0).",
+      "id": "unstable_commits",
+      "unit": "count"
+    },
+    {
+      "definition": "Commits of proposals whose observation was older than max_stale_ms/2 or not of GOOD quality.",
+      "id": "degraded_evidence_commits",
+      "unit": "count"
+    },
+    {
+      "definition": "Smallest distance between any two agents' authoritative positions at the end of any tick.",
+      "id": "min_pairwise_distance",
+      "unit": "distance"
+    },
+    {
+      "definition": "Agent pairs closer than 1.0 at the end of a tick, summed over ticks.",
+      "id": "separation_breaches",
+      "unit": "count"
+    },
+    {
+      "definition": "Judgment requests issued after validation passed.",
+      "id": "judgment_calls",
+      "unit": "count"
+    },
+    {
+      "definition": "Judgments of deterministic-valid proposals whose disposition was not PASS.",
+      "id": "judgment_disagreements",
+      "unit": "count"
+    },
+    {
+      "definition": "judgment_disagreements / judgment_calls; null without judgment calls.",
+      "id": "judgment_disagreement_rate",
+      "unit": "ratio"
+    },
+    {
+      "definition": "Judgments with disposition UNAVAILABLE (timeouts, network, disabled provider).",
+      "id": "judgment_unavailable",
+      "unit": "count"
+    },
+    {
+      "definition": "Mean latency_ms reported in judgment envelopes (0 for local deterministic judges).",
+      "id": "mean_judgment_latency_ms",
+      "unit": "ms"
+    },
+    {
+      "definition": "Judgment requests that reached a networked provider.",
+      "id": "network_calls",
+      "unit": "count"
+    },
+    {
+      "definition": "rejected_proposals / proposals.",
+      "id": "deterministic_rejection_rate",
+      "unit": "ratio"
+    },
+    {
+      "definition": "committed / proposals.",
+      "id": "commit_rate",
+      "unit": "ratio"
+    },
+    {
+      "definition": "Agents with a terminal goal (patrol agents have none).",
+      "id": "goals_total",
+      "unit": "count"
+    },
+    {
+      "definition": "Agents whose authoritative position ended within goal_radius of their goal.",
+      "id": "goals_reached",
+      "unit": "count"
+    },
+    {
+      "definition": "goals_reached / goals_total; null without goals.",
+      "id": "task_success",
+      "unit": "ratio"
+    },
+    {
+      "definition": "First tick after which every goal was reached; null if never.",
+      "id": "convergence_tick",
+      "unit": "tick"
+    },
+    {
+      "definition": "Ticks executed before termination.",
+      "id": "ticks_run",
+      "unit": "ticks"
+    },
+    {
+      "definition": "Mean age of the observation each proposal relied on.",
+      "id": "mean_observation_age_ms",
+      "unit": "ms"
+    },
+    {
+      "definition": "Faults activated during the run.",
+      "id": "faults_injected",
+      "unit": "count"
+    },
+    {
+      "definition": "Mean ticks after a fault ends until 3-tick commit throughput reaches 80% of the pre-fault level; null if never or no faults.",
+      "id": "recovery_ticks",
+      "unit": "ticks"
+    },
+    {
+      "definition": "Mean of usable simulated operator-load samples.",
+      "id": "mean_operator_load",
+      "unit": "index[0,1]"
+    },
+    {
+      "definition": "Maximum usable simulated operator-load sample.",
+      "id": "max_operator_load",
+      "unit": "index[0,1]"
+    },
+    {
+      "definition": "Ticks with adaptive level HIGH or CRITICAL.",
+      "id": "ticks_at_high_load",
+      "unit": "ticks"
+    },
+    {
+      "definition": "Correlation between per-tick operator load and the per-tick fraction of proposals not committed; null with fewer than 5 ticks or zero variance.",
+      "id": "human_state_coupling",
+      "unit": "pearson r"
+    },
+    {
+      "definition": "Mean over ticks with >= 2 committed moves of |sum of unit displacement vectors| / n (Vicsek order parameter). 1 = all committed motion aligned.",
+      "id": "resonance.coherence",
+      "unit": "[0,1]"
+    },
+    {
+      "definition": "1 - (direction reversals / consecutive committed-move pairs), pooled over agents.",
+      "id": "resonance.stability",
+      "unit": "[0,1]"
+    },
+    {
+      "definition": "task_success.",
+      "id": "resonance.convergence",
+      "unit": "[0,1]"
+    },
+    {
+      "definition": "Fraction of same-tick proposal pairs from different agents whose finite targets are closer than max(min_separation, 1).",
+      "id": "resonance.disagreement",
+      "unit": "[0,1]"
+    },
+    {
+      "definition": "Mean over faults of min(1, commit throughput in the W=8 ticks after the fault / in the W ticks before); null without faults or pre-fault commits.",
+      "id": "resonance.recovery",
+      "unit": "[0,1]"
+    },
+    {
+      "definition": "Fraction of proposals decided on degraded evidence: observation older than max_stale_ms/2, observation quality not GOOD, or judgment not OK.",
+      "id": "resonance.uncertainty",
+      "unit": "[0,1]"
+    }
+  ],
+  "note": "Recorded SIMULATED runs exported by `mesh export-web`. The cockpit verifies each event chain in the browser; `mesh replay` re-executes them.",
+  "runs": [
+    {
+      "id": "perturbed-mesh.default.r000.s42",
+      "kind": "recorded",
+      "label": "The Perturbed Mesh (seed 42)",
+      "path": "runs/perturbed-mesh.default.r000.s42"
+    },
+    {
+      "divergence": "runs/perturbed-mesh.default.r000.s42~no-judgment/divergence.json",
+      "id": "perturbed-mesh.default.r000.s42~no-judgment",
+      "kind": "counterfactual",
+      "label": "Counterfactual: judgment disabled",
+      "parent": "perturbed-mesh.default.r000.s42",
+      "path": "runs/perturbed-mesh.default.r000.s42~no-judgment"
+    }
+  ],
+  "scenarios": [
+    {
+      "agents": 4,
+      "description": "Four cooperative agents cross a static arena with two hazards; no faults or perturbations.",
+      "faults": [],
+      "id": "baseline",
+      "judgment": "disabled",
+      "path": "scenarios/baseline.yaml",
+      "ticks": 60
+    },
+    {
+      "agents": 4,
+      "description": "Four agents head for one point; separation decides which proposals can be committed.",
+      "faults": [],
+      "id": "contradictory-agents",
+      "judgment": "disabled",
+      "path": "scenarios/contradictory-agents.yaml",
+      "ticks": 50
+    },
+    {
+      "agents": 3,
+      "description": "NaN and offset observations, an invalid sensor flag, malformed proposals, and duplicate submissions.",
+      "faults": [
+        "corrupt_observation:k1@8",
+        "corrupt_observation:k2@12",
+        "invalidate_observation:k1@20",
+        "duplicate_proposal:k2@25",
+        "clock_skew:k1@32"
+      ],
+      "id": "corrupted-event",
+      "judgment": "disabled",
+      "path": "scenarios/corrupted-event.yaml",
+      "ticks": 50
+    },
+    {
+      "agents": 8,
+      "description": "Eight agents cross through a gap between two hazards; coordination is enforced only by validation.",
+      "faults": [],
+      "id": "crowded-crossing",
+      "judgment": "disabled",
+      "path": "scenarios/crowded-crossing.yaml",
+      "ticks": 70
+    },
+    {
+      "agents": 2,
+      "description": "A JSON-lines external agent (examples/rain_agent_stub.py) crosses a hazard field next to a built-in agent.",
+      "faults": [],
+      "id": "external-agent",
+      "judgment": "mock",
+      "path": "scenarios/external-agent.yaml",
+      "ticks": 50
+    },
+    {
+      "agents": 3,
+      "description": "Two sharp rises in the simulated operator-load index; background work is deferred during them.",
+      "faults": [],
+      "id": "human-state-perturbation",
+      "judgment": "disabled",
+      "path": "scenarios/human-state-perturbation.yaml",
+      "ticks": 70
+    },
+    {
+      "agents": 2,
+      "description": "The contrarian judge withholds a third of deterministically valid proposals; nothing it says can commit a rejected one.",
+      "faults": [],
+      "id": "judgment-disagreement",
+      "judgment": "mock",
+      "path": "scenarios/judgment-disagreement.yaml",
+      "ticks": 50
+    },
+    {
+      "agents": 2,
+      "description": "Judgment latency rises to 4 s, then to 12 s (above the 10 s timeout).",
+      "faults": [
+        "judge_latency@10",
+        "judge_latency@25"
+      ],
+      "id": "latency-spike",
+      "judgment": "mock",
+      "path": "scenarios/latency-spike.yaml",
+      "ticks": 50
+    },
+    {
+      "agents": 2,
+      "description": "The judge is unreachable for 15 ticks; validated proposals are withheld, not silently accepted.",
+      "faults": [
+        "network_unavailable@10"
+      ],
+      "id": "network-unavailable",
+      "judgment": "mock",
+      "path": "scenarios/network-unavailable.yaml",
+      "ticks": 50
+    },
+    {
+      "agents": 5,
+      "description": "Five agents, a hazard that appears mid-run, an operator-load spike, a sensor dropout, and a corrupted observation.",
+      "faults": [
+        "sensor_dropout:runner_02@20",
+        "corrupt_observation:tuner_03@52"
+      ],
+      "id": "perturbed-mesh",
+      "judgment": "mock",
+      "path": "scenarios/perturbed-mesh.yaml",
+      "ticks": 80
+    },
+    {
+      "agents": 3,
+      "description": "Two agents lose their position sensor in repeated windows; proposals on aging data are withheld or rejected.",
+      "faults": [
+        "sensor_dropout:d1@8",
+        "sensor_dropout:d2@15",
+        "sensor_dropout:d1@30"
+      ],
+      "id": "sensor-dropout",
+      "judgment": "mock",
+      "path": "scenarios/sensor-dropout.yaml",
+      "ticks": 60
+    },
+    {
+      "agents": 2,
+      "description": "A frozen sensor and a delayed sensor make agents propose from old information.",
+      "faults": [
+        "stale_telemetry:s1@10",
+        "observation_delay:s2@10"
+      ],
+      "id": "stale-observation",
+      "judgment": "mock",
+      "path": "scenarios/stale-observation.yaml",
+      "ticks": 50
+    },
+    {
+      "agents": 4,
+      "description": "Over-correcting agents oscillate around their goals; the step limit keeps the oscillation bounded.",
+      "faults": [],
+      "id": "swarm-instability",
+      "judgment": "disabled",
+      "path": "scenarios/swarm-instability.yaml",
+      "ticks": 60
+    },
+    {
+      "agents": 3,
+      "description": "Dense hazards, a hazard-blind agent, oversized steps, and malformed proposals.",
+      "faults": [],
+      "id": "validator-stress",
+      "judgment": "disabled",
+      "path": "scenarios/validator-stress.yaml",
+      "ticks": 60
+    }
+  ],
+  "software_version": "resonate-ai-mesh/0.2.0"
+}

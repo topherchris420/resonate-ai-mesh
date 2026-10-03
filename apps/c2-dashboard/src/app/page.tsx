@@ -1,263 +1,232 @@
- "use client";
+"use client";
 
-import React, { useEffect, useState, useRef } from "react";
-import dynamic from "next/dynamic";
-import OperatorPanel from "@/components/OperatorPanel";
-import AgentPanel from "@/components/AgentPanel";
-import EventFeed from "@/components/EventFeed";
-import ValidationInspector from "@/components/ValidationInspector";
-import {
-  OperatorStateTelemetry,
-  AdaptiveState,
-  AgentState,
-  CanonicalEventEnvelope,
-  ValidationResultPayload,
-  JudgmentEnvelope,
-  isJudgmentEnvelope,
-} from "@pordenone/shared-types";
-import {
-  adaptiveStateFromTelemetry,
-  alertsAreAggregated,
-  buildProposalEnvelope,
-  isAgentState,
-  isOperatorStateTelemetry,
-  isValidationResultPayload,
-  localStandaloneDispatch,
-  parseIncomingEnvelope,
-  prependEvent,
-  resolveHumanReview,
-  upsertAgent,
-  visualDensityScale,
-} from "@/session-model";
+import React, { useCallback, useEffect, useState } from "react";
+import Orientation, { type View } from "@/components/Orientation";
+import { Badge, Button, Empty, ErrorNote, Loading, cx } from "@/components/ui";
+import CapabilitiesView from "@/components/views/CapabilitiesView";
+import CompareView from "@/components/views/CompareView";
+import EvidenceView from "@/components/views/EvidenceView";
+import ExperimentView from "@/components/views/ExperimentView";
+import LiveView from "@/components/views/LiveView";
+import ReplayView from "@/components/views/ReplayView";
+import TopologyView from "@/components/views/TopologyView";
+import { connect, storeToken, type Connection } from "@/lib/source";
+import type { CapabilityReport, MetricDefinition, RunListing, ScenarioInfo } from "@/lib/types";
 
-const SpatialCanvas = dynamic(() => import("@/components/SpatialCanvas"), {
-  ssr: false,
-  loading: () => <div className="w-full h-full bg-[#090d13] flex items-center justify-center text-xs text-[#8b949e]">Loading 3D Spatial Canvas...</div>,
-});
+const TABS: { id: View; label: string; hint: string }[] = [
+  { id: "live", label: "Live", hint: "Run a session and decide human reviews (needs mesh serve)" },
+  { id: "experiment", label: "Experiment", hint: "Hypotheses, conditions, paired statistics" },
+  { id: "evidence", label: "Evidence", hint: "Claims checked against recorded evidence" },
+  { id: "replay", label: "Replay", hint: "Scrub a recorded run and inspect any decision" },
+  { id: "compare", label: "Compare", hint: "Counterfactual branches and where they diverge" },
+  { id: "topology", label: "Topology", hint: "Components, trust boundaries, and who may mutate state" },
+  { id: "capabilities", label: "Capabilities", hint: "What this installation can do right now" },
+];
 
-export default function C2DashboardPage() {
-  const [wsConnected, setWsConnected] = useState(false);
-  const [telemetry, setTelemetry] = useState<OperatorStateTelemetry | null>(null);
-  const [adaptiveState, setAdaptiveState] = useState<AdaptiveState | null>(null);
-  const [agents, setAgents] = useState<AgentState[]>([
-    {
-      agent_id: "agent_alpha",
-      state: "EXECUTING",
-      capabilities: ["SWARM", "RECON"],
-      task_assignments: ["PATROL_SECTOR_0"],
-      priority: 1,
-      position: { x: 100, y: 50, z: 0 },
-      velocity: { x: 2, y: 1, z: 0 },
-      confidence: 0.95,
-      timestamp: Date.now(),
-    },
-    {
-      agent_id: "agent_beta",
-      state: "EXECUTING",
-      capabilities: ["SWARM", "SURVEILLANCE"],
-      task_assignments: ["PATROL_SECTOR_1"],
-      priority: 1,
-      position: { x: -150, y: 120, z: 0 },
-      velocity: { x: -1, y: 2, z: 0 },
-      confidence: 0.92,
-      timestamp: Date.now(),
-    },
-  ]);
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>("agent_alpha");
-  const [events, setEvents] = useState<CanonicalEventEnvelope[]>([]);
-  const [latestValidation, setLatestValidation] = useState<ValidationResultPayload | null>(null);
-  const [latestJudgment, setLatestJudgment] = useState<JudgmentEnvelope | null>(null);
-  const [humanDecision, setHumanDecision] = useState<"approve" | "reject" | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
+const ORIENTED_KEY = "mesh-cockpit-oriented";
 
-  const wsRef = useRef<WebSocket | null>(null);
+function Mark() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="14" fill="none" stroke="rgb(var(--accent) / 0.35)" strokeWidth="1.5" />
+      <circle cx="16" cy="16" r="9" fill="none" stroke="rgb(var(--accent) / 0.65)" strokeWidth="1.5" />
+      <circle cx="16" cy="16" r="3.2" fill="rgb(var(--accent))" />
+      <circle cx="27.5" cy="9" r="1.8" fill="rgb(var(--text))" />
+      <circle cx="5" cy="21" r="1.8" fill="rgb(var(--text))" />
+    </svg>
+  );
+}
+
+function TokenPrompt({ url, onSubmit }: { url: string; onSubmit: (token: string) => void }) {
+  const [token, setToken] = useState("");
+  return (
+    <form
+      className="mx-auto mt-16 max-w-md space-y-3 rounded-lg border border-line bg-panel p-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(token.trim());
+      }}
+    >
+      <p>
+        <span className="font-mono">{url}</span> requires an API token (the server&apos;s <span className="font-mono">MESH_API_TOKEN</span>). It is kept in this tab&apos;s session storage only.
+      </p>
+      <input type="password" autoComplete="off" value={token} onChange={(e) => setToken(e.target.value)} className="w-full rounded border border-line bg-raised px-2 py-1.5" aria-label="API token" />
+      <Button type="submit" tone="primary">
+        Connect
+      </Button>
+    </form>
+  );
+}
+
+export default function Cockpit() {
+  const [connection, setConnection] = useState<Connection | null>(null);
+  const [view, setView] = useState<View>("replay");
+  const [capabilities, setCapabilities] = useState<CapabilityReport | null>(null);
+  const [runs, setRuns] = useState<RunListing[]>([]);
+  const [scenarios, setScenarios] = useState<ScenarioInfo[]>([]);
+  const [definitions, setDefinitions] = useState<MetricDefinition[]>([]);
+  const [openRun, setOpenRun] = useState<string | null>(null);
+  const [orientation, setOrientation] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const source = connection?.source ?? null;
 
   useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8080";
-    let ws: WebSocket;
-
-    try {
-      ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        setWsConnected(true);
-      };
-
-      ws.onclose = () => {
-        setWsConnected(false);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const envelope = parseIncomingEnvelope(event.data);
-          setEvents((prev) => prependEvent(prev, envelope));
-
-          const operatorTelemetry = envelope.payload?.operator_telemetry;
-          if (envelope.event_type === "telemetry" && isOperatorStateTelemetry(operatorTelemetry)) {
-            const t = operatorTelemetry;
-            setTelemetry(t);
-            setAdaptiveState(adaptiveStateFromTelemetry(t));
-          }
-
-          const validationResult = envelope.payload?.validation_result ?? envelope.payload;
-          if (envelope.event_type === "validation" && isValidationResultPayload(validationResult)) {
-            setLatestValidation(validationResult);
-            setHumanDecision(null);
-            if (!validationResult.accepted) {
-              setLatestJudgment(null);
-            }
-          }
-
-          const judgmentResult = envelope.payload?.judgment ?? envelope.payload;
-          if (envelope.event_type === "judgment" && isJudgmentEnvelope(judgmentResult)) {
-            setLatestJudgment(judgmentResult);
-            setHumanDecision(null);
-          }
-
-          const agentState = envelope.payload?.agent_state;
-          if (envelope.event_type === "agent_state" && isAgentState(agentState)) {
-            const newAgent = agentState;
-            setAgents((prev) => upsertAgent(prev, newAgent));
-          }
-        } catch (e) {
-          console.warn("Error parsing WebSocket message", e);
-        }
-      };
-    } catch (e) {
-      console.warn("WebSocket setup failed", e);
-    }
-
-    return () => {
-      wsRef.current?.close();
+    void connect().then(setConnection);
+    const fromHash = () => {
+      const id = window.location.hash.replace("#", "") as View;
+      if (TABS.some((t) => t.id === id)) setView(id);
     };
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    try {
+      if (!localStorage.getItem(ORIENTED_KEY)) setOrientation(true);
+    } catch {
+      setOrientation(true);
+    }
+    return () => window.removeEventListener("hashchange", fromHash);
   }, []);
 
-  const handleDispatchProposal = (actionType: string, targetX: number, targetY: number) => {
-    const timestamp = Date.now();
-    const proposalId = `prop_${timestamp}`;
-    const agentId = selectedAgentId || "agent_alpha";
-    const correlationId = `corr_${timestamp}`;
+  const reloadRuns = useCallback(async () => {
+    if (!source) return;
+    setRuns(await source.runs());
+  }, [source]);
 
-    const proposalEnvelope: CanonicalEventEnvelope = buildProposalEnvelope({
-      proposalId,
-      agentId,
-      actionType,
-      targetX,
-      targetY,
-      correlationId,
-      timestamp,
-    });
+  useEffect(() => {
+    if (!source) return;
+    setLoadError(null);
+    Promise.all([source.capabilities(), source.runs(), source.scenarios(), source.metricDefinitions()])
+      .then(([c, r, s, d]) => {
+        setCapabilities(c);
+        setRuns(r);
+        setScenarios(s);
+        setDefinitions(d);
+      })
+      .catch(setLoadError);
+  }, [source]);
 
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(proposalEnvelope));
-    } else {
-      const fallback = localStandaloneDispatch({
-        agents,
-        proposalId,
-        agentId,
-        targetX,
-        targetY,
-        correlationId,
-        timestamp,
-      });
-      setLatestValidation(fallback.validation);
-      setHumanDecision(null);
-      setLatestJudgment(fallback.judgment);
-      setAgents(fallback.agents);
+  const go = (next: View) => {
+    setView(next);
+    window.history.replaceState(null, "", `#${next}`);
+  };
+  const closeOrientation = () => {
+    setOrientation(false);
+    try {
+      localStorage.setItem(ORIENTED_KEY, "1");
+    } catch {
+      // Without storage the orientation simply shows again next time.
     }
   };
-
-  const handleResolveHumanReview = (proposalId: string, decision: "approve" | "reject") => {
-    const resolution = resolveHumanReview({
-      judgment: latestJudgment,
-      validation: latestValidation,
-      agents,
-      proposalId,
-      decision,
-      timestamp: Date.now(),
+  const openInReplay = (id: string) => {
+    void reloadRuns().then(() => {
+      setOpenRun(id);
+      go("replay");
     });
-    if (!resolution.applied || !resolution.event) {
-      return;
-    }
-    setHumanDecision(decision);
-    setEvents((prev) => prependEvent(prev, resolution.event as CanonicalEventEnvelope));
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(resolution.event));
-    }
-    setAgents(resolution.agents);
   };
-
-  const visualScale = visualDensityScale(adaptiveState?.state);
-  const aggregateAlerts = alertsAreAggregated(adaptiveState?.state);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0d1117] text-[#c9d1d9]">
-      <header className="h-12 border-b border-panelBorder bg-[#161b22] px-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <span className="font-extrabold tracking-widest text-cyanGlow text-sm">PORDENONE</span>
-          <span className="text-xs text-[#8b949e]">| Deterministic validation · simulated telemetry</span>
-        </div>
-
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full ${wsConnected ? "bg-greenOk" : "bg-redAlert"}`} />
-            <span>{wsConnected ? "Bridge Connected" : "Local Standalone Mode"}</span>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-40 border-b border-line bg-ink/90 backdrop-blur">
+        <div className="mx-auto flex max-w-[1680px] flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2">
+          <div className="flex items-center gap-2.5">
+            <Mark />
+            <div className="leading-tight">
+              <div className="text-[14px] font-semibold tracking-wide">Resonate AI Mesh</div>
+              <div className="text-[11px] text-muted">Pordenone kernel · research cockpit</div>
+            </div>
           </div>
-
-          <button
-            onClick={() => setIsRecording(!isRecording)}
-            className={`px-2 py-0.5 rounded text-[11px] font-bold border transition-colors ${
-              isRecording ? "bg-redAlert text-white border-redAlert animate-pulse" : "bg-[#21262d] text-[#8b949e] border-panelBorder hover:text-white"
-            }`}
-          >
-            {isRecording ? "● RECORDING SESSION" : "RECORD SESSION"}
-          </button>
+          <nav className="-mx-1 flex overflow-x-auto" aria-label="Views">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                title={tab.hint}
+                onClick={() => go(tab.id)}
+                aria-current={view === tab.id ? "page" : undefined}
+                className={cx(
+                  "mx-0.5 whitespace-nowrap rounded px-2.5 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.07em]",
+                  view === tab.id ? "bg-accent/10 text-accent" : "text-muted hover:text-text",
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+          <div className="ml-auto flex items-center gap-2">
+            {source ? (
+              <Badge tone={source.kind === "server" ? "commit" : "withhold"} title={connection?.notes.join(" ")}>
+                {source.kind === "server" ? `● ${source.label}` : "static export · recorded runs"}
+              </Badge>
+            ) : (
+              connection && <Badge tone="reject">no data source</Badge>
+            )}
+            <Badge tone="accent" title="All human-state data in these runs is simulated">
+              {capabilities?.status.data_mode ?? "SIMULATED"}
+            </Badge>
+            <Button tone="quiet" onClick={() => setOrientation(true)} title="What is this?">
+              ?
+            </Button>
+          </div>
         </div>
       </header>
 
-      <div className="flex-1 grid grid-cols-12 gap-2 p-2 overflow-hidden">
-        <div className="col-span-3 flex flex-col gap-2 overflow-hidden">
-          <OperatorPanel
-            telemetry={telemetry}
-            adaptiveState={adaptiveState}
-            onToggleSimulated={(sim) => {
-              if (telemetry) {
-                setTelemetry({ ...telemetry, is_simulated: sim });
-              }
+      <main className="mx-auto w-full max-w-[1680px] flex-1 px-4 py-4">
+        {!connection && <Loading what="data source" />}
+        {connection?.needsToken && connection.serverUrl && (
+          <TokenPrompt
+            url={connection.serverUrl}
+            onSubmit={(token) => {
+              storeToken(token);
+              void connect().then(setConnection);
             }}
           />
-          <div className="flex-1 overflow-hidden">
-            <AgentPanel
-              agents={agents}
-              selectedAgentId={selectedAgentId}
-              onSelectAgent={setSelectedAgentId}
-            />
-          </div>
-        </div>
+        )}
+        {connection && !source && !connection.needsToken && (
+          <Empty title="No data to show">
+            {connection.notes.map((n) => (
+              <p key={n}>{n}</p>
+            ))}
+          </Empty>
+        )}
+        <ErrorNote error={loadError} />
+        {source && (
+          <>
+            {view === "live" && <LiveView source={source} scenarios={scenarios} onFinished={openInReplay} />}
+            {view === "experiment" && <ExperimentView source={source} definitions={definitions} />}
+            {view === "evidence" && <EvidenceView source={source} />}
+            {view === "replay" && (runs.length > 0 ? <ReplayView source={source} runs={runs} definitions={definitions} initialRun={openRun} /> : <Loading what="runs" />)}
+            {view === "compare" && (
+              <CompareView
+                source={source}
+                runs={runs}
+                definitions={definitions}
+                onRunsChanged={(id) => void reloadRuns().then(() => setOpenRun(id))}
+                onOpenRun={openInReplay}
+              />
+            )}
+            {view === "topology" && <TopologyView source={source} runs={runs} scenarios={scenarios} />}
+            {view === "capabilities" && capabilities && <CapabilitiesView source={source} report={capabilities} scenarios={scenarios} />}
+          </>
+        )}
+      </main>
 
-        <div className="col-span-6 rounded border border-panelBorder overflow-hidden relative">
-          <SpatialCanvas
-            agents={agents}
-            selectedAgentId={selectedAgentId}
-            onSelectAgent={setSelectedAgentId}
-            visualDensityScale={visualScale}
-          />
+      <footer className="border-t border-line px-4 py-3 text-[11px] text-muted">
+        <div className="mx-auto flex max-w-[1680px] flex-wrap gap-x-4 gap-y-1">
+          <span>Every figure here is read from recorded files; nothing is generated for display.</span>
+          <span>Human-state values are simulated operational indices, not clinical measurements.</span>
+          <span>Nothing here controls physical hardware.</span>
         </div>
+      </footer>
 
-        <div className="col-span-3 flex flex-col gap-2 overflow-hidden">
-          <ValidationInspector
-            latestValidation={latestValidation}
-            latestJudgment={latestJudgment}
-            humanDecision={humanDecision}
-            onDispatchProposal={handleDispatchProposal}
-            onResolveHumanReview={handleResolveHumanReview}
-          />
-          <div className="flex-1 overflow-hidden">
-            <EventFeed events={events} aggregateAlerts={aggregateAlerts} />
-          </div>
-        </div>
-      </div>
+      {orientation && (
+        <Orientation
+          report={capabilities}
+          onClose={closeOrientation}
+          onGo={(next) => {
+            closeOrientation();
+            go(next);
+          }}
+        />
+      )}
     </div>
   );
 }

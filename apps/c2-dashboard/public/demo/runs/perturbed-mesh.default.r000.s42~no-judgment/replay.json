@@ -1,0 +1,33 @@
+{
+  "run_id": "perturbed-mesh.default.r000.s42~no-judgment",
+  "seed": 42,
+  "genesis_hash": "sha256:d41a0dffafb64f85ee1d456e3c01e9b8c6556448503412f229d55603e643299d",
+  "head_hash": "sha256:aafca640fe7ce111f46ed4a7b681b25a5e33bf9dffb50992f2f7b4e6169cbcc4",
+  "event_count": 1246,
+  "final_state_hash": "sha256:3db9847dc9deb0c48f63fde0419781c42b28bfeb536dd13ec03e0516f489ad6d",
+  "ticks_run": 80,
+  "termination": "max_ticks",
+  "substituted": [],
+  "counts": {
+    "decisions": 171,
+    "events": 1246,
+    "events.adaptive_level": 6,
+    "events.commitment": 171,
+    "events.environment_change": 3,
+    "events.fault_cleared": 2,
+    "events.fault_effect": 10,
+    "events.fault_injected": 2,
+    "events.human_state": 80,
+    "events.observation": 390,
+    "events.proposal": 171,
+    "events.resonance_sample": 80,
+    "events.run_completed": 1,
+    "events.run_started": 1,
+    "events.state_transition": 158,
+    "events.validation": 171
+  },
+  "policy_versions": [
+    "pordenone.kernel.policy.v2",
+    "pordenone.validator.v2"
+  ]
+}

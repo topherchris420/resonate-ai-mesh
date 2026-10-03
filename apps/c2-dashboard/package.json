@@ -1,40 +1,34 @@
 {
   "name": "c2-dashboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
+  "description": "Resonate AI Mesh research cockpit: replay, verify, and explain recorded runs; run live sessions against mesh serve",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@pordenone/shared-types": "workspace:*",
-    "@react-three/drei": "^9.105.0",
-    "@react-three/fiber": "^8.16.0",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.462.0",
-    "next": "^14.2.0",
+    "next": "^14.2.35",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.5.2",
-    "three": "^0.164.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.1.0",
     "@types/node": "^20.12.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@types/three": "^0.164.0",
     "autoprefixer": "^10.4.19",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.35",
+    "jsdom": "^25.0.1",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "typescript": "^5.5.3",
-    "vitest": "^2.1.9",
-    "jsdom": "^25.0.1",
-    "@testing-library/react": "^16.1.0"
+    "vitest": "^2.1.9"
   }
 }

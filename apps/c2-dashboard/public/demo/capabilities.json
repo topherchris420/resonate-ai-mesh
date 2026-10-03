@@ -1,0 +1,149 @@
+{
+  "context": "static-export",
+  "orientation": [
+    "This is a deterministic multi-agent research environment.",
+    "You can run an experiment, inspect why a decision occurred, inject a failure, compare policies, or replay a previous run.",
+    "Nothing here controls physical hardware.",
+    "Human-state data is currently SIMULATED.",
+    "Remote judgment is currently OFF."
+  ],
+  "status": {
+    "human_state_input": "SIMULATED",
+    "remote_judgment": "OFF in this static export (every judgment shown was made by a deterministic local judge)",
+    "physical_control": "NONE (not implemented)",
+    "data_mode": "SIMULATED"
+  },
+  "capabilities": [
+    {
+      "id": "simulate",
+      "statement": "run a deterministic multi-agent simulation (14 scenarios)",
+      "available": true,
+      "reason": null,
+      "command": "mesh run scenarios/perturbed-mesh.yaml"
+    },
+    {
+      "id": "experiment",
+      "statement": "run a controlled experiment with repetitions and paired statistics (7 manifests)",
+      "available": true,
+      "reason": null,
+      "command": "mesh experiment run experiments/baseline/manifest.yaml"
+    },
+    {
+      "id": "compare_policies",
+      "statement": "compare validation, judgment, or gating policies under identical seeds",
+      "available": true,
+      "reason": null,
+      "command": "mesh experiment compare fault-injection"
+    },
+    {
+      "id": "replay",
+      "statement": "replay the most recent run (perturbed-mesh.default.r000.s42) with zero network calls",
+      "available": true,
+      "reason": null,
+      "command": "mesh replay perturbed-mesh.default.r000.s42"
+    },
+    {
+      "id": "counterfactual",
+      "statement": "re-run a recorded run with judgment disabled and show where the timelines diverge",
+      "available": true,
+      "reason": null,
+      "command": "mesh counterfactual perturbed-mesh.default.r000.s42 --set kernel.judgment.provider=disabled --label no-judgment"
+    },
+    {
+      "id": "explain",
+      "statement": "explain why a decision happened by walking its causal chain",
+      "available": true,
+      "reason": null,
+      "command": "mesh explain perturbed-mesh.default.r000.s42 <proposal-id>"
+    },
+    {
+      "id": "inject_faults",
+      "statement": "inject faults: sensor_dropout, observation_delay, stale_telemetry, corrupt_observation, invalidate_observation, duplicate_proposal, clock_skew, freeze_agent, disable_judge, judge_timeout, network_unavailable, judge_latency, human_state_dropout, human_state_degraded",
+      "available": true,
+      "reason": null,
+      "command": "mesh run scenarios/perturbed-mesh.yaml --set 'faults=[{kind: judge_timeout, at_tick: 5, duration_ticks: 10}]'"
+    },
+    {
+      "id": "mock_judgment",
+      "statement": "ablate judgment with deterministic offline judges (evidence-heuristic, contrarian)",
+      "available": true,
+      "reason": null,
+      "command": "mesh experiment run experiments/judgment-ablation/manifest.yaml"
+    },
+    {
+      "id": "jev",
+      "statement": "test TypeSafe Jev against deterministic-only execution",
+      "available": false,
+      "reason": "depends on the local installation; not part of a static export",
+      "command": null
+    },
+    {
+      "id": "export_evidence",
+      "statement": "export an evidence bundle (events, decisions, metrics, provenance, report)",
+      "available": true,
+      "reason": null,
+      "command": "mesh verify apps/c2-dashboard/public/demo/runs/perturbed-mesh.default.r000.s42"
+    },
+    {
+      "id": "external_agent",
+      "statement": "attach an external deliberative agent (R.A.I.N. adapter protocol mesh-agent/1)",
+      "available": false,
+      "reason": "depends on the local installation; not part of a static export",
+      "command": "mesh run scenarios/external-agent.yaml"
+    },
+    {
+      "id": "golden",
+      "statement": "verify the committed golden recordings still replay exactly",
+      "available": true,
+      "reason": null,
+      "command": "mesh golden verify"
+    },
+    {
+      "id": "claims",
+      "statement": "check research claims against recorded experiment evidence",
+      "available": true,
+      "reason": null,
+      "command": "mesh claims check"
+    },
+    {
+      "id": "cockpit",
+      "statement": "serve the research cockpit API and live sessions",
+      "available": true,
+      "reason": null,
+      "command": "mesh serve"
+    },
+    {
+      "id": "live_human_state",
+      "statement": "accept LIVE human-state data from a registered source",
+      "available": false,
+      "reason": "no live source is connected; human-state input is SIMULATED",
+      "command": null
+    }
+  ],
+  "scenarios": [
+    "scenarios/baseline.yaml",
+    "scenarios/contradictory-agents.yaml",
+    "scenarios/corrupted-event.yaml",
+    "scenarios/crowded-crossing.yaml",
+    "scenarios/external-agent.yaml",
+    "scenarios/human-state-perturbation.yaml",
+    "scenarios/judgment-disagreement.yaml",
+    "scenarios/latency-spike.yaml",
+    "scenarios/network-unavailable.yaml",
+    "scenarios/perturbed-mesh.yaml",
+    "scenarios/sensor-dropout.yaml",
+    "scenarios/stale-observation.yaml",
+    "scenarios/swarm-instability.yaml",
+    "scenarios/validator-stress.yaml"
+  ],
+  "experiments": [
+    "experiments/baseline/manifest.yaml",
+    "experiments/fault-injection/manifest.yaml",
+    "experiments/human-state-adaptation/manifest.yaml",
+    "experiments/judgment-ablation/manifest.yaml",
+    "experiments/multi-agent-coordination/manifest.yaml",
+    "experiments/resonance-routing/manifest.yaml",
+    "experiments/validator-stress/manifest.yaml"
+  ],
+  "latest_run": "perturbed-mesh.default.r000.s42"
+}

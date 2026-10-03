@@ -2,21 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Vers3Dynamics research palette: one calm accent, semantic colors reserved
+   for what the kernel decided. Channels are space-separated RGB so Tailwind
+   opacity modifiers work. */
+:root {
+  --ink: 11 15 20;
+  --panel: 17 22 29;
+  --raised: 23 30 39;
+  --line: 36 44 56;
+  --text: 217 222 229;
+  --muted: 136 146 160;
+  --accent: 124 196 192;
+  --commit: 95 185 141;
+  --withhold: 216 162 74;
+  --reject: 217 100 95;
+  --review: 164 139 214;
+  --ai: 111 168 220;
+  --hazard: 192 87 79;
+  color-scheme: dark;
+}
+
+html,
 body {
-  background-color: #0d1117;
-  color: #c9d1d9;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  overflow: hidden;
+  background: rgb(var(--ink));
+  color: rgb(var(--text));
+}
+
+body {
+  font-feature-settings: "tnum" 1;
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.3);
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #161b22;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #30363d;
-  border-radius: 3px;
+  background: rgb(var(--line));
+  border-radius: 4px;
+}
+
+:focus-visible:not([tabindex="-1"]) {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }

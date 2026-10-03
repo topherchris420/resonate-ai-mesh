@@ -1,0 +1,603 @@
+{
+  "version": "resonate-ai-mesh.experiment-summary.v1",
+  "experiment_id": "baseline",
+  "title": "Baseline reference values",
+  "question": "Under normal operation (static hazards, no faults, no operator-load perturbation), what values do the run metrics and resonance dimensions take, and how much do they vary with the seed alone?\n",
+  "hypothesis": {
+    "statement": "Without faults or perturbations, deterministic validation rejects only occasional separation conflicts, no unsafe proposal is committed, and every agent with a goal reaches it.\n",
+    "prediction": null
+  },
+  "manifest_hash": "sha256:9c1c50cf6c3cb222c032e48cbea81b616dabeba6dec9969fef353098344d4e49",
+  "scenario_id": "baseline",
+  "base_seed": 42,
+  "repetitions": 30,
+  "dependent_variables": [
+    "committed",
+    "rejected_proposals",
+    "unsafe_commits",
+    "task_success",
+    "resonance.coherence",
+    "resonance.stability",
+    "resonance.disagreement"
+  ],
+  "conditions": [
+    {
+      "id": "reference",
+      "description": "Scenario as written.",
+      "status": "ran",
+      "skip_reason": null,
+      "overrides": {},
+      "runs": 30,
+      "metrics": {
+        "accepted_proposals": {
+          "n": 30,
+          "mean": 185.333333,
+          "median": 185.0,
+          "sd": 1.953482,
+          "variance": 3.816092,
+          "min": 181.0,
+          "max": 188.0,
+          "ci95": [
+            184.603973,
+            186.062694
+          ]
+        },
+        "commit_rate": {
+          "n": 30,
+          "mean": 0.996775,
+          "median": 0.997354,
+          "sd": 0.003858,
+          "variance": 0.000015,
+          "min": 0.984293,
+          "max": 1.0,
+          "ci95": [
+            0.995334,
+            0.998215
+          ]
+        },
+        "committed": {
+          "n": 30,
+          "mean": 185.333333,
+          "median": 185.0,
+          "sd": 1.953482,
+          "variance": 3.816092,
+          "min": 181.0,
+          "max": 188.0,
+          "ci95": [
+            184.603973,
+            186.062694
+          ]
+        },
+        "convergence_tick": {
+          "n": 30,
+          "mean": 42.5,
+          "median": 42.0,
+          "sd": 1.61352,
+          "variance": 2.603448,
+          "min": 41.0,
+          "max": 49.0,
+          "ci95": [
+            41.897569,
+            43.102431
+          ]
+        },
+        "degraded_evidence_commits": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "deterministic_rejection_rate": {
+          "n": 30,
+          "mean": 0.003225,
+          "median": 0.002646,
+          "sd": 0.003858,
+          "variance": 0.000015,
+          "min": 0.0,
+          "max": 0.015707,
+          "ci95": [
+            0.001785,
+            0.004666
+          ]
+        },
+        "faults_injected": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "goals_reached": {
+          "n": 30,
+          "mean": 3.0,
+          "median": 3.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 3.0,
+          "max": 3.0,
+          "ci95": [
+            3.0,
+            3.0
+          ]
+        },
+        "goals_total": {
+          "n": 30,
+          "mean": 3.0,
+          "median": 3.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 3.0,
+          "max": 3.0,
+          "ci95": [
+            3.0,
+            3.0
+          ]
+        },
+        "human_approved": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "human_reviews": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "human_state_coupling": {
+          "n": 15,
+          "mean": 0.037064,
+          "median": 0.033238,
+          "sd": 0.021446,
+          "variance": 0.00046,
+          "min": 0.01128,
+          "max": 0.08622,
+          "ci95": [
+            0.025186,
+            0.048941
+          ]
+        },
+        "judgment_calls": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "judgment_disagreements": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "judgment_unavailable": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "max_operator_load": {
+          "n": 30,
+          "mean": 0.413357,
+          "median": 0.41145,
+          "sd": 0.009501,
+          "variance": 0.00009,
+          "min": 0.4032,
+          "max": 0.4348,
+          "ci95": [
+            0.409809,
+            0.416904
+          ]
+        },
+        "mean_observation_age_ms": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "mean_operator_load": {
+          "n": 30,
+          "mean": 0.395373,
+          "median": 0.395335,
+          "sd": 0.001654,
+          "variance": 3e-6,
+          "min": 0.39327,
+          "max": 0.399892,
+          "ci95": [
+            0.394756,
+            0.395991
+          ]
+        },
+        "min_pairwise_distance": {
+          "n": 30,
+          "mean": 4.513727,
+          "median": 4.468926,
+          "sd": 1.040894,
+          "variance": 1.08346,
+          "min": 3.066922,
+          "max": 7.798044,
+          "ci95": [
+            4.125095,
+            4.90236
+          ]
+        },
+        "network_calls": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "proposals": {
+          "n": 30,
+          "mean": 185.933333,
+          "median": 186.0,
+          "sd": 1.855715,
+          "variance": 3.443678,
+          "min": 182.0,
+          "max": 191.0,
+          "ci95": [
+            185.240476,
+            186.626191
+          ]
+        },
+        "rejected_proposals": {
+          "n": 30,
+          "mean": 0.6,
+          "median": 0.5,
+          "sd": 0.723974,
+          "variance": 0.524138,
+          "min": 0.0,
+          "max": 3.0,
+          "ci95": [
+            0.329694,
+            0.870306
+          ]
+        },
+        "resonance.coherence": {
+          "n": 30,
+          "mean": 0.136025,
+          "median": 0.122359,
+          "sd": 0.037155,
+          "variance": 0.001381,
+          "min": 0.101658,
+          "max": 0.26698,
+          "ci95": [
+            0.122153,
+            0.149897
+          ]
+        },
+        "resonance.convergence": {
+          "n": 30,
+          "mean": 1.0,
+          "median": 1.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "resonance.disagreement": {
+          "n": 30,
+          "mean": 0.00244,
+          "median": 0.001992,
+          "sd": 0.002942,
+          "variance": 9e-6,
+          "min": 0.0,
+          "max": 0.012146,
+          "ci95": [
+            0.001341,
+            0.003538
+          ]
+        },
+        "resonance.stability": {
+          "n": 30,
+          "mean": 0.988646,
+          "median": 0.989011,
+          "sd": 0.006387,
+          "variance": 0.000041,
+          "min": 0.977901,
+          "max": 1.0,
+          "ci95": [
+            0.986261,
+            0.99103
+          ]
+        },
+        "resonance.uncertainty": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "safe_rejections": {
+          "n": 30,
+          "mean": 0.6,
+          "median": 0.5,
+          "sd": 0.723974,
+          "variance": 0.524138,
+          "min": 0.0,
+          "max": 3.0,
+          "ci95": [
+            0.329694,
+            0.870306
+          ]
+        },
+        "separation_breaches": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "task_success": {
+          "n": 30,
+          "mean": 1.0,
+          "median": 1.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 1.0,
+          "max": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "ticks_at_high_load": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "ticks_run": {
+          "n": 30,
+          "mean": 60.0,
+          "median": 60.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 60.0,
+          "max": 60.0,
+          "ci95": [
+            60.0,
+            60.0
+          ]
+        },
+        "unsafe_commits": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "unsafe_proposals": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "unsafe_proposals_blocked": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "unstable_commits": {
+          "n": 30,
+          "mean": 2.066667,
+          "median": 2.0,
+          "sd": 1.172481,
+          "variance": 1.374713,
+          "min": 0.0,
+          "max": 4.0,
+          "ci95": [
+            1.628904,
+            2.504429
+          ]
+        },
+        "withheld": {
+          "n": 30,
+          "mean": 0.0,
+          "median": 0.0,
+          "sd": 0.0,
+          "variance": 0.0,
+          "min": 0.0,
+          "max": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      "failure_rates": {
+        "judgment_unavailable": {
+          "runs_with_event": 0,
+          "runs": 30,
+          "rate": 0.0,
+          "wilson95": [
+            0.0,
+            0.113513
+          ]
+        },
+        "rejected_proposals": {
+          "runs_with_event": 15,
+          "runs": 30,
+          "rate": 0.5,
+          "wilson95": [
+            0.331541,
+            0.668459
+          ]
+        },
+        "unsafe_commits": {
+          "runs_with_event": 0,
+          "runs": 30,
+          "rate": 0.0,
+          "wilson95": [
+            0.0,
+            0.113513
+          ]
+        }
+      }
+    }
+  ],
+  "comparisons": [],
+  "prediction": null,
+  "invariants": [
+    {
+      "name": "event_chain_intact",
+      "expected": true,
+      "runs_checked": 30,
+      "runs_violated": 0,
+      "violating_runs": []
+    },
+    {
+      "name": "no_commit_without_validation_pass",
+      "expected": true,
+      "runs_checked": 30,
+      "runs_violated": 0,
+      "violating_runs": []
+    },
+    {
+      "name": "no_judgment_after_failed_validation",
+      "expected": true,
+      "runs_checked": 30,
+      "runs_violated": 0,
+      "violating_runs": []
+    },
+    {
+      "name": "every_commit_has_provenance",
+      "expected": true,
+      "runs_checked": 30,
+      "runs_violated": 0,
+      "violating_runs": []
+    },
+    {
+      "name": "no_unsafe_commits",
+      "expected": true,
+      "runs_checked": 30,
+      "runs_violated": 0,
+      "violating_runs": []
+    },
+    {
+      "name": "simulated_data_labeled",
+      "expected": true,
+      "runs_checked": 30,
+      "runs_violated": 0,
+      "violating_runs": []
+    },
+    {
+      "name": "zero_network_calls",
+      "expected": true,
+      "runs_checked": 30,
+      "runs_violated": 0,
+      "violating_runs": []
+    }
+  ],
+  "unexpected": [],
+  "limitations": [
+    "One fixed arena layout; seeds change only sensor noise."
+  ],
+  "software_version": "resonate-ai-mesh/0.2.0"
+}

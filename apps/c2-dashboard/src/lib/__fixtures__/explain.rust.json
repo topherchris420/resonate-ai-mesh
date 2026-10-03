@@ -1,0 +1,370 @@
+{
+ "prop-00012-medic_05": {
+  "target": "prop-00012-medic_05",
+  "correlation_id": "corr-00012-medic_05",
+  "chain": [
+   {
+    "seq": 314,
+    "event_id": "obs-000418",
+    "event_type": "observation",
+    "tick": 12,
+    "source": "sensor.medic_05",
+    "causation_id": "evt-000001",
+    "summary": "sensor reading for medic_05 observed_at=1700000003000 quality=GOOD",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": ""
+   },
+   {
+    "seq": 319,
+    "event_id": "evt-000428",
+    "event_type": "proposal",
+    "tick": 12,
+    "source": "medic_05",
+    "causation_id": "obs-000418",
+    "summary": "medic_05 proposes MOVE to [0.0,-79.0,0.0] priority 6: \"scripted\"",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": ""
+   },
+   {
+    "seq": 320,
+    "event_id": "evt-000429",
+    "event_type": "validation",
+    "tick": 12,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000428",
+    "summary": "PASS: 11 checks; observation age 0 ms; deterministic confidence 1.0",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.validator.v2"
+   },
+   {
+    "seq": 321,
+    "event_id": "evt-000431",
+    "event_type": "judgment",
+    "tick": 12,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000429",
+    "summary": "deterministic_mock / evidence-heuristic-v1 -> HUMAN_REVIEW [HUMAN_REVIEW_INDICATED] status ok",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.judgment.policy.v1"
+   },
+   {
+    "seq": 322,
+    "event_id": "evt-000432",
+    "event_type": "commitment",
+    "tick": 12,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000431",
+    "summary": "policy pordenone.kernel.policy.v2 -> awaiting_human_review [HUMAN_REVIEW_INDICATED] at operator level NORMAL",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   },
+   {
+    "seq": 384,
+    "event_id": "evt-000513",
+    "event_type": "human_resolution",
+    "tick": 15,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000432",
+    "summary": "simulated_operator decided approve (simulated operator, load index 0.39)",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   },
+   {
+    "seq": 385,
+    "event_id": "evt-000514",
+    "event_type": "validation",
+    "tick": 15,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000513",
+    "summary": "PASS: 11 checks; observation age 750 ms; deterministic confidence 0.75",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.validator.v2"
+   },
+   {
+    "seq": 386,
+    "event_id": "evt-000515",
+    "event_type": "commitment",
+    "tick": 15,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000514",
+    "summary": "policy pordenone.kernel.policy.v2 -> committed [HUMAN_DECISION_APPROVE] at operator level NORMAL",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   },
+   {
+    "seq": 387,
+    "event_id": "evt-000516",
+    "event_type": "state_transition",
+    "tick": 15,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000515",
+    "summary": "commit medic_05 revision 60: 05e0936759 -> c405f86aa8",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   }
+  ],
+  "state_changed": true,
+  "ai_involved": false
+ },
+ "prop-00000-runner_02": {
+  "target": "prop-00000-runner_02",
+  "correlation_id": "corr-00000-runner_02",
+  "chain": [
+   {
+    "seq": 14,
+    "event_id": "obs-000017",
+    "event_type": "observation",
+    "tick": 0,
+    "source": "sensor.runner_02",
+    "causation_id": "evt-000001",
+    "summary": "sensor reading for runner_02 observed_at=1700000000000 quality=GOOD",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": ""
+   },
+   {
+    "seq": 22,
+    "event_id": "evt-000029",
+    "event_type": "proposal",
+    "tick": 0,
+    "source": "runner_02",
+    "causation_id": "obs-000017",
+    "summary": "runner_02 proposes MOVE to [-59.963,1.59,0.0] priority 2: \"straight line, step 10.00\"",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": ""
+   },
+   {
+    "seq": 23,
+    "event_id": "evt-000030",
+    "event_type": "validation",
+    "tick": 0,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000029",
+    "summary": "FAIL: STEP_TOO_LARGE (step of 10.162159 exceeds max_step 8)",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.validator.v2"
+   },
+   {
+    "seq": 24,
+    "event_id": "evt-000031",
+    "event_type": "commitment",
+    "tick": 0,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000030",
+    "summary": "policy pordenone.kernel.policy.v2 -> rejected_deterministic [DETERMINISTIC_VALIDATION_FAILED, STEP_TOO_LARGE] at operator level NORMAL",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   }
+  ],
+  "state_changed": false,
+  "ai_involved": false
+ },
+ "corr-00000-patrol_04": {
+  "target": "corr-00000-patrol_04",
+  "correlation_id": "corr-00000-patrol_04",
+  "chain": [
+   {
+    "seq": 13,
+    "event_id": "obs-000015",
+    "event_type": "observation",
+    "tick": 0,
+    "source": "sensor.patrol_04",
+    "causation_id": "evt-000001",
+    "summary": "sensor reading for patrol_04 observed_at=1700000000000 quality=GOOD",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": ""
+   },
+   {
+    "seq": 17,
+    "event_id": "evt-000023",
+    "event_type": "proposal",
+    "tick": 0,
+    "source": "patrol_04",
+    "causation_id": "obs-000015",
+    "summary": "patrol_04 proposes PATROL to [-22.8134,58.593,0.0] priority 0: \"step toward goal (62.5 away)\"",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": ""
+   },
+   {
+    "seq": 18,
+    "event_id": "evt-000024",
+    "event_type": "validation",
+    "tick": 0,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000023",
+    "summary": "PASS: 11 checks; observation age 0 ms; deterministic confidence 1.0",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.validator.v2"
+   },
+   {
+    "seq": 19,
+    "event_id": "evt-000026",
+    "event_type": "judgment",
+    "tick": 0,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000024",
+    "summary": "deterministic_mock / evidence-heuristic-v1 -> PASS [ELIGIBLE_PASS] status ok",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.judgment.policy.v1"
+   },
+   {
+    "seq": 20,
+    "event_id": "evt-000027",
+    "event_type": "commitment",
+    "tick": 0,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000026",
+    "summary": "policy pordenone.kernel.policy.v2 -> committed [ELIGIBLE_PASS] at operator level NORMAL",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   },
+   {
+    "seq": 21,
+    "event_id": "evt-000028",
+    "event_type": "state_transition",
+    "tick": 0,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000027",
+    "summary": "commit patrol_04 revision 8: f72eab71a4 -> 709a1471a5",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   }
+  ],
+  "state_changed": true,
+  "ai_involved": false
+ },
+ "evt-000514": {
+  "target": "evt-000514",
+  "correlation_id": "corr-00012-medic_05",
+  "chain": [
+   {
+    "seq": 314,
+    "event_id": "obs-000418",
+    "event_type": "observation",
+    "tick": 12,
+    "source": "sensor.medic_05",
+    "causation_id": "evt-000001",
+    "summary": "sensor reading for medic_05 observed_at=1700000003000 quality=GOOD",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": ""
+   },
+   {
+    "seq": 319,
+    "event_id": "evt-000428",
+    "event_type": "proposal",
+    "tick": 12,
+    "source": "medic_05",
+    "causation_id": "obs-000418",
+    "summary": "medic_05 proposes MOVE to [0.0,-79.0,0.0] priority 6: \"scripted\"",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": ""
+   },
+   {
+    "seq": 320,
+    "event_id": "evt-000429",
+    "event_type": "validation",
+    "tick": 12,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000428",
+    "summary": "PASS: 11 checks; observation age 0 ms; deterministic confidence 1.0",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.validator.v2"
+   },
+   {
+    "seq": 321,
+    "event_id": "evt-000431",
+    "event_type": "judgment",
+    "tick": 12,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000429",
+    "summary": "deterministic_mock / evidence-heuristic-v1 -> HUMAN_REVIEW [HUMAN_REVIEW_INDICATED] status ok",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.judgment.policy.v1"
+   },
+   {
+    "seq": 322,
+    "event_id": "evt-000432",
+    "event_type": "commitment",
+    "tick": 12,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000431",
+    "summary": "policy pordenone.kernel.policy.v2 -> awaiting_human_review [HUMAN_REVIEW_INDICATED] at operator level NORMAL",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   },
+   {
+    "seq": 384,
+    "event_id": "evt-000513",
+    "event_type": "human_resolution",
+    "tick": 15,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000432",
+    "summary": "simulated_operator decided approve (simulated operator, load index 0.39)",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   },
+   {
+    "seq": 385,
+    "event_id": "evt-000514",
+    "event_type": "validation",
+    "tick": 15,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000513",
+    "summary": "PASS: 11 checks; observation age 750 ms; deterministic confidence 0.75",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.validator.v2"
+   },
+   {
+    "seq": 386,
+    "event_id": "evt-000515",
+    "event_type": "commitment",
+    "tick": 15,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000514",
+    "summary": "policy pordenone.kernel.policy.v2 -> committed [HUMAN_DECISION_APPROVE] at operator level NORMAL",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   },
+   {
+    "seq": 387,
+    "event_id": "evt-000516",
+    "event_type": "state_transition",
+    "tick": 15,
+    "source": "pordenone.kernel",
+    "causation_id": "evt-000515",
+    "summary": "commit medic_05 revision 60: 05e0936759 -> c405f86aa8",
+    "ai_involved": false,
+    "mode": "SIMULATED",
+    "policy_version": "pordenone.kernel.policy.v2"
+   }
+  ],
+  "state_changed": true,
+  "ai_involved": false
+ }
+}
