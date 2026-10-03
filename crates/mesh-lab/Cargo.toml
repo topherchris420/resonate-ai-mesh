@@ -3,6 +3,7 @@ name = "mesh-lab"
 description = "Resonate AI Mesh experiment engine: scenarios, simulation, fault injection, recording, replay, counterfactuals, metrics, and the `mesh` CLI"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 
 [lib]

@@ -13,6 +13,8 @@ members = [
 [workspace.package]
 version = "0.2.0"
 edition = "2021"
+# Verified with `cargo +1.88 check --workspace --all-targets --locked`.
+rust-version = "1.88"
 license = "MIT"
 repository = "https://github.com/topherchris420/resonate-ai-mesh"
 

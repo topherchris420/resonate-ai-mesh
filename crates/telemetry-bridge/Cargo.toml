@@ -3,6 +3,7 @@ name = "telemetry-bridge"
 description = "Ingest gate for external telemetry: size limits, schema checks, allowed event types, live-source registration, rate limiting"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 
 [dependencies]

@@ -1,6 +1,9 @@
+# Simulated human-state source. Streams SIMULATED datums to mesh serve /ingest.
 FROM python:3.12-slim
+RUN useradd --create-home --uid 10001 pipeline
 WORKDIR /app
 COPY services/biometric-pipeline/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY services/biometric-pipeline/ .
+USER pipeline
 CMD ["python", "main.py"]

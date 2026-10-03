@@ -3,6 +3,7 @@ name = "event-bus"
 description = "Canonical event model, provenance, hash chain, and in-process fan-out bus for Resonate AI Mesh"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 
 [dependencies]

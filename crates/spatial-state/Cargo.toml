@@ -3,6 +3,7 @@ name = "spatial-state"
 description = "Deterministic spatial index of committed entity positions"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
