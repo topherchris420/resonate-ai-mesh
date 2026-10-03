@@ -14,7 +14,7 @@ Every number the system reports traces back to an event, and every event traces 
 | `environment.json` | The world as configured (arena, hazards, agents, faults) and the final state | yes | yes |
 | `topology.json` | The typed component graph for this run | yes | yes |
 | `replay.json` | Seed, genesis, head hash, final state hash, counts, substitutions, policy versions | yes | yes |
-| `provenance.json` | Software version, git commit and dirty flag, rustc, OS and architecture, command line, wall-clock start and finish, every policy and schema version, judge and agent descriptors, parent run for branches, and the digests of the files above | no (wall times) | — |
+| `provenance.json` | Software version, git commit and dirty flag (whether tracked source differs from that commit; recorded outputs under `fixtures/golden` and the cockpit export are not counted), rustc, OS and architecture, command line, wall-clock start and finish, every policy and schema version, judge and agent descriptors, parent run for branches, and the digests of the files above | no (wall times) | — |
 | `timing.json` | Wall-clock throughput and pipeline latency (p50, p95, max) | no | no; never compared by replay |
 | `report.md` | Human-readable summary: what ran, how to reproduce it, and what it found | — | no |
 

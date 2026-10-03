@@ -368,8 +368,19 @@ pub fn git_metadata() -> (String, Option<bool>) {
             .map(|output| String::from_utf8_lossy(&output.stdout).trim().to_string())
     };
     let commit = run(&["rev-parse", "HEAD"]).unwrap_or_else(|| "unknown".to_string());
-    let dirty =
-        run(&["status", "--porcelain", "--untracked-files=no"]).map(|text| !text.is_empty());
+    // Whether the source differs from the commit. Recorded outputs that live
+    // in the repository (golden fixtures, the cockpit export) are excluded:
+    // writing them would otherwise mark every export as dirty.
+    let dirty = run(&[
+        "status",
+        "--porcelain",
+        "--untracked-files=no",
+        "--",
+        ":(top)",
+        ":(exclude,top)fixtures/golden",
+        ":(exclude,top)apps/c2-dashboard/public/demo",
+    ])
+    .map(|text| !text.is_empty());
     (commit, dirty)
 }
 
