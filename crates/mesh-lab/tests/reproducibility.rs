@@ -423,3 +423,32 @@ fn a_live_session_stopped_early_replays_exactly() {
         .any(|s| s.contains("operator commands")));
     let _ = std::fs::remove_dir_all(dir);
 }
+
+#[test]
+fn a_run_judged_by_jev_replays_exactly_without_the_network() {
+    // fixtures/golden/jev-judged holds genuine TypeSafe Jev output. Replay must
+    // reproduce every event and metric from the recorded envelopes, describe
+    // the same remote judge, and send nothing over the network.
+    let bundle = Bundle::load(&root().join("fixtures/golden/jev-judged")).expect("fixture loads");
+    let judge = bundle.provenance.judge.clone().expect("judge recorded");
+    assert!(
+        judge.networked,
+        "the fixture must come from a networked judge"
+    );
+    let report = runtime().block_on(mesh_lab::replay::replay_bundle(&bundle));
+    assert!(report.verified, "{}", mesh_lab::replay::render(&report));
+    assert_eq!(report.network_calls, 0, "replay sent a request");
+    assert_eq!(report.events_matching as usize, bundle.events.len());
+    assert!(report.substituted.iter().any(|s| s.contains("judgment")));
+    // Every judgment in the record came from the remote model and followed a passing validation.
+    let judgments: Vec<_> = bundle
+        .events
+        .iter()
+        .filter(|c| c.event.event_type == "judgment")
+        .collect();
+    assert!(!judgments.is_empty());
+    assert!(judgments.iter().all(|c| c.event.ai_involved));
+    assert!(judgments
+        .iter()
+        .all(|c| c.event.payload["provider"] == "typesafe"));
+}

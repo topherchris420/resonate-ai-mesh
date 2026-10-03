@@ -328,7 +328,7 @@ pub fn command_line() -> Vec<String> {
     std::env::args().collect()
 }
 
-pub fn print_run_summary(result: &RunResult, dir: &Path) {
+pub fn print_run_summary(result: &RunResult, dir: &Path, allow_network: bool) {
     let m = &result.metrics;
     let v = |key: &str| crate::bundle::fmt_value(m.values.get(key).copied().flatten());
     println!("RUN RECORDED  {}", result.config.run_id);
@@ -374,14 +374,32 @@ pub fn print_run_summary(result: &RunResult, dir: &Path) {
     let failed: Vec<&str> = m
         .invariants
         .iter()
-        .filter(|i| !i.holds)
+        .filter(|i| !i.holds && !network_expected(i, allow_network))
         .map(|i| i.name.as_str())
         .collect();
-    if failed.is_empty() {
+    let holding = m.invariants.iter().filter(|i| i.holds).count();
+    if failed.is_empty() && holding == m.invariants.len() {
         println!("  Invariants:         all {} hold", m.invariants.len());
+    } else if failed.is_empty() {
+        println!(
+            "  Invariants:         {holding} of {} hold; zero_network_calls does not, because network access was permitted",
+            m.invariants.len()
+        );
     } else {
         println!("  Invariants:         VIOLATED: {}", failed.join(", "));
     }
+    if allow_network && result.network_calls > 0 {
+        println!(
+            "  Network:            {} judgment calls reached a networked judge (permitted by --allow-network); replay will answer them from this recording",
+            result.network_calls
+        );
+    }
+}
+
+/// A run started with `--allow-network` is expected to make network calls, so
+/// `zero_network_calls` failing there is the requested behavior, not a violation.
+fn network_expected(invariant: &crate::invariants::InvariantResult, allow_network: bool) -> bool {
+    allow_network && invariant.name == "zero_network_calls"
 }
 
 async fn cmd_run(cli: &Cli, args: &RunArgs) -> Result<i32, String> {
@@ -438,13 +456,20 @@ async fn cmd_run(cli: &Cli, args: &RunArgs) -> Result<i32, String> {
             .unwrap_or_default()
         );
     } else {
-        print_run_summary(&result, &dir);
+        print_run_summary(&result, &dir, args.allow_network);
     }
-    Ok(if result.metrics.invariants.iter().all(|i| i.holds) {
-        0
-    } else {
-        3
-    })
+    Ok(
+        if result
+            .metrics
+            .invariants
+            .iter()
+            .all(|i| i.holds || network_expected(i, args.allow_network))
+        {
+            0
+        } else {
+            3
+        },
+    )
 }
 
 fn load_bundle(cli: &Cli, reference: &str) -> Result<crate::record::Bundle, String> {

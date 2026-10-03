@@ -26,6 +26,15 @@ pub struct GoldenSource {
     pub seed: Option<u64>,
     #[serde(default)]
     pub set: BTreeMap<String, Value>,
+    /// False for recordings that cannot be remade offline, such as a run
+    /// judged by a remote model. `golden update` leaves them untouched;
+    /// `golden verify` still replays them.
+    #[serde(default = "regenerable")]
+    pub regenerate: bool,
+}
+
+fn regenerable() -> bool {
+    true
 }
 
 pub fn fixture_dirs(root: &Path) -> Vec<PathBuf> {
@@ -80,6 +89,9 @@ pub async fn update(root: &Path) -> Result<Vec<(String, String)>, String> {
         }
         let source: GoldenSource =
             crate::config::read_yaml(&source_path).map_err(|e| e.to_string())?;
+        if !source.regenerate {
+            continue;
+        }
         let target_path = dir.join(&source.path);
         let target = crate::cli::load_target(&target_path)?;
         let config = crate::cli::resolve_target(

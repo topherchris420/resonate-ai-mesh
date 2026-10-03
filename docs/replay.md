@@ -57,9 +57,9 @@ That example is real: before operator stops were substituted, a live session sto
 
 ## Golden recordings
 
-`fixtures/golden/` holds three committed bundles: the canonical Perturbed Mesh run, a corrupted-event run, and an external-agent run. Each has a `source.yaml` that says how to regenerate it. CI runs `mesh golden verify`, which replays all three. A change to the simulator, validator, judges, or policy that alters any recorded event fails CI with the first divergent event. After an intentional behavior change, `mesh golden update` regenerates the bundles and the diff shows what changed.
+`fixtures/golden/` holds four committed bundles: the canonical Perturbed Mesh run, a corrupted-event run, an external-agent run, and a run judged by the real TypeSafe Jev model. Each has a `source.yaml` that says how to regenerate it. CI runs `mesh golden verify`, which replays all four. A change to the simulator, validator, judges, or policy that alters any recorded event fails CI with the first divergent event. After an intentional behavior change, `mesh golden update` regenerates the bundles and the diff shows what changed.
 
-The external-agent fixture replays without Python: the agent's recorded turns are substituted.
+The external-agent fixture replays without Python, because the agent's recorded turns are substituted. The Jev fixture replays without credentials or network, because the recorded envelopes are substituted and the replayed run still describes the original remote judge. `golden update` skips fixtures marked `regenerate: false`, such as the Jev recording.
 
 ## Counterfactuals
 

@@ -114,7 +114,7 @@ pub const DEFINITIONS: &[MetricDef] = &[
     MetricDef { id: "judgment_disagreement_rate", unit: "ratio", definition: "judgment_disagreements / judgment_calls; null without judgment calls." },
     MetricDef { id: "judgment_unavailable", unit: "count", definition: "Judgments with disposition UNAVAILABLE (timeouts, network, disabled provider)." },
     MetricDef { id: "mean_judgment_latency_ms", unit: "ms", definition: "Mean latency_ms reported in judgment envelopes (0 for local deterministic judges)." },
-    MetricDef { id: "network_calls", unit: "count", definition: "Judgment requests that reached a networked provider." },
+    MetricDef { id: "network_calls", unit: "count", definition: "Judgments answered by a networked provider (in a replay, read from its recording; replay itself sends nothing)." },
     MetricDef { id: "deterministic_rejection_rate", unit: "ratio", definition: "rejected_proposals / proposals." },
     MetricDef { id: "commit_rate", unit: "ratio", definition: "committed / proposals." },
     MetricDef { id: "goals_total", unit: "count", definition: "Agents with a terminal goal (patrol agents have none)." },

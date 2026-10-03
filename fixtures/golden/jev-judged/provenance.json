@@ -1,0 +1,82 @@
+{
+  "bundle_format": "resonate-ai-mesh.run-bundle.v1",
+  "software_version": "resonate-ai-mesh/0.2.0",
+  "git_commit": "62ac2d10a112d432ba4361ae38370f4fc5a83b98",
+  "git_dirty": true,
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "os": "linux",
+  "arch": "x86_64",
+  "command": [
+    "./target/release/mesh",
+    "run",
+    "scenarios/perturbed-mesh.yaml",
+    "--seed",
+    "42",
+    "--set",
+    "kernel.judgment.provider=typesafe",
+    "--set",
+    "ticks=6",
+    "--allow-network",
+    "--out",
+    "fixtures/golden/jev-judged"
+  ],
+  "started_at_wall": "2026-10-03T19:29:41.230539001+00:00",
+  "finished_at_wall": "2026-10-03T19:29:43.239631382+00:00",
+  "run_config_hash": "sha256:41fef0b74298b636f6167097051e99ce3accb2274ac2b5ca7d2edddea90d5be4",
+  "validator_version": "pordenone.validator.v2",
+  "validator_config_hash": "sha256:5a88c22808add5b9b336fa555d28c4aea2c3091abfca88e4b5732181eb4b05d3",
+  "kernel_policy_version": "pordenone.kernel.policy.v2",
+  "judgment_policy_version": "pordenone.judgment.policy.v1",
+  "question_set_version": "pordenone.judgment.questions.v1",
+  "judgment_state_schema": "pordenone.judgment.state.v2",
+  "event_schema_version": "1.2.0",
+  "judge": {
+    "name": "typesafe",
+    "model": "jev-latest",
+    "kind": "remote_model",
+    "networked": true
+  },
+  "agents": [
+    {
+      "agent_id": "medic_05",
+      "adapter": "builtin:scripted",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "patrol_04",
+      "adapter": "builtin:patrol",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "runner_02",
+      "adapter": "builtin:greedy",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "scout_01",
+      "adapter": "builtin:cautious",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "tuner_03",
+      "adapter": "builtin:oscillating",
+      "deterministic": true,
+      "networked": false
+    }
+  ],
+  "parent": null,
+  "file_hashes": {
+    "decisions.jsonl": "sha256:02604430d5ab6aa06a9224746411e68f6941433593033a8e1e5ae84c82b78668",
+    "environment.json": "sha256:e4f29527eec4434c91d276c13b1127bffd46be7b322c73fa22ca1ce932f4aa88",
+    "events.jsonl": "sha256:08cedb6faaacc39ef1dc2d89d7055d0ee577103a680cf7f1388610873298520b",
+    "intents.jsonl": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest.json": "sha256:4d4bdda144f9150878685b48b6921ebc3f98227a2581046f95fdd2ac475ec463",
+    "metrics.json": "sha256:62763d5951b72c8b34ae95e196e3ad5fa24d51afb60d0f7c32453dcd17251768",
+    "replay.json": "sha256:a4a84c5df799c8f0b22b6477923c27ae89455c9f345e77678fb789d02119b3b5",
+    "topology.json": "sha256:ee8a9894deea10c4a7ea5be87de3ca6f2a01ec3bfd5ac04af971b56b53dec295"
+  }
+}

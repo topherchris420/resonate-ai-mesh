@@ -358,7 +358,17 @@ fn count(events: &[ChainedEvent], event_type: &str) -> u64 {
 /// Verify integrity, re-execute, and compare.
 pub async fn replay_bundle(bundle: &Bundle) -> ReplayReport {
     let integrity = verify_integrity(bundle);
-    let substitutions = substitutions_for(bundle);
+    let mut substitutions = substitutions_for(bundle);
+    // Reproduce the recording's own description of itself: the judge whose
+    // answers are substituted, and how the original run was made.
+    if substitutions.judgments.is_some() {
+        substitutions.judge_descriptor = bundle.provenance.judge.clone();
+    }
+    substitutions.recorded_substitutions = bundle
+        .events
+        .first()
+        .filter(|c| c.event.event_type == "run_started")
+        .and_then(|c| serde_json::from_value(c.event.payload["substituted"].clone()).ok());
     let mut substituted: Vec<String> = Vec::new();
     if substitutions.judgments.is_some() {
         substituted.push("judgment (recorded envelopes)".to_string());
@@ -442,7 +452,7 @@ fn fill_comparison(
     replayed: &RunResult,
     rules: &Normalization,
 ) {
-    report.network_calls = replayed.network_calls;
+    report.network_calls = replayed.live_network_calls;
     report.final_state_replayed = replayed.final_state.hash();
     report.head_replayed = replayed.head_hash.clone();
     report.head_exact_match = report.head_recorded == report.head_replayed;

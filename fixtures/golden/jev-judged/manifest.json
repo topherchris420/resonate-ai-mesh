@@ -1,0 +1,288 @@
+{
+  "run_id": "perturbed-mesh.default.r000.s42",
+  "experiment_id": "perturbed-mesh",
+  "condition_id": "default",
+  "repetition": 0,
+  "seed": 42,
+  "scenario": {
+    "id": "perturbed-mesh",
+    "description": "Five agents, a hazard that appears mid-run, an operator-load spike, a sensor dropout, and a corrupted observation.",
+    "ticks": 6,
+    "dt_ms": 250,
+    "start_time_ms": 1700000000000,
+    "arena_half_extent": 100.0,
+    "hazards": [
+      {
+        "id": "ridge",
+        "center": [
+          10.0,
+          5.0
+        ],
+        "radius": 12.0,
+        "appears_at_tick": 0,
+        "retires_at_tick": null
+      },
+      {
+        "id": "marsh",
+        "center": [
+          -45.0,
+          -40.0
+        ],
+        "radius": 9.0,
+        "appears_at_tick": 0,
+        "retires_at_tick": null
+      },
+      {
+        "id": "flood",
+        "center": [
+          36.0,
+          -15.0
+        ],
+        "radius": 9.0,
+        "appears_at_tick": 24,
+        "retires_at_tick": null
+      }
+    ],
+    "points_of_interest": [
+      {
+        "id": "north_gate",
+        "position": [
+          70.0,
+          25.0
+        ]
+      },
+      {
+        "id": "east_ridge",
+        "position": [
+          70.0,
+          -35.0
+        ]
+      },
+      {
+        "id": "south_depot",
+        "position": [
+          -25.0,
+          -62.0
+        ]
+      },
+      {
+        "id": "west_post",
+        "position": [
+          -75.0,
+          30.0
+        ]
+      }
+    ],
+    "agents": [
+      {
+        "id": "scout_01",
+        "behavior": "cautious",
+        "start": [
+          -70.0,
+          45.0
+        ],
+        "goal": "east_ridge",
+        "speed": 4.0,
+        "priority": 2,
+        "gain": 1.8,
+        "malformed_every": 4,
+        "script": [],
+        "command": [],
+        "timeout_ms": 2000
+      },
+      {
+        "id": "runner_02",
+        "behavior": "greedy",
+        "start": [
+          -70.0,
+          0.0
+        ],
+        "goal": "north_gate",
+        "speed": 10.0,
+        "priority": 2,
+        "gain": 1.8,
+        "malformed_every": 4,
+        "script": [],
+        "command": [],
+        "timeout_ms": 2000
+      },
+      {
+        "id": "tuner_03",
+        "behavior": "oscillating",
+        "start": [
+          -5.0,
+          -50.0
+        ],
+        "goal": "south_depot",
+        "speed": 3.0,
+        "priority": 1,
+        "gain": 2.0,
+        "malformed_every": 4,
+        "script": [],
+        "command": [],
+        "timeout_ms": 2000
+      },
+      {
+        "id": "patrol_04",
+        "behavior": "patrol",
+        "start": [
+          -20.0,
+          60.0
+        ],
+        "goal": "west_post",
+        "speed": 3.0,
+        "priority": 1,
+        "gain": 1.8,
+        "malformed_every": 4,
+        "script": [],
+        "command": [],
+        "timeout_ms": 2000
+      },
+      {
+        "id": "medic_05",
+        "behavior": "scripted",
+        "start": [
+          0.0,
+          -85.0
+        ],
+        "goal": null,
+        "speed": 5.0,
+        "priority": 6,
+        "gain": 1.8,
+        "malformed_every": 4,
+        "script": [
+          {
+            "tick": 12,
+            "action_type": "MOVE",
+            "target": [
+              0.0,
+              -79.0
+            ],
+            "priority": 6
+          },
+          {
+            "tick": 44,
+            "action_type": "MOVE",
+            "target": [
+              0.0,
+              -73.0
+            ],
+            "priority": 6
+          },
+          {
+            "tick": 62,
+            "action_type": "MOVE",
+            "target": [
+              0.0,
+              -73.0
+            ],
+            "priority": 6
+          }
+        ],
+        "command": [],
+        "timeout_ms": 2000
+      }
+    ],
+    "sensors": {
+      "position_noise": 0.25,
+      "latency_ticks": 0
+    },
+    "human_state": {
+      "enabled": true,
+      "baseline": 0.25,
+      "alpha": 0.3,
+      "w_rejections": 0.6,
+      "w_reviews": 0.3,
+      "w_complexity": 0.15,
+      "window": 6,
+      "noise": 0.01,
+      "perturbations": [
+        {
+          "at_tick": 40,
+          "duration_ticks": 12,
+          "delta": 0.5
+        }
+      ],
+      "trace": null
+    },
+    "human_review": {
+      "mode": "simulated_operator",
+      "latency_ticks": 3,
+      "approve_below_load": 0.7
+    },
+    "faults": [
+      {
+        "kind": "sensor_dropout",
+        "target": "runner_02",
+        "at_tick": 20,
+        "duration_ticks": 10,
+        "magnitude": 0.0
+      },
+      {
+        "kind": "corrupt_observation",
+        "target": "tuner_03",
+        "at_tick": 52,
+        "duration_ticks": 2,
+        "magnitude": 25.0
+      }
+    ],
+    "kernel": {
+      "validator": {
+        "max_spatial_bound": 10000.0,
+        "max_stale_ms": 1500,
+        "max_future_skew_ms": 1000,
+        "min_priority": 0,
+        "max_priority": 10,
+        "allowed_actions": [
+          "MOVE",
+          "PATROL",
+          "INSPECT",
+          "STANDBY",
+          "HOLD"
+        ],
+        "max_step": 8.0,
+        "min_separation": 3.0,
+        "disabled_checks": []
+      },
+      "judgment": {
+        "provider": "typesafe",
+        "profile": "evidence_heuristic",
+        "recorded_from": null,
+        "recorded_from_condition": null,
+        "timeout_ms": 10000
+      },
+      "judgment_policy": {
+        "version": "pordenone.judgment.policy.v1",
+        "minimum_confidence": 0.7,
+        "minimum_evidence_score": 2.0,
+        "scope_violation_threshold": 0.5,
+        "contradiction_revise_threshold": 0.5,
+        "contradiction_review_threshold": 0.75,
+        "human_review_threshold": 0.5
+      },
+      "policy": {
+        "adaptive": {
+          "enabled": true,
+          "on_signal_loss": "assume_high",
+          "thresholds": [
+            0.4,
+            0.65,
+            0.85
+          ],
+          "background_priority_max": 0
+        },
+        "routing": {
+          "mode": "always"
+        }
+      }
+    },
+    "termination": {
+      "stop_when_all_goals_reached": false,
+      "goal_radius": 1.5
+    }
+  },
+  "overrides": {
+    "kernel.judgment.provider": "typesafe",
+    "ticks": 6
+  }
+}

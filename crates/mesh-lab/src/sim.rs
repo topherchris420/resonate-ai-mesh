@@ -345,14 +345,43 @@ pub struct JudgeFaults {
     pub latency_ms: Option<u64>,
 }
 
-/// Wraps the configured provider so faults can be injected, and counts calls
-/// that reach a networked provider.
+/// Answers from a recording while describing itself as the judge that made
+/// the recording, so a replayed run states the same judge as the original.
+pub struct ReplayedJudge {
+    inner: Arc<dyn JudgmentProvider>,
+    original: ProviderDescriptor,
+}
+
+impl ReplayedJudge {
+    pub fn new(inner: Arc<dyn JudgmentProvider>, original: ProviderDescriptor) -> Self {
+        Self { inner, original }
+    }
+}
+
+#[async_trait]
+impl JudgmentProvider for ReplayedJudge {
+    async fn evaluate(&self, request: &JudgmentRequest) -> JudgmentEnvelope {
+        self.inner.evaluate(request).await
+    }
+
+    fn descriptor(&self) -> ProviderDescriptor {
+        self.original.clone()
+    }
+}
+
+/// Wraps the configured provider so faults can be injected, and counts calls.
+///
+/// `network_calls` counts judgments answered by a networked judge: a property
+/// of the run, identical in a recording and its replay. `live_network_calls`
+/// counts requests this process actually sent over the network, which is
+/// always 0 when answers come from a recording.
 pub struct FaultableJudge {
     inner: Arc<dyn JudgmentProvider>,
     faults: Mutex<JudgeFaults>,
     timeout_ms: u64,
     calls: AtomicU64,
     network_calls: AtomicU64,
+    replaying: bool,
 }
 
 impl FaultableJudge {
@@ -363,7 +392,14 @@ impl FaultableJudge {
             timeout_ms,
             calls: AtomicU64::new(0),
             network_calls: AtomicU64::new(0),
+            replaying: false,
         }
+    }
+
+    /// Answers come from a recording; nothing is sent over the network.
+    pub fn replaying(mut self) -> Self {
+        self.replaying = true;
+        self
     }
 
     pub fn set_faults(&self, faults: JudgeFaults) {
@@ -376,6 +412,14 @@ impl FaultableJudge {
 
     pub fn network_calls(&self) -> u64 {
         self.network_calls.load(Ordering::SeqCst)
+    }
+
+    pub fn live_network_calls(&self) -> u64 {
+        if self.replaying {
+            0
+        } else {
+            self.network_calls()
+        }
     }
 }
 

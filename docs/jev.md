@@ -80,6 +80,12 @@ Optional settings: `JUDGMENT_MODEL` (default `jev-latest`), `TYPESAFE_BASE_URL`,
 
 Without `--allow-network`, a run that asks for Jev fails with an explanation. In an experiment, the condition is skipped and reported as skipped. Replay never constructs a networked judge.
 
+## What a real Jev run showed
+
+`fixtures/golden/jev-judged` is a genuine recording: `jev-1.13.0` judging the first six ticks of the canonical scenario (8 judgments, 164–493 ms each, all `provider_status: ok`). Jev answered `insufficient_evidence` for every valid proposal, with low confidence (0.31–0.46) and an evidence score of about 1.5 of 3. The policy therefore routed all eight to human review, and four were approved and re-validated before committing. The one proposal that failed validation (`STEP_TOO_LARGE`) was rejected without a judgment call. So on this evidence package Jev is far more conservative than the evidence-heuristic stand-in, which passes most of the same proposals. A likely reason is that the package gives a language model ids and numbers with little context. Improving the package is an open experiment, and nothing here should be read as a measurement of Jev's quality.
+
+CI replays this recording on every push with no credentials and no network. Replay reproduces all 106 events and every metric, reports `network_calls: 0`, and states the same remote judge. The run's metrics still record its 8 networked judgments.
+
 ## What the ablation measures
 
-`experiments/judgment-ablation` compares, at the same seeds, no judge, the evidence-heuristic judge, its recorded judgments replayed, the contrarian judge, and Jev when available. Results so far, with mock judges only: the evidence judge removes 2.79 degraded-evidence commits per run [−2.94, −2.64], at a cost of 1.5 commits. Replay reproduces it exactly. Task success does not change. Unsafe commits are 0 in every condition, because validation runs first. Jev has not yet been run through this experiment at scale, and nothing here claims how a language model would judge.
+`experiments/judgment-ablation` compares, at the same seeds, no judge, the evidence-heuristic judge, its recorded judgments replayed, the contrarian judge, and Jev when available. Results so far, with mock judges only: the evidence judge removes 2.79 degraded-evidence commits per run [−2.94, −2.64], at a cost of 1.5 commits. Replay reproduces it exactly. Task success does not change. Unsafe commits are 0 in every condition, because validation runs first. Jev has not yet been run through this experiment at scale (100 repetitions × ~230 calls each), and nothing here claims how a language model would judge in general.

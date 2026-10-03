@@ -19,7 +19,7 @@ packages/shared-types  TypeScript mirrors of the recorded contracts
 scenarios/         14 scenario files
 experiments/       7 experiment manifests
 claims/            10 research claims with their evidence checks
-fixtures/golden/   3 committed recordings that CI replays
+fixtures/golden/   4 committed recordings that CI replays (one judged by Jev)
 fixtures/canonical/floats.json  cross-language float-formatting contract
 schemas/json/, proto/  wire contracts, tested against recordings
 services/biometric-pipeline  simulated human-state source for /ingest

@@ -107,14 +107,14 @@ Three implementations compute the canonical hashes: Rust, Python, and the browse
 
 ## Optional integrations
 
-- **TypeSafe Jev** ([`docs/jev.md`](docs/jev.md)): a bounded judge answering five typed questions about evidence that has already passed validation. Runs need `TYPESAFE_API_KEY` and `--allow-network`. The judgment-ablation experiment compares it with no judge, mock judges, and replayed judgments. Replays never call it.
+- **TypeSafe Jev** ([`docs/jev.md`](docs/jev.md)): a bounded judge answering five typed questions about evidence that has already passed validation. Runs need `TYPESAFE_API_KEY` and `--allow-network`. In a recorded six-tick run, `jev-1.13.0` routed every valid proposal to human review and was never consulted on the one that failed validation. That recording is a golden fixture CI replays with no key and no network.
 - **External agents / R.A.I.N.** ([`docs/rain-adapter.md`](docs/rain-adapter.md)): any process that speaks `mesh-agent/1` (JSON lines on stdin and stdout) can be an agent. Its intents are proposals like any other and carry no authority.
 - **Human-state sources** ([`docs/human-state.md`](docs/human-state.md)): `/ingest` admits labeled `HumanStateDatum` values. LIVE data is accepted only from sources registered in `MESH_LIVE_SOURCES`.
 
 ## Limitations
 
 - Everything measured here is a simulation: geometric agents in a 2D arena, a scripted operator-load curve, and a simulated reviewer in batch runs. The results describe this simulator, not the real world.
-- The mock judges are deterministic rules. They show what a judgment stage does to the pipeline, not how a language model judges. Jev has not yet been run through the full ablation at scale.
+- The mock judges are deterministic rules. They show what a judgment stage does to the pipeline, not how a language model judges. Jev has been recorded on one short run, not yet through the full ablation.
 - The resonance vector is a set of operational measures with stated definitions. It is not evidence of cognition, wellbeing, or "resonance" in any broader sense.
 - The geometric safety oracle is independent of the validator's code but shares its notion of hazards (declared circles).
 - Determinism holds for the same code and dependency versions. `software_version` is normalized in replay comparisons, but a change to the simulator changes recordings by design. `mesh golden verify` detects such changes.

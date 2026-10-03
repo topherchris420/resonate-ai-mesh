@@ -113,9 +113,12 @@ export function deriveDecisions(events: EventEnvelope[]): DecisionView[] {
   const decisions: DecisionView[] = [];
   const observationQuality = new Map<string, string>();
   const proposals = new Map<string, DecisionView>();
-  // Positions as of the start of the current tick (what the kernel's snapshot
-  // held when proposals were made), and as updated by commits within it.
+  // The runner's order within a tick: due human reviews are resolved against
+  // the tick-start snapshot, then a new snapshot is taken and every agent
+  // proposes from it. Proposals therefore see review commits from the same
+  // tick, but not each other's commits.
   let atTickStart = new Map<string, Vec2>();
+  let beforeAgents: Map<string, Vec2> | null = null;
   const position = new Map<string, Vec2>();
   let currentTick = -1;
 
@@ -125,6 +128,10 @@ export function deriveDecisions(events: EventEnvelope[]): DecisionView[] {
     if (tick !== currentTick) {
       currentTick = tick;
       atTickStart = new Map(position);
+      beforeAgents = null;
+    }
+    if (event.event_type === "proposal" && !event.source.includes("operator") && beforeAgents === null) {
+      beforeAgents = new Map(position);
     }
     switch (event.event_type) {
       case "observation": {
@@ -147,7 +154,7 @@ export function deriveDecisions(events: EventEnvelope[]): DecisionView[] {
           triggerEventId: event.event_id,
           actionType: str(proposal.action_type) ?? "?",
           target: Array.isArray(proposal.target) ? (proposal.target as (number | null)[]) : null,
-          from: atTickStart.get(event.subject_id) ?? null,
+          from: (beforeAgents ?? atTickStart).get(event.subject_id) ?? null,
           priority: num(proposal.priority),
           rationale: str(p.rationale),
           observationId,
@@ -263,6 +270,7 @@ export function deriveDecisions(events: EventEnvelope[]): DecisionView[] {
           if (at) {
             position.set(subject, at);
             atTickStart.set(subject, at);
+            beforeAgents?.set(subject, at);
           }
         }
         if (mutation === "commit") {

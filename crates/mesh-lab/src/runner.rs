@@ -78,6 +78,12 @@ pub struct Substitutions {
     pub human_state: BTreeMap<u64, HumanStateDatum>,
     /// A live session that a person stopped early: the tick at which it stopped.
     pub stopped_at_tick: Option<u64>,
+    /// Replay only: the judge whose recorded answers are substituted, so the
+    /// replayed run describes the same judge as the recording.
+    pub judge_descriptor: Option<ProviderDescriptor>,
+    /// Replay only: the recording's own `run_started.substituted`, which
+    /// describes how the original run was made, not how it is replayed.
+    pub recorded_substitutions: Option<Vec<String>>,
 }
 
 /// Commands an interactive session may issue between ticks. Each one is
@@ -139,7 +145,10 @@ pub struct RunResult {
     pub head_hash: String,
     pub metrics: MetricsDoc,
     pub timing: crate::record::Timing,
+    /// Judgments answered by a networked judge (in a replay, from its recording).
     pub network_calls: u64,
+    /// Requests this execution actually sent over the network.
+    pub live_network_calls: u64,
     pub judgment_calls: u64,
     pub judge: Option<ProviderDescriptor>,
     pub agent_descriptors: Vec<crate::agents::AgentDescriptor>,
@@ -233,6 +242,7 @@ impl Lab {
 fn build_judge(
     config: &RunConfig,
     substitute: Option<&Vec<JudgmentEnvelope>>,
+    original: Option<&ProviderDescriptor>,
     allow_network: bool,
 ) -> Result<(Option<Arc<FaultableJudge>>, bool), RunError> {
     let spec = &config.scenario.kernel.judgment;
@@ -240,9 +250,15 @@ fn build_judge(
         return Ok((None, false));
     }
     if let Some(recorded) = substitute {
-        let provider = Arc::new(RecordedJudgmentProvider::new(recorded.clone()));
+        let mut provider: Arc<dyn JudgmentProvider> =
+            Arc::new(RecordedJudgmentProvider::new(recorded.clone()));
+        if let Some(original) = original {
+            provider = Arc::new(crate::sim::ReplayedJudge::new(provider, original.clone()));
+        }
         return Ok((
-            Some(Arc::new(FaultableJudge::new(provider, spec.timeout_ms))),
+            Some(Arc::new(
+                FaultableJudge::new(provider, spec.timeout_ms).replaying(),
+            )),
             true,
         ));
     }
@@ -499,8 +515,12 @@ pub async fn run(config: &RunConfig, mut options: RunOptions) -> Result<RunResul
     };
 
     let replaying_judgment = options.substitutions.judgments.as_ref();
-    let (judge, judgment_is_recorded) =
-        build_judge(config, replaying_judgment, options.allow_network)?;
+    let (judge, judgment_is_recorded) = build_judge(
+        config,
+        replaying_judgment,
+        options.substitutions.judge_descriptor.as_ref(),
+        options.allow_network,
+    )?;
     let mut substituted = Vec::new();
     if replaying_judgment.is_some() && judge.is_some() {
         substituted.push("judgment".to_string());
@@ -563,7 +583,11 @@ pub async fn run(config: &RunConfig, mut options: RunOptions) -> Result<RunResul
             "run_config_hash": genesis_hash,
             "agents": scenario.agents.iter().map(|a| a.id.clone()).collect::<Vec<_>>(),
             "judge": judge.as_ref().map(|j| j.descriptor()),
-            "substituted": substituted,
+            "substituted": options
+                .substitutions
+                .recorded_substitutions
+                .clone()
+                .unwrap_or_else(|| substituted.clone()),
         }),
     );
     let start_id = recorder.record(start_event);
@@ -1226,6 +1250,7 @@ pub async fn run(config: &RunConfig, mut options: RunOptions) -> Result<RunResul
     ));
 
     let network_calls = judge.as_ref().map(|j| j.network_calls()).unwrap_or(0);
+    let live_network_calls = judge.as_ref().map(|j| j.live_network_calls()).unwrap_or(0);
     let judgment_calls = judge.as_ref().map(|j| j.calls()).unwrap_or(0);
     let judgments: Vec<JudgmentEnvelope> = recorder
         .events
@@ -1278,6 +1303,7 @@ pub async fn run(config: &RunConfig, mut options: RunOptions) -> Result<RunResul
         metrics,
         timing,
         network_calls,
+        live_network_calls,
         judgment_calls,
         judge: judge.as_ref().map(|j| j.descriptor()),
         agent_descriptors,
