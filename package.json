@@ -13,12 +13,17 @@
     "proto:generate": "bash scripts/generate-proto.sh"
   },
   "devDependencies": {
-    "next": "^14.2.35",
+    "next": "^15.5.27",
     "turbo": "^2.0.0",
     "typescript": "^5.5.3"
   },
   "packageManager": "pnpm@10.30.3",
   "engines": {
     "node": ">=18"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.28"
+    }
   }
 }
