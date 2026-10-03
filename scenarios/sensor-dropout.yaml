@@ -1,0 +1,21 @@
+# Sensor dropout: position telemetry disappears intermittently for two agents.
+id: sensor-dropout
+description: Two agents lose their position sensor in repeated windows; proposals on aging data are withheld or rejected.
+ticks: 60
+points_of_interest:
+  - { id: east, position: [70, 0] }
+  - { id: north, position: [0, 70] }
+hazards:
+  - { id: rock, center: [20, 20], radius: 10 }
+agents:
+  - { id: d1, behavior: cautious, start: [-70, 0], goal: east, speed: 4 }
+  - { id: d2, behavior: greedy, start: [0, -70], goal: north, speed: 6 }
+  - { id: d3, behavior: cautious, start: [-50, -50], goal: north, speed: 4 }
+faults:
+  - { kind: sensor_dropout, target: d1, at_tick: 8, duration_ticks: 5 }
+  - { kind: sensor_dropout, target: d2, at_tick: 15, duration_ticks: 9 }
+  - { kind: sensor_dropout, target: d1, at_tick: 30, duration_ticks: 9 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: mock, profile: evidence_heuristic }
+termination: { stop_when_all_goals_reached: false }

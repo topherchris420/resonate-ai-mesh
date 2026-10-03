@@ -39,6 +39,7 @@ fn run(
             agent: Some(&agent),
             others,
             hazards,
+            duplicate: false,
         },
     )
 }
@@ -118,6 +119,7 @@ fn unregistered_agent_fails_closed() {
             agent: None,
             others: &[],
             hazards: &[],
+            duplicate: false,
         },
     );
     assert!(!result.accepted);
@@ -305,6 +307,7 @@ fn only_a_passing_verdict_yields_a_validated_proposal() {
         agent: Some(&agent),
         others: &[],
         hazards: &[],
+        duplicate: false,
     };
     match validator.evaluate(proposal(1.0, 1.0), &context) {
         Verdict::Pass(validated) => assert!(validated.result().accepted),
@@ -314,6 +317,22 @@ fn only_a_passing_verdict_yields_a_validated_proposal() {
         validator.evaluate(proposal(f64::NAN, 1.0), &context),
         Verdict::Fail { .. }
     ));
+}
+
+#[test]
+fn duplicate_proposals_fail_closed() {
+    let agent = me();
+    let result = EpistemicValidator::new().validate(
+        &proposal(1.0, 1.0),
+        &ValidationContext {
+            now_ms: NOW,
+            agent: Some(&agent),
+            others: &[],
+            hazards: &[],
+            duplicate: true,
+        },
+    );
+    assert_eq!(result.reasons, vec!["DUPLICATE_PROPOSAL"]);
 }
 
 #[test]
@@ -373,6 +392,7 @@ proptest! {
             agent: if registered { Some(&agent) } else { None },
             others: &[],
             hazards: &[],
+            duplicate: false,
         };
         let result = validator.validate(&p, &context);
         let any_fail = result.checks.iter().any(|c| c.status == CheckStatus::Fail);

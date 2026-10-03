@@ -1,0 +1,18 @@
+# Swarm instability: agents correct toward shared goals with gains at and
+# above 2, so their motion oscillates. max_step bounds the oscillation.
+id: swarm-instability
+description: Over-correcting agents oscillate around their goals; the step limit keeps the oscillation bounded.
+ticks: 60
+sensors: { position_noise: 0.5 }
+points_of_interest:
+  - { id: p1, position: [10, 10] }
+  - { id: p2, position: [-10, -10] }
+agents:
+  - { id: o1, behavior: oscillating, start: [-20, 10], goal: p1, speed: 6, gain: 1.6 }
+  - { id: o2, behavior: oscillating, start: [20, -10], goal: p2, speed: 6, gain: 2.0 }
+  - { id: o3, behavior: oscillating, start: [10, -30], goal: p1, speed: 9, gain: 2.3 }
+  - { id: o4, behavior: oscillating, start: [-10, 30], goal: p2, speed: 9, gain: 2.6 }
+kernel:
+  validator: { max_step: 8, min_separation: 2, max_stale_ms: 1500 }
+  judgment: { provider: disabled }
+termination: { stop_when_all_goals_reached: false, goal_radius: 2 }

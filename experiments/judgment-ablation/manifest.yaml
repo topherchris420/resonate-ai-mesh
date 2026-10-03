@@ -1,0 +1,59 @@
+id: judgment-ablation
+title: Judgment ablation on the perturbed mesh
+question: >
+  Does a bounded judgment stage after deterministic validation change which
+  proposals are committed, and at what cost in throughput and task progress?
+hypothesis:
+  statement: >
+    With the evidence-heuristic judge, proposals made on degraded evidence
+    (observations older than half the staleness limit) are withheld instead of
+    committed. Replaying the recorded judgments reproduces the judged condition
+    exactly. No judge can cause an unsafe commit, because judgment is only
+    consulted after validation passes.
+  prediction:
+    metric: degraded_evidence_commits
+    direction: decrease
+    baseline: deterministic_only
+    treatment: mock_judgment
+seed: 42
+repetitions: 100
+scenario: ../../scenarios/perturbed-mesh.yaml
+independent_variables: [kernel.judgment.provider, kernel.judgment.profile]
+dependent_variables:
+  - committed
+  - withheld
+  - degraded_evidence_commits
+  - unsafe_commits
+  - judgment_calls
+  - judgment_disagreement_rate
+  - human_reviews
+  - task_success
+  - resonance.uncertainty
+conditions:
+  - id: deterministic_only
+    description: Validation and policy only; judgment is not consulted.
+    set: { kernel.judgment.provider: disabled }
+  - id: mock_judgment
+    description: Deterministic evidence-heuristic judge (offline stand-in, not a model).
+    set: { kernel.judgment.provider: mock, kernel.judgment.profile: evidence_heuristic }
+  - id: replayed_judgment
+    description: Judgments recorded in mock_judgment, replayed for the same seed.
+    set: { kernel.judgment.provider: recorded, kernel.judgment.recorded_from_condition: mock_judgment }
+  - id: contrarian_judgment
+    description: A judge that disagrees with a fixed third of valid proposals.
+    set: { kernel.judgment.provider: mock, kernel.judgment.profile: contrarian }
+  - id: jev
+    description: TypeSafe Jev over the network. Runs only with credentials and --allow-network.
+    set: { kernel.judgment.provider: typesafe }
+    requires: [typesafe]
+invariants:
+  - event_chain_intact
+  - no_commit_without_validation_pass
+  - no_judgment_after_failed_validation
+  - every_commit_has_provenance
+  - no_unsafe_commits
+  - simulated_data_labeled
+metrics: [committed, withheld, degraded_evidence_commits]
+limitations:
+  - The mock judges are deterministic rules in this repository; they show what a judgment stage does to the pipeline, not how a language model would judge.
+  - One scenario. Effects depend on how much stale evidence the scenario produces.

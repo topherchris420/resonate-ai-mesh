@@ -53,6 +53,7 @@ pub struct HazardZone {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum CheckId {
+    UniqueProposal,
     FiniteValues,
     ActionAllowlist,
     AgentRegistered,
@@ -66,7 +67,8 @@ pub enum CheckId {
 }
 
 impl CheckId {
-    pub const ALL: [CheckId; 10] = [
+    pub const ALL: [CheckId; 11] = [
+        CheckId::UniqueProposal,
         CheckId::FiniteValues,
         CheckId::ActionAllowlist,
         CheckId::AgentRegistered,
@@ -81,6 +83,7 @@ impl CheckId {
 
     pub fn as_str(self) -> &'static str {
         match self {
+            Self::UniqueProposal => "unique_proposal",
             Self::FiniteValues => "finite_values",
             Self::ActionAllowlist => "action_allowlist",
             Self::AgentRegistered => "agent_registered",
@@ -96,6 +99,7 @@ impl CheckId {
 
     pub fn reason_code(self) -> &'static str {
         match self {
+            Self::UniqueProposal => "DUPLICATE_PROPOSAL",
             Self::FiniteValues => "NON_FINITE_VALUE",
             Self::ActionAllowlist => "ACTION_NOT_ALLOWED",
             Self::AgentRegistered => "AGENT_NOT_REGISTERED",
@@ -241,6 +245,8 @@ pub struct ValidationContext<'a> {
     /// Every other registered agent.
     pub others: &'a [AgentView],
     pub hazards: &'a [HazardZone],
+    /// True when this proposal id was already processed by the kernel.
+    pub duplicate: bool,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -410,6 +416,20 @@ impl EpistemicValidator {
         let finite = target.is_finite();
         let observed_at = proposal.observation_time();
         let age_ms = context.now_ms.saturating_sub(observed_at);
+
+        checks.push(if context.duplicate {
+            fail(
+                CheckId::UniqueProposal,
+                format!(
+                    "proposal `{}` was already processed",
+                    clip(&proposal.proposal_id, 64)
+                ),
+                None,
+                None,
+            )
+        } else {
+            pass(CheckId::UniqueProposal, "proposal id not seen before")
+        });
 
         checks.push(if finite {
             pass(CheckId::FiniteValues, "target coordinates are finite")

@@ -120,6 +120,7 @@ struct KernelInner {
     adaptive_level: AdaptiveLevel,
     pending_reviews: std::collections::BTreeMap<String, PendingReview>,
     history: AgentHistory,
+    processed: std::collections::BTreeSet<String>,
     tick: Option<u64>,
 }
 
@@ -170,10 +171,11 @@ impl KernelBuilder {
         self
     }
 
-    /// Answer judgment from recordings. No provider network call is possible.
+    /// Answer judgment from recordings (a `RecordedJudgmentProvider`, possibly
+    /// wrapped). Envelopes are marked RECORDED_JUDGMENT.
     pub fn replay_judgments(
         mut self,
-        recorded: Arc<RecordedJudgmentProvider>,
+        recorded: Arc<dyn JudgmentProvider>,
         policy: JudgmentPolicy,
     ) -> Self {
         self.provider = recorded;
@@ -230,6 +232,7 @@ impl KernelBuilder {
                 adaptive_level: AdaptiveLevel::Normal,
                 pending_reviews: Default::default(),
                 history: AgentHistory::default(),
+                processed: Default::default(),
                 tick: None,
             }),
         })
@@ -296,7 +299,7 @@ impl KernelEngine {
     ) -> (Self, Arc<RecordedJudgmentProvider>) {
         let provider = Arc::new(RecordedJudgmentProvider::new(recorded));
         let kernel = KernelBuilder::new(bus)
-            .replay_judgments(provider.clone(), policy)
+            .replay_judgments(provider.clone() as Arc<dyn JudgmentProvider>, policy)
             .build()
             .expect("default kernel configuration is valid");
         (kernel, provider)
@@ -535,6 +538,7 @@ impl KernelEngine {
         let agent_id = proposal.agent_id.clone();
         let correlation_id = proposal.correlation_id.clone();
 
+        let duplicate = !inner.processed.insert(proposal.proposal_id.clone());
         let verdict = {
             let me = inner.state.agent_view(&agent_id);
             let others = inner.state.other_views(&agent_id);
@@ -546,6 +550,7 @@ impl KernelEngine {
                     agent: me.as_ref(),
                     others: &others,
                     hazards: &hazards,
+                    duplicate,
                 },
             )
         };
@@ -764,6 +769,8 @@ impl KernelEngine {
             let me = inner.state.agent_view(&agent_id);
             let others = inner.state.other_views(&agent_id);
             let hazards = inner.state.hazards();
+            // The re-check after a human decision concerns the same proposal,
+            // so it is not a duplicate submission.
             self.validator.evaluate(
                 pending.proposal.clone(),
                 &ValidationContext {
@@ -771,6 +778,7 @@ impl KernelEngine {
                     agent: me.as_ref(),
                     others: &others,
                     hazards: &hazards,
+                    duplicate: false,
                 },
             )
         };
@@ -994,9 +1002,6 @@ impl KernelEngine {
                 envelope.simulation_label = request.prepared.simulation_label.clone();
                 envelope.question_set_version = QUESTION_SET_VERSION.to_string();
                 envelope.state_schema_version = typed_judgment::STATE_SCHEMA_VERSION.to_string();
-                if self.descriptor.kind == ProviderKind::Deterministic {
-                    envelope.latency_ms = 0;
-                }
                 self.judgment_policy.apply(envelope);
             }
             JudgmentMode::Replay => {

@@ -1,0 +1,17 @@
+# Judgment disagreement: a deterministic contrarian judge disagrees with a
+# stable third of proposals that passed deterministic validation.
+id: judgment-disagreement
+description: The contrarian judge withholds a third of deterministically valid proposals; nothing it says can commit a rejected one.
+ticks: 50
+points_of_interest:
+  - { id: east, position: [60, 0] }
+  - { id: west, position: [-60, 0] }
+hazards:
+  - { id: wall, center: [0, 0], radius: 12 }
+agents:
+  - { id: j1, behavior: cautious, start: [-60, 20], goal: east, speed: 4 }
+  - { id: j2, behavior: greedy, start: [60, -20], goal: west, speed: 9 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: mock, profile: contrarian }
+termination: { stop_when_all_goals_reached: false }

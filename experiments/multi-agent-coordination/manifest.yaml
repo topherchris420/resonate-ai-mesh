@@ -1,0 +1,40 @@
+id: multi-agent-coordination
+title: Separation as the only coordination mechanism
+question: >
+  In a crowded crossing, how does the minimum-separation rule trade conflicts
+  for progress, and how do coherence and convergence respond?
+hypothesis:
+  statement: >
+    A larger minimum separation keeps agents farther apart but rejects more
+    proposals and lowers task success within the time limit.
+  prediction:
+    metric: task_success
+    direction: decrease
+    baseline: separation_2
+    treatment: separation_4
+seed: 3
+repetitions: 40
+scenario: ../../scenarios/crowded-crossing.yaml
+independent_variables: [kernel.validator.min_separation]
+dependent_variables:
+  - rejected_proposals
+  - min_pairwise_distance
+  - separation_breaches
+  - task_success
+  - resonance.coherence
+  - resonance.disagreement
+conditions:
+  - id: separation_2
+    set: { kernel.validator.min_separation: 2 }
+  - id: separation_3
+    set: { kernel.validator.min_separation: 3 }
+  - id: separation_4
+    set: { kernel.validator.min_separation: 4 }
+invariants:
+  - event_chain_intact
+  - no_commit_without_validation_pass
+  - every_commit_has_provenance
+  - no_unsafe_commits
+  - simulated_data_labeled
+limitations:
+  - Agents do not negotiate; conflicts are resolved by processing order and validation alone.

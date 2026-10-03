@@ -108,6 +108,21 @@ async fn commit_and_rejection_lifecycle() {
 }
 
 #[tokio::test]
+async fn a_resubmitted_proposal_is_rejected_as_a_duplicate() {
+    let (kernel, _) = deterministic(None);
+    kernel.register_agent(agent(0.0)).await.unwrap();
+    let first = kernel
+        .process_action_proposal_detailed(proposal("prop_dup", "MOVE", 3.0, "corr"))
+        .await;
+    assert!(first.committed);
+    let second = kernel
+        .process_action_proposal_detailed(proposal("prop_dup", "MOVE", 3.0, "corr"))
+        .await;
+    assert!(!second.committed);
+    assert_eq!(second.validation.reasons, vec!["DUPLICATE_PROPOSAL"]);
+}
+
+#[tokio::test]
 async fn unknown_agents_are_rejected_and_never_auto_registered() {
     let (kernel, _) = deterministic(None);
     let before = kernel.state_hash().await;

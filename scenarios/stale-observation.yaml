@@ -1,0 +1,17 @@
+# Stale observation: agents act on aging information. One sensor freezes
+# (repeats its last reading); another delivers readings 1.5 s late.
+id: stale-observation
+description: A frozen sensor and a delayed sensor make agents propose from old information.
+ticks: 50
+points_of_interest:
+  - { id: target, position: [60, 0] }
+agents:
+  - { id: s1, behavior: cautious, start: [-60, 10], goal: target, speed: 4 }
+  - { id: s2, behavior: cautious, start: [-60, -10], goal: target, speed: 4 }
+faults:
+  - { kind: stale_telemetry, target: s1, at_tick: 10, duration_ticks: 12 }
+  - { kind: observation_delay, target: s2, at_tick: 10, duration_ticks: 12, magnitude: 1500 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: mock, profile: evidence_heuristic }
+termination: { stop_when_all_goals_reached: false }

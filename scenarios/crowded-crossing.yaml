@@ -1,0 +1,29 @@
+# Crowded crossing: eight agents swap sides through a gap between two hazards.
+id: crowded-crossing
+description: Eight agents cross through a gap between two hazards; coordination is enforced only by validation.
+ticks: 70
+points_of_interest:
+  - { id: e1, position: [50, 12] }
+  - { id: e2, position: [50, 4] }
+  - { id: e3, position: [50, -4] }
+  - { id: e4, position: [50, -12] }
+  - { id: w1, position: [-50, 12] }
+  - { id: w2, position: [-50, 4] }
+  - { id: w3, position: [-50, -4] }
+  - { id: w4, position: [-50, -12] }
+hazards:
+  - { id: north_wall, center: [0, 30], radius: 22 }
+  - { id: south_wall, center: [0, -30], radius: 22 }
+agents:
+  - { id: x1, behavior: cautious, start: [-50, 12], goal: e4, speed: 4 }
+  - { id: x2, behavior: cautious, start: [-50, 4], goal: e3, speed: 4 }
+  - { id: x3, behavior: greedy, start: [-50, -4], goal: e2, speed: 4 }
+  - { id: x4, behavior: greedy, start: [-50, -12], goal: e1, speed: 4 }
+  - { id: y1, behavior: cautious, start: [50, 12], goal: w4, speed: 4 }
+  - { id: y2, behavior: cautious, start: [50, 4], goal: w3, speed: 4 }
+  - { id: y3, behavior: greedy, start: [50, -4], goal: w2, speed: 4 }
+  - { id: y4, behavior: greedy, start: [50, -12], goal: w1, speed: 4 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: disabled }
+termination: { stop_when_all_goals_reached: true, goal_radius: 2 }

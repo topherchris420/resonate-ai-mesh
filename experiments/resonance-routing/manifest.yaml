@@ -1,0 +1,42 @@
+id: resonance-routing
+title: Routing judgment by measured agent instability
+question: >
+  Can judgment be consulted only for agents whose recent proposals were often
+  not committed, cutting judgment calls while keeping its effect on commits made
+  from degraded evidence?
+hypothesis:
+  statement: >
+    Instability routing makes fewer judgment calls than consulting judgment on
+    every valid proposal.
+  prediction:
+    metric: judgment_calls
+    direction: decrease
+    baseline: judge_always
+    treatment: judge_on_instability
+seed: 42
+repetitions: 100
+scenario: ../../scenarios/perturbed-mesh.yaml
+independent_variables: [kernel.policy.routing]
+dependent_variables:
+  - judgment_calls
+  - degraded_evidence_commits
+  - committed
+  - withheld
+  - unsafe_commits
+  - task_success
+conditions:
+  - id: judge_always
+    set: { kernel.policy.routing: { mode: always } }
+  - id: judge_never
+    set: { kernel.judgment.provider: disabled }
+  - id: judge_on_instability
+    set: { kernel.policy.routing: { mode: on_agent_instability, window: 6, threshold: 0.15 } }
+invariants:
+  - event_chain_intact
+  - no_commit_without_validation_pass
+  - no_judgment_after_failed_validation
+  - every_commit_has_provenance
+  - no_unsafe_commits
+  - simulated_data_labeled
+limitations:
+  - The routing signal is each agent's own recent rejection and withhold rate; a stale observation from a historically stable agent is not routed to judgment.

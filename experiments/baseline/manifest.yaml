@@ -1,0 +1,36 @@
+id: baseline
+title: Baseline reference values
+question: >
+  Under normal operation (static hazards, no faults, no operator-load
+  perturbation), what values do the run metrics and resonance dimensions take,
+  and how much do they vary with the seed alone?
+hypothesis:
+  statement: >
+    Without faults or perturbations, deterministic validation rejects only
+    occasional separation conflicts, no unsafe proposal is committed, and every
+    agent with a goal reaches it.
+seed: 42
+repetitions: 30
+scenario: ../../scenarios/baseline.yaml
+independent_variables: [seed]
+dependent_variables:
+  - committed
+  - rejected_proposals
+  - unsafe_commits
+  - task_success
+  - resonance.coherence
+  - resonance.stability
+  - resonance.disagreement
+conditions:
+  - id: reference
+    description: Scenario as written.
+invariants:
+  - event_chain_intact
+  - no_commit_without_validation_pass
+  - no_judgment_after_failed_validation
+  - every_commit_has_provenance
+  - no_unsafe_commits
+  - simulated_data_labeled
+  - zero_network_calls
+limitations:
+  - One fixed arena layout; seeds change only sensor noise.

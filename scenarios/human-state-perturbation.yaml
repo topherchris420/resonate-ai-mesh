@@ -1,0 +1,22 @@
+# Human-state perturbation: the simulated operator-load index rises sharply
+# twice. Background patrols are deferred while the level is HIGH or CRITICAL.
+id: human-state-perturbation
+description: Two sharp rises in the simulated operator-load index; background work is deferred during them.
+ticks: 70
+points_of_interest:
+  - { id: a, position: [50, 40] }
+  - { id: b, position: [-50, -40] }
+  - { id: c, position: [50, -40] }
+agents:
+  - { id: h1, behavior: cautious, start: [-50, 40], goal: c, speed: 3, priority: 2 }
+  - { id: h2, behavior: patrol, start: [-50, -40], goal: a, speed: 3 }
+  - { id: h3, behavior: patrol, start: [50, 40], goal: b, speed: 3 }
+human_state:
+  baseline: 0.2
+  perturbations:
+    - { at_tick: 15, duration_ticks: 10, delta: 0.6 }
+    - { at_tick: 45, duration_ticks: 12, delta: 0.8 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: disabled }
+termination: { stop_when_all_goals_reached: false }
