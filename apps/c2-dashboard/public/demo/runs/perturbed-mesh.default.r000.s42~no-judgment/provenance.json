@@ -1,8 +1,8 @@
 {
   "bundle_format": "resonate-ai-mesh.run-bundle.v1",
   "software_version": "resonate-ai-mesh/0.2.0",
-  "git_commit": "0ccdcd1e961550f1ba1b2a76557d46750c102f31",
-  "git_dirty": true,
+  "git_commit": "562cd9a30c678f64bf7886689221a644f88fb3c5",
+  "git_dirty": false,
   "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
   "os": "linux",
   "arch": "x86_64",
@@ -10,8 +10,8 @@
     "mesh",
     "export-web"
   ],
-  "started_at_wall": "2026-10-03T18:41:35.857143299+00:00",
-  "finished_at_wall": "2026-10-03T18:41:35.928658825+00:00",
+  "started_at_wall": "2026-10-03T19:35:36.694651417+00:00",
+  "finished_at_wall": "2026-10-03T19:35:36.724311938+00:00",
   "run_config_hash": "sha256:d41a0dffafb64f85ee1d456e3c01e9b8c6556448503412f229d55603e643299d",
   "validator_version": "pordenone.validator.v2",
   "validator_config_hash": "sha256:5a88c22808add5b9b336fa555d28c4aea2c3091abfca88e4b5732181eb4b05d3",
@@ -69,6 +69,6 @@
     "manifest.json": "sha256:8c17f68d452793279f333e0659e149cd64cb82b0a72c96349fb5b3f35e9425ff",
     "metrics.json": "sha256:5146fdf5f86ffdef47ffad4f9d6450204708b4d6ce21c9b7a5337b5a0ccfbcb8",
     "replay.json": "sha256:7e49e57b7676c7a86b705ff4f1c95cb0373c2e7637b200e8408124e0cae5575d",
-    "topology.json": "sha256:6e5806f61d4d28bc813d8f54d7f899d41f14e9d7023891365ecaed8f9a0492b3"
+    "topology.json": "sha256:578bbf15732a45bca4a887de95d792ac50562bb7965720ac92898754bfa57b9b"
   }
 }

@@ -106,7 +106,7 @@ mesh replay perturbed-mesh.default.r000.s42~no-judgment
 
 ## Provenance
 
-- Software: `resonate-ai-mesh/0.2.0` (git `0ccdcd1e9615`, uncommitted changes)
+- Software: `resonate-ai-mesh/0.2.0` (git `562cd9a30c67`)
 - Run config hash (chain genesis): `sha256:d41a0dffafb64f85ee1d456e3c01e9b8c6556448503412f229d55603e643299d`
 - Event log head: `sha256:aafca640fe7ce111f46ed4a7b681b25a5e33bf9dffb50992f2f7b4e6169cbcc4`
 - Final state hash: `sha256:3db9847dc9deb0c48f63fde0419781c42b28bfeb536dd13ec03e0516f489ad6d`
@@ -120,7 +120,7 @@ mesh replay perturbed-mesh.default.r000.s42~no-judgment
 | `manifest.json` | `sha256:8c17f68d452793279f333e0659e149cd64cb82b0a72c96349fb5b3f35e9425ff` |
 | `metrics.json` | `sha256:5146fdf5f86ffdef47ffad4f9d6450204708b4d6ce21c9b7a5337b5a0ccfbcb8` |
 | `replay.json` | `sha256:7e49e57b7676c7a86b705ff4f1c95cb0373c2e7637b200e8408124e0cae5575d` |
-| `topology.json` | `sha256:6e5806f61d4d28bc813d8f54d7f899d41f14e9d7023891365ecaed8f9a0492b3` |
+| `topology.json` | `sha256:578bbf15732a45bca4a887de95d792ac50562bb7965720ac92898754bfa57b9b` |
 
 ## Limitations
 

@@ -163,7 +163,7 @@
         "ValidationResult"
       ],
       "trust_boundary": "LOCAL_DETERMINISTIC",
-      "latency_ms": 0.0999,
+      "latency_ms": 0.1006,
       "provenance": "pordenone.validator.v2",
       "health": "OK",
       "deterministic": true,

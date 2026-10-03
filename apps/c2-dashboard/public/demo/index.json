@@ -578,7 +578,7 @@
       "unit": "ms"
     },
     {
-      "definition": "Judgment requests that reached a networked provider.",
+      "definition": "Judgments answered by a networked provider (in a replay, read from its recording; replay itself sends nothing).",
       "id": "network_calls",
       "unit": "count"
     },
