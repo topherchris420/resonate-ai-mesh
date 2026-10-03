@@ -1,0 +1,14 @@
+id: instability-routing-cuts-judgment-calls
+claim: >
+  Consulting judgment only for agents whose recent proposals were often not
+  committed reduces judgment calls on the Perturbed Mesh.
+status: provisional
+evidence:
+  - experiment: resonance-routing
+    role: supports
+    check: { type: prediction }
+  - experiment: resonance-routing
+    role: supports
+    check: { type: condition_max, condition: judge_on_instability, metric: unsafe_commits, max: 0 }
+limitations:
+  - 'See instability-routing-preserves-protection: the reduction comes with a loss of protection.'

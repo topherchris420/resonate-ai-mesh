@@ -72,11 +72,24 @@ pub fn policy_for_level(level: AdaptiveLevel) -> PolicyConfiguration {
     }
 }
 
+/// What the operator level becomes when the human-state signal is missing or invalid.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum SignalLossPolicy {
+    /// Assume at least HIGH, so background work is deferred (fail closed).
+    #[default]
+    AssumeHigh,
+    /// Keep the last level derived from a usable signal.
+    HoldLast,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields, default)]
 pub struct AdaptivePolicyConfig {
     /// Withhold background proposals while the operator level defers them.
     pub enabled: bool,
+    /// Level used while the human-state signal is unusable.
+    pub on_signal_loss: SignalLossPolicy,
     /// Load thresholds for ELEVATED, HIGH, CRITICAL (load below the first is NORMAL).
     pub thresholds: [f64; 3],
     /// Proposals at or below this priority count as background work.
@@ -87,6 +100,7 @@ impl Default for AdaptivePolicyConfig {
     fn default() -> Self {
         Self {
             enabled: true,
+            on_signal_loss: SignalLossPolicy::AssumeHigh,
             thresholds: [0.4, 0.65, 0.85],
             background_priority_max: 0,
         }

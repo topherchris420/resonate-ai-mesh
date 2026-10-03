@@ -104,17 +104,23 @@ fn final_outcomes(decisions: &[DecisionRecord]) -> BTreeMap<String, (String, u64
     outcomes
 }
 
+/// One side of a timeline comparison.
+pub struct TimelineSide<'a> {
+    pub run_id: &'a str,
+    pub events: &'a [ChainedEvent],
+    pub decisions: &'a [DecisionRecord],
+    pub metrics: &'a Value,
+}
+
 pub fn compare(
-    left_run: &str,
-    left_events: &[ChainedEvent],
-    left_decisions: &[DecisionRecord],
-    left_metrics: &Value,
-    right_run: &str,
-    right_events: &[ChainedEvent],
-    right_decisions: &[DecisionRecord],
-    right_metrics: &Value,
+    left: TimelineSide<'_>,
+    right: TimelineSide<'_>,
     overrides: BTreeMap<String, Value>,
 ) -> TimelineComparison {
+    let (left_run, left_events, left_decisions, left_metrics) =
+        (left.run_id, left.events, left.decisions, left.metrics);
+    let (right_run, right_events, right_decisions, right_metrics) =
+        (right.run_id, right.events, right.decisions, right.metrics);
     let rules = Normalization {
         ignore_run_identity: true,
         ignore_software_version: true,
@@ -317,14 +323,18 @@ pub async fn run_branch(
         crate::record::read_jsonl(&bundle.dir.join("decisions.jsonl"))
             .map_err(|error| error.to_string())?;
     let comparison = compare(
-        &bundle.config.run_id,
-        &bundle.events,
-        &left_decisions,
-        &bundle.metrics,
-        &config.run_id,
-        &result.events,
-        &result.decisions,
-        &right_metrics,
+        TimelineSide {
+            run_id: &bundle.config.run_id,
+            events: &bundle.events,
+            decisions: &left_decisions,
+            metrics: &bundle.metrics,
+        },
+        TimelineSide {
+            run_id: &config.run_id,
+            events: &result.events,
+            decisions: &result.decisions,
+            metrics: &right_metrics,
+        },
         overrides.clone(),
     );
     Ok(Branch {

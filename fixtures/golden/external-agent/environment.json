@@ -1,0 +1,210 @@
+{
+  "agents": [
+    {
+      "behavior": "external",
+      "command": [
+        "python3",
+        "examples/rain_agent_stub.py"
+      ],
+      "gain": 1.8,
+      "goal": "east",
+      "id": "rain_01",
+      "malformed_every": 4,
+      "priority": 1,
+      "script": [],
+      "speed": 5.0,
+      "start": [
+        -55.0,
+        2.0
+      ],
+      "timeout_ms": 3000
+    },
+    {
+      "behavior": "cautious",
+      "command": [],
+      "gain": 1.8,
+      "goal": "east",
+      "id": "local_02",
+      "malformed_every": 4,
+      "priority": 1,
+      "script": [],
+      "speed": 4.0,
+      "start": [
+        -55.0,
+        -8.0
+      ],
+      "timeout_ms": 2000
+    }
+  ],
+  "arena_half_extent": 100.0,
+  "description": "A JSON-lines external agent (examples/rain_agent_stub.py) crosses a hazard field next to a built-in agent.",
+  "dt_ms": 250,
+  "faults": [],
+  "final_state": {
+    "agents": {
+      "local_02": {
+        "agent_id": "local_02",
+        "capabilities": [
+          "cautious"
+        ],
+        "confidence": 1.0,
+        "current_task": "MOVE",
+        "last_updated": 1700000007250,
+        "position": {
+          "x": 51.671,
+          "y": 6.8332,
+          "z": 0.0
+        },
+        "priority": 1,
+        "status": "Executing",
+        "velocity": {
+          "x": 3.130600000000001,
+          "y": 2.1258999999999997,
+          "z": 0.0
+        }
+      },
+      "rain_01": {
+        "agent_id": "rain_01",
+        "capabilities": [
+          "external"
+        ],
+        "confidence": 1.0,
+        "current_task": "MOVE",
+        "last_updated": 1700000006500,
+        "position": {
+          "x": 55.0,
+          "y": 5.0,
+          "z": 0.0
+        },
+        "priority": 1,
+        "status": "Executing",
+        "velocity": {
+          "x": 0.9834000000000032,
+          "y": -1.4866000000000001,
+          "z": 0.0
+        }
+      }
+    },
+    "hazards": {
+      "bog": {
+        "center": {
+          "x": 28.0,
+          "y": 12.0,
+          "z": 0.0
+        },
+        "id": "bog",
+        "radius": 7.0
+      },
+      "knoll": {
+        "center": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "id": "knoll",
+        "radius": 10.0
+      }
+    },
+    "revision": 60
+  },
+  "hazards": [
+    {
+      "appears_at_tick": 0,
+      "center": [
+        0.0,
+        0.0
+      ],
+      "id": "knoll",
+      "radius": 10.0,
+      "retires_at_tick": null
+    },
+    {
+      "appears_at_tick": 0,
+      "center": [
+        28.0,
+        12.0
+      ],
+      "id": "bog",
+      "radius": 7.0,
+      "retires_at_tick": null
+    }
+  ],
+  "human_review": {
+    "approve_below_load": 0.75,
+    "latency_ticks": 3,
+    "mode": "simulated_operator"
+  },
+  "human_state": {
+    "alpha": 0.3,
+    "baseline": 0.25,
+    "enabled": true,
+    "noise": 0.01,
+    "perturbations": [],
+    "trace": null,
+    "w_complexity": 0.15,
+    "w_rejections": 0.6,
+    "w_reviews": 0.3,
+    "window": 6
+  },
+  "kernel": {
+    "judgment": {
+      "profile": "evidence_heuristic",
+      "provider": "mock",
+      "recorded_from": null,
+      "recorded_from_condition": null,
+      "timeout_ms": 10000
+    },
+    "judgment_policy": {
+      "contradiction_review_threshold": 0.75,
+      "contradiction_revise_threshold": 0.5,
+      "human_review_threshold": 0.5,
+      "minimum_confidence": 0.7,
+      "minimum_evidence_score": 2.0,
+      "scope_violation_threshold": 0.5,
+      "version": "pordenone.judgment.policy.v1"
+    },
+    "policy": {
+      "adaptive": {
+        "background_priority_max": 0,
+        "enabled": true,
+        "on_signal_loss": "assume_high",
+        "thresholds": [
+          0.4,
+          0.65,
+          0.85
+        ]
+      },
+      "routing": {
+        "mode": "always"
+      }
+    },
+    "validator": {
+      "allowed_actions": [
+        "MOVE",
+        "PATROL",
+        "INSPECT",
+        "STANDBY",
+        "HOLD"
+      ],
+      "disabled_checks": [],
+      "max_future_skew_ms": 1000,
+      "max_priority": 10,
+      "max_spatial_bound": 10000.0,
+      "max_stale_ms": 1500,
+      "max_step": 8.0,
+      "min_priority": 0,
+      "min_separation": 3.0
+    }
+  },
+  "points_of_interest": [
+    {
+      "id": "east",
+      "position": [
+        55.0,
+        5.0
+      ]
+    }
+  ],
+  "scenario": "external-agent",
+  "ticks": 30
+}

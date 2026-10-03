@@ -1,0 +1,5 @@
+# An external JSON-lines agent (examples/rain_agent_stub.py). Replay
+# substitutes its recorded turns, so verifying this fixture needs no Python.
+path: ../../../scenarios/external-agent.yaml
+seed: 42
+set: { ticks: 30 }

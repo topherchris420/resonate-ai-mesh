@@ -26,6 +26,9 @@ pub struct Cli {
         env = "MESH_ARTIFACTS"
     )]
     pub artifacts: PathBuf,
+    /// Repository root (where scenarios/, experiments/, claims/ live).
+    #[arg(long, global = true, default_value = ".", env = "MESH_ROOT")]
+    pub root: PathBuf,
     #[command(subcommand)]
     pub command: Command,
 }
@@ -45,6 +48,79 @@ pub enum Command {
     /// Run or compare experiments (conditions x repetitions).
     #[command(subcommand)]
     Experiment(ExperimentCommand),
+    /// Explain why a decision happened: walk its causal chain.
+    Explain(ExplainArgs),
+    /// What this installation can do right now (probed, not assumed).
+    Capabilities(JsonArgs),
+    /// Print the mesh topology for a scenario, manifest, or recorded run.
+    Topology(TopologyArgs),
+    /// Check research claims against experiment evidence.
+    #[command(subcommand)]
+    Claims(ClaimsCommand),
+    /// Verify or regenerate golden recordings.
+    #[command(subcommand)]
+    Golden(GoldenCommand),
+    /// Record, explain, replay, and branch the canonical scenario end to end.
+    Demo,
+    /// List recorded runs and experiments.
+    List(JsonArgs),
+    /// Export real recorded runs and experiment summaries for the static cockpit.
+    ExportWeb(ExportArgs),
+    /// Serve the cockpit API, live sessions, and the hardened ingest endpoint.
+    Serve(crate::server::ServeArgs),
+}
+
+#[derive(Args)]
+pub struct JsonArgs {
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args)]
+pub struct ExplainArgs {
+    /// Run bundle directory or run id.
+    pub run: String,
+    /// Proposal id, correlation id, or event id.
+    pub target: String,
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args)]
+pub struct TopologyArgs {
+    /// Scenario, manifest, or run bundle (default: the canonical scenario).
+    pub path: Option<PathBuf>,
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Subcommand)]
+pub enum ClaimsCommand {
+    /// Evaluate every claim; exit non-zero if a claim overstates its evidence.
+    Check(JsonArgs),
+}
+
+#[derive(Subcommand)]
+pub enum GoldenCommand {
+    /// Replay every golden recording; fail on the first divergence.
+    Verify(GoldenArgs),
+    /// Regenerate golden recordings after an intentional behavior change.
+    Update(GoldenArgs),
+}
+
+#[derive(Args)]
+pub struct GoldenArgs {
+    #[arg(long, default_value = "fixtures/golden")]
+    pub dir: PathBuf,
+}
+
+#[derive(Args)]
+pub struct ExportArgs {
+    #[arg(long, default_value = "apps/c2-dashboard/public/demo")]
+    pub out: PathBuf,
+    /// Override repetitions of exported experiments.
+    #[arg(long)]
+    pub reps: Option<u32>,
 }
 
 #[derive(Subcommand)]
@@ -483,15 +559,20 @@ async fn cmd_diff(cli: &Cli, args: &DiffArgs) -> Result<i32, String> {
         )
         .map_err(|error| error.to_string())
     };
+    let (left_decisions, right_decisions) = (read(&left)?, read(&right)?);
     let comparison = crate::counterfactual::compare(
-        &left.config.run_id,
-        &left.events,
-        &read(&left)?,
-        &left.metrics,
-        &right.config.run_id,
-        &right.events,
-        &read(&right)?,
-        &right.metrics,
+        crate::counterfactual::TimelineSide {
+            run_id: &left.config.run_id,
+            events: &left.events,
+            decisions: &left_decisions,
+            metrics: &left.metrics,
+        },
+        crate::counterfactual::TimelineSide {
+            run_id: &right.config.run_id,
+            events: &right.events,
+            decisions: &right_decisions,
+            metrics: &right.metrics,
+        },
         BTreeMap::new(),
     );
     if args.json {
@@ -640,6 +721,207 @@ async fn cmd_experiment_compare(cli: &Cli, args: &ExperimentCompareArgs) -> Resu
     Ok(0)
 }
 
+async fn cmd_explain(cli: &Cli, args: &ExplainArgs) -> Result<i32, String> {
+    let bundle = load_bundle(cli, &args.run)?;
+    let explanation = crate::explain::explain(&bundle.events, &args.target).ok_or_else(|| {
+        format!(
+            "nothing in {} matches `{}`",
+            bundle.config.run_id, args.target
+        )
+    })?;
+    if args.json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&explanation).unwrap_or_default()
+        );
+    } else {
+        print!("{}", crate::explain::render(&explanation));
+    }
+    Ok(0)
+}
+
+fn probe(cli: &Cli) -> crate::capabilities::Probe {
+    crate::capabilities::Probe {
+        root: cli.root.clone(),
+        artifacts: cli.artifacts.clone(),
+    }
+}
+
+async fn cmd_capabilities(cli: &Cli, args: &JsonArgs) -> Result<i32, String> {
+    let report =
+        crate::capabilities::discover(&probe(cli), &crate::capabilities::LiveFacts::default());
+    if args.json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&report).unwrap_or_default()
+        );
+    } else {
+        print!("{}", crate::capabilities::render(&report));
+    }
+    Ok(0)
+}
+
+async fn cmd_topology(cli: &Cli, args: &TopologyArgs) -> Result<i32, String> {
+    let path = args
+        .path
+        .clone()
+        .unwrap_or_else(|| cli.root.join("scenarios/perturbed-mesh.yaml"));
+    let topology = if path.join("topology.json").is_file() {
+        crate::record::read_json::<crate::topology::Topology>(&path.join("topology.json"))
+            .map_err(|e| e.to_string())?
+    } else {
+        let target = load_target(&path)?;
+        let config = resolve_target(&target, None, 0, None, &BTreeMap::new())?;
+        crate::topology::from_config(&config, None, None, false)
+    };
+    let problems = crate::topology::check(&topology);
+    if args.json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&topology).unwrap_or_default()
+        );
+    } else {
+        println!(
+            "MESH TOPOLOGY ({} nodes, {} edges)\n",
+            topology.nodes.len(),
+            topology.edges.len()
+        );
+        for node in &topology.nodes {
+            println!(
+                "  {:<26} {:<12} {:<24} deterministic={:<5} networked={:<5} mutates_state={}",
+                node.id,
+                format!("{:?}", node.kind).to_uppercase(),
+                format!("{:?}", node.trust_boundary),
+                node.deterministic,
+                node.networked,
+                node.may_mutate_state
+            );
+        }
+        println!();
+        for edge in &topology.edges {
+            println!(
+                "  {:<26} --{:<10}--> {:<26} {}",
+                edge.from,
+                format!("{:?}", edge.kind).to_lowercase(),
+                edge.to,
+                edge.schema
+            );
+        }
+        if problems.is_empty() {
+            println!("\n  Structural checks: exactly one node may mutate state; no agent or judge reaches state directly.");
+        } else {
+            for problem in &problems {
+                println!("  ! {problem}");
+            }
+        }
+    }
+    Ok(if problems.is_empty() { 0 } else { 1 })
+}
+
+async fn cmd_claims(cli: &Cli, args: &JsonArgs) -> Result<i32, String> {
+    let results = crate::claims::check_claims(&cli.root.join("claims"), &cli.artifacts)?;
+    if args.json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&results).unwrap_or_default()
+        );
+    } else {
+        print!("{}", crate::claims::render(&results));
+    }
+    Ok(if results.iter().any(|r| r.level == "error") {
+        1
+    } else {
+        0
+    })
+}
+
+async fn cmd_golden_verify(cli: &Cli, args: &GoldenArgs) -> Result<i32, String> {
+    let dir = if args.dir.is_absolute() {
+        args.dir.clone()
+    } else {
+        cli.root.join(&args.dir)
+    };
+    let results = crate::golden::verify(&dir).await;
+    if results.is_empty() {
+        return Err(format!("no golden recordings under {}", dir.display()));
+    }
+    let mut failed = 0;
+    for result in &results {
+        match (&result.report, &result.error) {
+            (Some(report), _) if report.verified => println!(
+                "GOLDEN OK        {:<40} {} events, head {}",
+                result.name,
+                report.events_matching,
+                crate::bundle::short(&report.head_replayed)
+            ),
+            (Some(report), _) => {
+                failed += 1;
+                println!("GOLDEN DIVERGED  {}", result.name);
+                print!("{}", crate::replay::render(report));
+            }
+            (None, error) => {
+                failed += 1;
+                println!(
+                    "GOLDEN ERROR     {}: {}",
+                    result.name,
+                    error.as_deref().unwrap_or("unknown")
+                );
+            }
+        }
+    }
+    if failed > 0 {
+        println!("\n{failed} golden recording(s) no longer reproduce. If the change is intentional, run `mesh golden update` and commit the result.");
+    }
+    Ok(if failed == 0 { 0 } else { 1 })
+}
+
+async fn cmd_golden_update(cli: &Cli, args: &GoldenArgs) -> Result<i32, String> {
+    let dir = if args.dir.is_absolute() {
+        args.dir.clone()
+    } else {
+        cli.root.join(&args.dir)
+    };
+    for (run_id, head) in crate::golden::update(&dir).await? {
+        println!("UPDATED  {run_id:<44} head {}", crate::bundle::short(&head));
+    }
+    Ok(0)
+}
+
+async fn cmd_list(cli: &Cli, args: &JsonArgs) -> Result<i32, String> {
+    let runs = crate::capabilities::recorded_runs(&cli.artifacts);
+    let experiments: Vec<String> = std::fs::read_dir(cli.artifacts.join("experiments"))
+        .map(|entries| {
+            let mut ids: Vec<String> = entries
+                .filter_map(|e| e.ok())
+                .filter(|e| e.path().join("summary.json").is_file())
+                .map(|e| e.file_name().to_string_lossy().to_string())
+                .collect();
+            ids.sort();
+            ids
+        })
+        .unwrap_or_default();
+    if args.json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&serde_json::json!({
+                "runs": runs.iter().map(|(p, _)| p.display().to_string()).collect::<Vec<_>>(),
+                "experiments": experiments,
+            }))
+            .unwrap_or_default()
+        );
+    } else {
+        println!("Runs (newest first):");
+        for (path, _) in &runs {
+            println!("  {}", path.display());
+        }
+        println!("\nExperiments:");
+        for id in &experiments {
+            println!("  {id}");
+        }
+    }
+    Ok(0)
+}
+
 pub async fn main(cli: Cli) -> i32 {
     init_logging();
     let outcome = match &cli.command {
@@ -652,6 +934,33 @@ pub async fn main(cli: Cli) -> i32 {
         Command::Experiment(ExperimentCommand::Compare(args)) => {
             cmd_experiment_compare(&cli, args).await
         }
+        Command::Explain(args) => cmd_explain(&cli, args).await,
+        Command::Capabilities(args) => cmd_capabilities(&cli, args).await,
+        Command::Topology(args) => cmd_topology(&cli, args).await,
+        Command::Claims(ClaimsCommand::Check(args)) => cmd_claims(&cli, args).await,
+        Command::Golden(GoldenCommand::Verify(args)) => cmd_golden_verify(&cli, args).await,
+        Command::Golden(GoldenCommand::Update(args)) => cmd_golden_update(&cli, args).await,
+        Command::Demo => crate::demo::run(&cli.root, &cli.artifacts)
+            .await
+            .map(|text| {
+                print!("{text}");
+                0
+            }),
+        Command::List(args) => cmd_list(&cli, args).await,
+        Command::ExportWeb(args) => {
+            let out = if args.out.is_absolute() {
+                args.out.clone()
+            } else {
+                cli.root.join(&args.out)
+            };
+            crate::web::export(&cli.root, &out, args.reps)
+                .await
+                .map(|_| {
+                    println!("EXPORTED  {}", out.display());
+                    0
+                })
+        }
+        Command::Serve(args) => crate::server::serve(&cli, args).await,
     };
     match outcome {
         Ok(code) => code,

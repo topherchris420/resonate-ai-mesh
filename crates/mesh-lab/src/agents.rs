@@ -341,7 +341,7 @@ impl MeshAgentAdapter for BuiltinAgent {
             Behavior::Patrol => self.cooperative(context, "PATROL", 0, self.spec.speed),
             Behavior::Malformed => {
                 let n = self.proposals_made + 1;
-                if n % self.spec.malformed_every == 0 {
+                if n.is_multiple_of(self.spec.malformed_every) {
                     let position = self.belief.position;
                     let (action, target, priority, why) = match (n / self.spec.malformed_every) % 5
                     {
@@ -472,20 +472,31 @@ pub fn behavior_name(behavior: Behavior) -> &'static str {
     }
 }
 
-/// Replays intents captured from an earlier run. Used in replay for agents
-/// that are not deterministic (external processes).
+/// What a non-deterministic agent did at one tick, as recorded.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct RecordedTurn {
+    pub intent: Option<AgentIntent>,
+    pub explanation: Option<String>,
+    pub faults: Vec<String>,
+}
+
+/// Replays an agent's recorded turns. Used in replay for agents that are not
+/// deterministic (external processes); it reports the original descriptor so
+/// the replayed events are identical, and replay lists the substitution.
 pub struct RecordedAgent {
     descriptor: AgentDescriptor,
-    intents: BTreeMap<u64, Option<AgentIntent>>,
+    turns: BTreeMap<u64, RecordedTurn>,
     tick: u64,
+    pending_faults: Vec<String>,
 }
 
 impl RecordedAgent {
-    pub fn new(descriptor: AgentDescriptor, intents: BTreeMap<u64, Option<AgentIntent>>) -> Self {
+    pub fn new(descriptor: AgentDescriptor, turns: BTreeMap<u64, RecordedTurn>) -> Self {
         Self {
             descriptor,
-            intents,
+            turns,
             tick: 0,
+            pending_faults: Vec::new(),
         }
     }
 }
@@ -498,14 +509,20 @@ impl MeshAgentAdapter for RecordedAgent {
         self.tick = observation.tick;
     }
     fn propose(&mut self, context: &ProposalContext) -> Option<AgentIntent> {
-        self.intents.get(&context.tick).cloned().flatten()
+        self.tick = context.tick;
+        let turn = self.turns.get(&context.tick).cloned().unwrap_or_default();
+        self.pending_faults = turn.faults;
+        turn.intent
     }
     fn explain(&self) -> Option<String> {
-        self.intents
+        self.turns
             .get(&self.tick)
-            .and_then(|intent| intent.as_ref().map(|i| i.rationale.clone()))
+            .and_then(|turn| turn.explanation.clone())
     }
     fn receive_outcome(&mut self, _outcome: &ProposalOutcome) {}
+    fn take_faults(&mut self) -> Vec<String> {
+        std::mem::take(&mut self.pending_faults)
+    }
 }
 
 #[derive(Serialize)]
@@ -622,7 +639,17 @@ impl ExternalProcessAgent {
         })
         .map_err(|error| error.to_string())?;
         self.send_line(&hello)?;
-        let reply = self.read_line().ok_or("no hello reply")?;
+        // Interpreter start-up can be slow on a loaded machine; allow more time
+        // for the handshake than for each proposal.
+        let reply = self
+            .lines
+            .as_ref()
+            .and_then(|lines| {
+                lines
+                    .recv_timeout(self.timeout.max(Duration::from_secs(15)))
+                    .ok()
+            })
+            .ok_or("no hello reply")?;
         let hello: HelloReply = serde_json::from_str(&reply).map_err(|error| error.to_string())?;
         if hello.protocol != AGENT_PROTOCOL {
             return Err(format!("unsupported protocol `{}`", hello.protocol));
@@ -674,9 +701,7 @@ impl MeshAgentAdapter for ExternalProcessAgent {
 
     fn propose(&mut self, context: &ProposalContext) -> Option<AgentIntent> {
         self.explanation = None;
-        if self.stdin.is_none() {
-            return None;
-        }
+        self.stdin.as_ref()?;
         self.send(&ToAgent::Propose { context });
         let Some(line) = self.read_line() else {
             self.faults

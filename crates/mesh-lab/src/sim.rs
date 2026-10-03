@@ -235,10 +235,7 @@ impl Sensors {
                 .unwrap_or(0);
         let truth = |agent: &str| -> Option<Vector3> {
             let history = self.history.get(agent)?;
-            let index = history
-                .len()
-                .checked_sub(1 + delay_ticks as usize)
-                .unwrap_or(0);
+            let index = history.len().saturating_sub(1 + delay_ticks as usize);
             history.get(index).copied()
         };
         let Some(own) = truth(agent_id).or_else(|| positions.get(agent_id).copied()) else {

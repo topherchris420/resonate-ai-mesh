@@ -12,6 +12,11 @@ use event_bus::{quantize, ChainedEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+/// (tick, committed displacement) of one agent.
+type TickMove = (u64, (f64, f64));
+/// (agent id, finite target) of one proposal.
+type AgentTarget<'a> = (&'a str, (f64, f64, f64));
+
 pub const METRICS_VERSION: &str = "resonate-ai-mesh.metrics.v1";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -225,7 +230,7 @@ pub fn compute(
     );
 
     // Displacements of committed moves, in commit order, per agent.
-    let mut moves: BTreeMap<&str, Vec<(u64, (f64, f64))>> = BTreeMap::new();
+    let mut moves: BTreeMap<&str, Vec<TickMove>> = BTreeMap::new();
     for record in &committed_records {
         if let (Some(from), Some(to)) = (vec_of(&record.from), vec_of(&record.target)) {
             let delta = (to.0 - from.0, to.1 - from.1);
@@ -442,7 +447,7 @@ pub fn compute(
     let conflict_radius = scenario.kernel.validator.min_separation.max(1.0);
     let mut pair_count = 0u64;
     let mut conflicts = 0u64;
-    let mut per_tick_targets: BTreeMap<u64, Vec<(&str, (f64, f64, f64))>> = BTreeMap::new();
+    let mut per_tick_targets: BTreeMap<u64, Vec<AgentTarget>> = BTreeMap::new();
     for record in &proposals {
         if record.duplicate_submission {
             continue;

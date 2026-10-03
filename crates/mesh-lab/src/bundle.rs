@@ -62,7 +62,6 @@ pub fn save_run(
     write_json(&dir.join("manifest.json"), config)?;
     write_jsonl(&dir.join("events.jsonl"), &result.events)?;
     write_jsonl(&dir.join("decisions.jsonl"), &result.decisions)?;
-    write_jsonl(&dir.join("judgments.jsonl"), &result.judgments)?;
     write_jsonl(&dir.join("intents.jsonl"), &result.intents)?;
     write_json(&dir.join("metrics.json"), &result.metrics)?;
     write_json(

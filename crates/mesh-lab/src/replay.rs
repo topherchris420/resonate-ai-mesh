@@ -85,23 +85,45 @@ pub fn substitutions_for(bundle: &Bundle) -> Substitutions {
     if judge_needs_recording {
         substitutions.judgments = Some(bundle.judgments.clone());
     }
-    let nondeterministic: Vec<&str> = bundle
+    for agent in bundle
         .provenance
         .agents
         .iter()
-        .filter(|agent| !agent.deterministic || agent.adapter.starts_with("recorded:"))
-        .map(|agent| agent.agent_id.as_str())
-        .collect();
+        .filter(|agent| !agent.deterministic)
+    {
+        substitutions
+            .agent_descriptors
+            .insert(agent.agent_id.clone(), agent.clone());
+        substitutions
+            .intents
+            .entry(agent.agent_id.clone())
+            .or_default();
+    }
     for recorded in &bundle.intents {
-        if nondeterministic.contains(&recorded.agent_id.as_str()) {
-            substitutions
-                .intents
-                .entry(recorded.agent_id.clone())
-                .or_default()
-                .insert(recorded.tick, recorded.intent.clone());
+        if let Some(turns) = substitutions.intents.get_mut(&recorded.agent_id) {
+            turns.insert(
+                recorded.tick,
+                crate::agents::RecordedTurn {
+                    intent: recorded.intent.clone(),
+                    explanation: recorded.explanation.clone(),
+                    faults: recorded.faults.clone(),
+                },
+            );
         }
     }
     for chained in &bundle.events {
+        if chained.event.event_type == "human_state"
+            && chained.event.payload["datum"]["source"] != crate::sim::OPERATOR_LOAD_SOURCE
+        {
+            if let (Some(tick), Ok(datum)) = (
+                chained.event.tick,
+                serde_json::from_value::<event_bus::HumanStateDatum>(
+                    chained.event.payload["datum"].clone(),
+                ),
+            ) {
+                substitutions.human_state.insert(tick, datum);
+            }
+        }
         if chained.event.event_type == "operator_command" {
             if let (Some(tick), Ok(command)) = (
                 chained.event.tick,
@@ -340,6 +362,9 @@ pub async fn replay_bundle(bundle: &Bundle) -> ReplayReport {
     }
     if !substitutions.commands.is_empty() {
         substituted.push("operator commands (recorded)".to_string());
+    }
+    if !substitutions.human_state.is_empty() {
+        substituted.push("external human-state input (recorded)".to_string());
     }
     let rules = Normalization {
         ignore_run_identity: false,

@@ -1,0 +1,32 @@
+{
+  "run_id": "external-agent.default.r000.s42",
+  "seed": 42,
+  "genesis_hash": "sha256:d051a74caf7ff98ed467a02a3375c8a500a8ac552a5d44f1f1812bbe6e0cae63",
+  "head_hash": "sha256:49d0302dbabc36d39f6d1a1c231c0f23f4304da5ddb85b2c2f647168b2893a0e",
+  "event_count": 415,
+  "final_state_hash": "sha256:77c0298c5bdea0a6df8d2ee6d1ce873ebfaa73ad4baac03fae916f4b4cd9a5c5",
+  "ticks_run": 30,
+  "termination": "max_ticks",
+  "substituted": [],
+  "counts": {
+    "decisions": 57,
+    "events": 415,
+    "events.adaptive_level": 4,
+    "events.commitment": 57,
+    "events.environment_change": 2,
+    "events.human_state": 30,
+    "events.judgment": 56,
+    "events.observation": 60,
+    "events.proposal": 57,
+    "events.resonance_sample": 30,
+    "events.run_completed": 1,
+    "events.run_started": 1,
+    "events.state_transition": 60,
+    "events.validation": 57
+  },
+  "policy_versions": [
+    "pordenone.judgment.policy.v1",
+    "pordenone.kernel.policy.v2",
+    "pordenone.validator.v2"
+  ]
+}

@@ -1,0 +1,16 @@
+id: operator-load-gating-reduces-commits
+claim: >
+  With adaptive gating enabled, background proposals are deferred while the
+  simulated operator-load level is HIGH or CRITICAL, which reduces the number
+  of commits during load perturbations without any unsafe commit.
+status: provisional
+evidence:
+  - experiment: human-state-adaptation
+    role: supports
+    check: { type: prediction }
+  - experiment: human-state-adaptation
+    role: supports
+    check: { type: condition_max, condition: gating_on, metric: unsafe_commits, max: 0 }
+limitations:
+  - 'The operator-load index is simulated (operator_load_v1) and is not a measurement of any person.'
+  - 'Fewer commits is not the same as better outcomes; task progress of background work drops by design.'

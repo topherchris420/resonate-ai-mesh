@@ -35,3 +35,4 @@ futures-util = { workspace = true }
 
 [dev-dependencies]
 proptest = { workspace = true }
+event-bus = { path = "../event-bus" }

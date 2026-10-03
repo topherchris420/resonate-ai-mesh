@@ -161,6 +161,27 @@ mod tests {
     }
 
     proptest! {
+        /// Hashes are recomputed from parsed JSON, so every finite float must
+        /// survive a write/read round trip bit for bit.
+        #[test]
+        fn chains_with_arbitrary_floats_verify_after_a_round_trip(values in proptest::collection::vec(-1.0e9f64..1.0e9, 1..20)) {
+            let mut chain = EventChain::new("sha256:genesis");
+            let events: Vec<ChainedEvent> = values
+                .iter()
+                .enumerate()
+                .map(|(n, v)| {
+                    let mut e = event(n as u64);
+                    e.payload = json!({"value": v, "tiny": v / 1.0e12});
+                    chain.append(e)
+                })
+                .collect();
+            let reparsed: Vec<ChainedEvent> = events
+                .iter()
+                .map(|c| serde_json::from_str(&serde_json::to_string(c).unwrap()).unwrap())
+                .collect();
+            prop_assert!(verify_chain("sha256:genesis", &reparsed).is_ok());
+        }
+
         #[test]
         fn any_payload_edit_is_detected(count in 2u64..20, victim in 0usize..20, value in any::<i64>()) {
             let mut events = build(count);

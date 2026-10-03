@@ -48,7 +48,13 @@ conditions:
   - id: network_unavailable
     set: { faults: [{ kind: network_unavailable, at_tick: 20, duration_ticks: 8 }] }
   - id: human_state_dropout
+    description: The operator-load signal is lost just before the load spike; the level fails closed to HIGH (default).
     set: { faults: [{ kind: human_state_dropout, at_tick: 38, duration_ticks: 16 }] }
+  - id: human_state_dropout_hold_last
+    description: Same fault with the earlier behavior, keeping the last level. This silently disables gating.
+    set:
+      faults: [{ kind: human_state_dropout, at_tick: 38, duration_ticks: 16 }]
+      kernel.policy.adaptive.on_signal_loss: hold_last
 invariants:
   - event_chain_intact
   - no_commit_without_validation_pass

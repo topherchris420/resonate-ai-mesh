@@ -1,0 +1,23 @@
+id: judgment-never-overrides-validation
+claim: >
+  Across every judge tested (deterministic-only, evidence-heuristic,
+  contrarian, recorded) and every injected fault, judgment was never consulted
+  for a proposal that failed deterministic validation, and no proposal was
+  committed without a passing validation of the same proposal.
+status: supported
+evidence:
+  - experiment: judgment-ablation
+    role: supports
+    check: { type: invariant, name: no_judgment_after_failed_validation }
+  - experiment: judgment-ablation
+    role: supports
+    check: { type: invariant, name: no_commit_without_validation_pass }
+  - experiment: fault-injection
+    role: supports
+    check: { type: invariant, name: no_judgment_after_failed_validation }
+  - experiment: fault-injection
+    role: supports
+    check: { type: invariant, name: no_commit_without_validation_pass }
+limitations:
+  - 'This is also enforced by construction (a commit authorization requires a ValidatedProposal) and by property tests; the experiments confirm it on recorded runs, they do not prove it.'
+  - 'The remote Jev condition did not run without credentials and network permission.'

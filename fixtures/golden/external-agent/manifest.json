@@ -1,0 +1,162 @@
+{
+  "run_id": "external-agent.default.r000.s42",
+  "experiment_id": "external-agent",
+  "condition_id": "default",
+  "repetition": 0,
+  "seed": 42,
+  "scenario": {
+    "id": "external-agent",
+    "description": "A JSON-lines external agent (examples/rain_agent_stub.py) crosses a hazard field next to a built-in agent.",
+    "ticks": 30,
+    "dt_ms": 250,
+    "start_time_ms": 1700000000000,
+    "arena_half_extent": 100.0,
+    "hazards": [
+      {
+        "id": "knoll",
+        "center": [
+          0.0,
+          0.0
+        ],
+        "radius": 10.0,
+        "appears_at_tick": 0,
+        "retires_at_tick": null
+      },
+      {
+        "id": "bog",
+        "center": [
+          28.0,
+          12.0
+        ],
+        "radius": 7.0,
+        "appears_at_tick": 0,
+        "retires_at_tick": null
+      }
+    ],
+    "points_of_interest": [
+      {
+        "id": "east",
+        "position": [
+          55.0,
+          5.0
+        ]
+      }
+    ],
+    "agents": [
+      {
+        "id": "rain_01",
+        "behavior": "external",
+        "start": [
+          -55.0,
+          2.0
+        ],
+        "goal": "east",
+        "speed": 5.0,
+        "priority": 1,
+        "gain": 1.8,
+        "malformed_every": 4,
+        "script": [],
+        "command": [
+          "python3",
+          "examples/rain_agent_stub.py"
+        ],
+        "timeout_ms": 3000
+      },
+      {
+        "id": "local_02",
+        "behavior": "cautious",
+        "start": [
+          -55.0,
+          -8.0
+        ],
+        "goal": "east",
+        "speed": 4.0,
+        "priority": 1,
+        "gain": 1.8,
+        "malformed_every": 4,
+        "script": [],
+        "command": [],
+        "timeout_ms": 2000
+      }
+    ],
+    "sensors": {
+      "position_noise": 0.25,
+      "latency_ticks": 0
+    },
+    "human_state": {
+      "enabled": true,
+      "baseline": 0.25,
+      "alpha": 0.3,
+      "w_rejections": 0.6,
+      "w_reviews": 0.3,
+      "w_complexity": 0.15,
+      "window": 6,
+      "noise": 0.01,
+      "perturbations": [],
+      "trace": null
+    },
+    "human_review": {
+      "mode": "simulated_operator",
+      "latency_ticks": 3,
+      "approve_below_load": 0.75
+    },
+    "faults": [],
+    "kernel": {
+      "validator": {
+        "max_spatial_bound": 10000.0,
+        "max_stale_ms": 1500,
+        "max_future_skew_ms": 1000,
+        "min_priority": 0,
+        "max_priority": 10,
+        "allowed_actions": [
+          "MOVE",
+          "PATROL",
+          "INSPECT",
+          "STANDBY",
+          "HOLD"
+        ],
+        "max_step": 8.0,
+        "min_separation": 3.0,
+        "disabled_checks": []
+      },
+      "judgment": {
+        "provider": "mock",
+        "profile": "evidence_heuristic",
+        "recorded_from": null,
+        "recorded_from_condition": null,
+        "timeout_ms": 10000
+      },
+      "judgment_policy": {
+        "version": "pordenone.judgment.policy.v1",
+        "minimum_confidence": 0.7,
+        "minimum_evidence_score": 2.0,
+        "scope_violation_threshold": 0.5,
+        "contradiction_revise_threshold": 0.5,
+        "contradiction_review_threshold": 0.75,
+        "human_review_threshold": 0.5
+      },
+      "policy": {
+        "adaptive": {
+          "enabled": true,
+          "on_signal_loss": "assume_high",
+          "thresholds": [
+            0.4,
+            0.65,
+            0.85
+          ],
+          "background_priority_max": 0
+        },
+        "routing": {
+          "mode": "always"
+        }
+      }
+    },
+    "termination": {
+      "stop_when_all_goals_reached": true,
+      "goal_radius": 2.0
+    }
+  },
+  "overrides": {
+    "ticks": 30
+  }
+}

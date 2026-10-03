@@ -531,7 +531,7 @@ async fn adaptive_gating_can_be_switched_off_for_ablation() {
 }
 
 #[tokio::test]
-async fn invalid_human_state_drops_evidence_without_guessing_a_level() {
+async fn invalid_human_state_drops_evidence_and_follows_the_signal_loss_policy() {
     let (kernel, _) = deterministic(None);
     let good = HumanStateDatum::simulated(
         "operator_load_index",
@@ -549,7 +549,25 @@ async fn invalid_human_state_drops_evidence_without_guessing_a_level() {
     lost.value = 0.0;
     let event = kernel.observe_human_state(&lost, "e2").await.unwrap();
     assert_eq!(event.payload["signal_usable"], false);
-    assert_eq!(kernel.adaptive_level().await, AdaptiveLevel::Elevated);
+    assert_eq!(
+        kernel.adaptive_level().await,
+        AdaptiveLevel::High,
+        "signal loss fails closed to HIGH by default"
+    );
+
+    let holding = KernelEngine::builder(EventBus::new(16))
+        .policy(KernelPolicyConfig {
+            adaptive: AdaptivePolicyConfig {
+                on_signal_loss: SignalLossPolicy::HoldLast,
+                ..AdaptivePolicyConfig::default()
+            },
+            ..KernelPolicyConfig::default()
+        })
+        .build()
+        .unwrap();
+    holding.observe_human_state(&good, "e1").await;
+    holding.observe_human_state(&lost, "e2").await;
+    assert_eq!(holding.adaptive_level().await, AdaptiveLevel::Elevated);
 }
 
 #[tokio::test]

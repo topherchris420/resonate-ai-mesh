@@ -68,10 +68,14 @@ pub enum RunError {
 pub struct Substitutions {
     /// Judgments to answer from (used when the original judge was networked or recorded).
     pub judgments: Option<Vec<JudgmentEnvelope>>,
-    /// Intents of non-deterministic agents, keyed by agent then tick.
-    pub intents: BTreeMap<String, BTreeMap<u64, Option<AgentIntent>>>,
+    /// Recorded turns of non-deterministic agents, keyed by agent then tick.
+    pub intents: BTreeMap<String, BTreeMap<u64, crate::agents::RecordedTurn>>,
+    /// Original adapter descriptors of substituted agents.
+    pub agent_descriptors: BTreeMap<String, crate::agents::AgentDescriptor>,
     /// Interactive commands recorded in a live session, keyed by tick.
     pub commands: BTreeMap<u64, Vec<ControlCommand>>,
+    /// Human-state data that arrived from an external source, keyed by tick.
+    pub human_state: BTreeMap<u64, HumanStateDatum>,
 }
 
 /// Commands an interactive session may issue between ticks. Each one is
@@ -98,6 +102,11 @@ pub trait RunControl: Send {
     fn commands(&mut self, tick: u64) -> Vec<ControlCommand>;
     /// Called after each tick with the events it produced.
     fn on_tick(&mut self, _tick: u64, _events: &[ChainedEvent]) {}
+    /// Human-state datum from an external source for this tick, replacing the
+    /// simulated model. `None` keeps the simulation.
+    fn human_state(&mut self, _tick: u64) -> Option<HumanStateDatum> {
+        None
+    }
     fn should_stop(&self) -> bool {
         false
     }
@@ -251,9 +260,9 @@ fn build_judge(
                     "a recorded judge needs judgment.recorded_from (a run bundle) or, in an experiment, judgment.recorded_from_condition".into(),
                 )
             })?;
-            let judgments: Vec<JudgmentEnvelope> =
-                crate::record::read_jsonl(&path.join("judgments.jsonl"))
-                    .map_err(|error| RunError::Config(error.to_string()))?;
+            let judgments: Vec<JudgmentEnvelope> = crate::record::Bundle::load(path)
+                .map_err(|error| RunError::Config(error.to_string()))?
+                .judgments;
             (Arc::new(RecordedJudgmentProvider::new(judgments)), true)
         }
         JudgeProvider::Typesafe => {
@@ -296,16 +305,18 @@ fn adapter_for(
         .and_then(|g| scenario.poi(g))
         .map(|poi| point(poi.position));
     if spec.behavior == Behavior::External {
-        if let Some(intents) = substitutions.intents.get(&spec.id) {
-            return Box::new(RecordedAgent::new(
-                crate::agents::AgentDescriptor {
+        if let Some(turns) = substitutions.intents.get(&spec.id) {
+            let descriptor = substitutions
+                .agent_descriptors
+                .get(&spec.id)
+                .cloned()
+                .unwrap_or(crate::agents::AgentDescriptor {
                     agent_id: spec.id.clone(),
-                    adapter: "recorded:external".into(),
-                    deterministic: true,
+                    adapter: "external:unknown".into(),
+                    deterministic: false,
                     networked: false,
-                },
-                intents.clone(),
-            ));
+                });
+            return Box::new(RecordedAgent::new(descriptor, turns.clone()));
         }
         return Box::new(ExternalProcessAgent::start(
             &spec.id,
@@ -588,7 +599,7 @@ pub async fn run(config: &RunConfig, mut options: RunOptions) -> Result<RunResul
     let agent_descriptors: Vec<_> = adapters.values().map(|a| a.descriptor()).collect();
     let record_intents_for: BTreeSet<String> = agent_descriptors
         .iter()
-        .filter(|d| !d.deterministic || d.adapter.starts_with("recorded:"))
+        .filter(|d| !d.deterministic)
         .map(|d| d.agent_id.clone())
         .collect();
     let mut recorded_intents = Vec::new();
@@ -782,14 +793,26 @@ pub async fn run(config: &RunConfig, mut options: RunOptions) -> Result<RunResul
                     )
                 })
                 .collect();
-            let datum: HumanStateDatum = match &trace {
-                Some(trace) => trace.get(tick as usize).cloned().unwrap_or_else(|| {
+            let external = options
+                .substitutions
+                .human_state
+                .get(&tick)
+                .cloned()
+                .or_else(|| {
+                    options
+                        .control
+                        .as_mut()
+                        .and_then(|control| control.human_state(tick))
+                });
+            let datum: HumanStateDatum = match (&trace, external) {
+                (_, Some(datum)) => datum,
+                (Some(trace), None) => trace.get(tick as usize).cloned().unwrap_or_else(|| {
                     let mut missing = load_model.datum(0.0, now, &[]).as_replay();
                     missing.quality = SignalQuality::Missing;
                     missing.confidence = 0.0;
                     missing
                 }),
-                None => load_model.datum(load, now, &human_faults),
+                (None, None) => load_model.datum(load, now, &human_faults),
             };
             let mut event = lab.event(
                 "human_state",
@@ -999,7 +1022,18 @@ pub async fn run(config: &RunConfig, mut options: RunOptions) -> Result<RunResul
             } else {
                 adapter.propose(&context)
             };
-            for problem in adapter.take_faults() {
+            let explanation = if frozen { None } else { adapter.explain() };
+            let problems = adapter.take_faults();
+            if record_intents_for.contains(agent_id) && !frozen {
+                recorded_intents.push(RecordedIntent {
+                    tick,
+                    agent_id: agent_id.clone(),
+                    intent: intent.clone(),
+                    explanation: explanation.clone(),
+                    faults: problems.clone(),
+                });
+            }
+            for problem in problems {
                 recorder.record(lab.event(
                     "fault_effect",
                     agent_id,
@@ -1011,20 +1045,14 @@ pub async fn run(config: &RunConfig, mut options: RunOptions) -> Result<RunResul
                     json!({ "effect": "agent_protocol", "detail": problem }),
                 ));
             }
-            if record_intents_for.contains(agent_id) {
-                recorded_intents.push(RecordedIntent {
-                    tick,
-                    agent_id: agent_id.clone(),
-                    intent: intent.clone(),
-                });
-            }
             let mut source = agent_id.clone();
             if let Some(position) = operator_proposals.iter().position(|(id, _)| id == agent_id) {
                 intent = Some(operator_proposals.remove(position).1);
                 source = "operator_console".to_string();
             }
-            let Some(intent) = intent else { continue };
-            let explanation = adapters.get(agent_id).and_then(|a| a.explain());
+            let Some(intent) = intent else {
+                continue;
+            };
             let observation = last_observation.get(agent_id);
             let skew = agent_faults
                 .iter()

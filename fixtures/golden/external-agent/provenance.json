@@ -1,0 +1,55 @@
+{
+  "bundle_format": "resonate-ai-mesh.run-bundle.v1",
+  "software_version": "resonate-ai-mesh/0.2.0",
+  "git_commit": "82444c49ec6953793083a5f21fc80742d9575f36",
+  "git_dirty": true,
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "os": "linux",
+  "arch": "x86_64",
+  "command": [
+    "mesh",
+    "golden",
+    "update"
+  ],
+  "started_at_wall": "2026-10-03T18:02:54.127794783+00:00",
+  "finished_at_wall": "2026-10-03T18:02:54.189474779+00:00",
+  "run_config_hash": "sha256:d051a74caf7ff98ed467a02a3375c8a500a8ac552a5d44f1f1812bbe6e0cae63",
+  "validator_version": "pordenone.validator.v2",
+  "validator_config_hash": "sha256:5a88c22808add5b9b336fa555d28c4aea2c3091abfca88e4b5732181eb4b05d3",
+  "kernel_policy_version": "pordenone.kernel.policy.v2",
+  "judgment_policy_version": "pordenone.judgment.policy.v1",
+  "question_set_version": "pordenone.judgment.questions.v1",
+  "judgment_state_schema": "pordenone.judgment.state.v2",
+  "event_schema_version": "1.2.0",
+  "judge": {
+    "name": "deterministic_mock",
+    "model": "evidence-heuristic-v1",
+    "kind": "deterministic",
+    "networked": false
+  },
+  "agents": [
+    {
+      "agent_id": "local_02",
+      "adapter": "builtin:cautious",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "rain_01",
+      "adapter": "external:rain-stub",
+      "deterministic": false,
+      "networked": false
+    }
+  ],
+  "parent": null,
+  "file_hashes": {
+    "decisions.jsonl": "sha256:88c985370c5a15299b99e73be57a044c7a682aedf4a9a35511436657ba2b504b",
+    "environment.json": "sha256:c68ab0b77cb8eafc1f61531a5c9d80fe3923352e400e134fcb7bdbfd80ae556b",
+    "events.jsonl": "sha256:9a886c35c2bd0e534578357313d0a4f4623e716ddfcaacd6e854aacc9c90d6ae",
+    "intents.jsonl": "sha256:605668af1b6615090d48c3d9741d71ef14b80ad6b4924772c7cb2426008163b8",
+    "manifest.json": "sha256:d49a4b743291d91c7f43937c7b4ccc86dc985c5867b5b1a7a988744620570501",
+    "metrics.json": "sha256:bf474baacd65cd67adce3a2d33a4c9794b4e54d7b8729536a22e41a932619dda",
+    "replay.json": "sha256:d22694d575ad1a1225a8ae08856b04fa602f122c0e053dbf451341d2d7880c23",
+    "topology.json": "sha256:79533af37ab3164cf1928c7d34dfcdedac207ff7ef8c5457974feed79e08d326"
+  }
+}

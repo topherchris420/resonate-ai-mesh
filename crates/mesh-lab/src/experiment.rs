@@ -13,6 +13,9 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use typed_judgment::JudgmentEnvelope;
 
+/// A finished repetition and, when another condition replays them, its judgments.
+type RunOutcome = Result<(RunRow, Option<Vec<JudgmentEnvelope>>), String>;
+
 pub const SUMMARY_VERSION: &str = "resonate-ai-mesh.experiment-summary.v1";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -189,7 +192,7 @@ async fn run_one(
     options: &ExperimentOptions,
     dir: &Path,
     keep_judgments: bool,
-) -> Result<(RunRow, Option<Vec<JudgmentEnvelope>>), String> {
+) -> RunOutcome {
     let run_config =
         config::resolve_run(manifest, scenario, condition, rep).map_err(|e| e.to_string())?;
     let mut substitutions = Substitutions::default();
@@ -334,58 +337,54 @@ pub async fn run_experiment(
         let done = std::sync::atomic::AtomicU32::new(0);
         let keep_judgments = needs_recording.contains(&condition.id);
         let recorded_ref = &recorded;
-        let results: Vec<Result<(RunRow, Option<Vec<JudgmentEnvelope>>), String>> =
-            std::thread::scope(|scope| {
-                let handles: Vec<_> = (0..workers)
-                    .map(|_| {
-                        let next = &next;
-                        let done = &done;
-                        let source = source.clone();
-                        let dir = dir.clone();
-                        scope.spawn(move || {
-                            let runtime = tokio::runtime::Builder::new_current_thread()
-                                .enable_time()
-                                .build()
-                                .expect("tokio runtime");
-                            let mut out = Vec::new();
-                            loop {
-                                let rep = next.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-                                if rep >= repetitions {
-                                    break;
-                                }
-                                let outcome = runtime.block_on(run_one(
-                                    manifest,
-                                    scenario,
-                                    condition,
-                                    rep,
-                                    source.as_deref().and_then(|s| {
-                                        recorded_ref.get(&(s.to_string(), rep)).cloned()
-                                    }),
-                                    options,
-                                    &dir,
-                                    keep_judgments,
-                                ));
-                                let finished =
-                                    done.fetch_add(1, std::sync::atomic::Ordering::SeqCst) + 1;
-                                if options.progress
-                                    && (finished % 10 == 0 || finished == repetitions)
-                                {
-                                    eprintln!(
-                                        "  {:<28} {:>4}/{}",
-                                        condition.id, finished, repetitions
-                                    );
-                                }
-                                out.push(outcome);
+        let results: Vec<RunOutcome> = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..workers)
+                .map(|_| {
+                    let next = &next;
+                    let done = &done;
+                    let source = source.clone();
+                    let dir = dir.clone();
+                    scope.spawn(move || {
+                        let runtime = tokio::runtime::Builder::new_current_thread()
+                            .enable_time()
+                            .build()
+                            .expect("tokio runtime");
+                        let mut out = Vec::new();
+                        loop {
+                            let rep = next.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                            if rep >= repetitions {
+                                break;
                             }
-                            out
-                        })
+                            let outcome = runtime.block_on(run_one(
+                                manifest,
+                                scenario,
+                                condition,
+                                rep,
+                                source
+                                    .as_deref()
+                                    .and_then(|s| recorded_ref.get(&(s.to_string(), rep)).cloned()),
+                                options,
+                                &dir,
+                                keep_judgments,
+                            ));
+                            let finished =
+                                done.fetch_add(1, std::sync::atomic::Ordering::SeqCst) + 1;
+                            if options.progress
+                                && (finished.is_multiple_of(10) || finished == repetitions)
+                            {
+                                eprintln!("  {:<28} {:>4}/{}", condition.id, finished, repetitions);
+                            }
+                            out.push(outcome);
+                        }
+                        out
                     })
-                    .collect();
-                handles
-                    .into_iter()
-                    .flat_map(|handle| handle.join().expect("experiment worker panicked"))
-                    .collect()
-            });
+                })
+                .collect();
+            handles
+                .into_iter()
+                .flat_map(|handle| handle.join().expect("experiment worker panicked"))
+                .collect()
+        });
         let mut condition_rows = Vec::new();
         for result in results {
             let (row, judgments) = result?;
@@ -581,9 +580,10 @@ pub fn summarize(
         let Some(c) = stats::paired(&p.metric, &p.baseline, &p.treatment, &pairs) else {
             return not_evaluable("no paired values".into());
         };
-        let interval = c.ci95_t.or(c.ci95_bootstrap);
+        let degenerate = c.sd_difference == Some(0.0) || c.n_pairs < 2;
+        let interval = if degenerate { None } else { c.ci95_t.or(c.ci95_bootstrap) };
         let (status, detail) = match (interval, p.direction) {
-            (None, _) if c.sd_difference == Some(0.0) || c.n_pairs < 2 => {
+            (None, _) if degenerate => {
                 let observed = c.mean_difference;
                 let status = match p.direction {
                     Direction::Decrease if observed < 0.0 => "supported",
@@ -592,7 +592,14 @@ pub fn summarize(
                     _ if observed == 0.0 => "inconclusive",
                     _ => "contradicted",
                 };
-                (status, format!("every pair differs by {observed}; no interval needed"))
+                (
+                    status,
+                    format!(
+                        "every one of the {} pairs differs by exactly {}; no interval is needed",
+                        c.n_pairs,
+                        fmt_value(Some(observed))
+                    ),
+                )
             }
             (None, _) => ("not_evaluable", "no interval could be computed".to_string()),
             (Some([low, high]), Direction::Decrease) => {

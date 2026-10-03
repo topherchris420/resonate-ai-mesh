@@ -265,8 +265,13 @@ pub enum CheckStatus {
 pub struct CheckOutcome {
     pub check: CheckId,
     pub status: CheckStatus,
+    /// Explanation for a failed, skipped, or disabled check. Empty for a pass:
+    /// the measured value and limit are the evidence.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub detail: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub measured: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<f64>,
 }
 
@@ -760,21 +765,21 @@ fn clip(text: &str, max: usize) -> String {
         .collect()
 }
 
-fn pass(check: CheckId, detail: &str) -> CheckOutcome {
+fn pass(check: CheckId, _detail: &str) -> CheckOutcome {
     CheckOutcome {
         check,
         status: CheckStatus::Pass,
-        detail: detail.to_string(),
+        detail: String::new(),
         measured: None,
         limit: None,
     }
 }
 
-fn measured_pass(check: CheckId, detail: &str, measured: f64, limit: f64) -> CheckOutcome {
+fn measured_pass(check: CheckId, _detail: &str, measured: f64, limit: f64) -> CheckOutcome {
     CheckOutcome {
         check,
         status: CheckStatus::Pass,
-        detail: detail.to_string(),
+        detail: String::new(),
         measured: Some(q(measured)),
         limit: Some(q(limit)),
     }

@@ -47,7 +47,7 @@ pub use clock::{ManualClock, SequentialIds};
 pub use policy::{
     policy_for_level, AdaptiveLevel, AdaptivePolicyConfig, CognitiveLoadPolicyLevel, CommitBasis,
     JudgmentRouting, JudgmentSummary, KernelPolicyConfig, PolicyConfiguration, PolicyDecision,
-    PolicyOutcome, KERNEL_POLICY_VERSION,
+    PolicyOutcome, SignalLossPolicy, KERNEL_POLICY_VERSION,
 };
 pub use state::{
     AgentStatus, AuthoritativeAgentState, CommitAuthorization, MutationError, StateSnapshot,
@@ -452,9 +452,13 @@ impl KernelEngine {
             });
             inner.adaptive_level = self.policy.adaptive.level_for(datum.value);
         } else {
-            // A missing or invalid signal is reported, never replaced by a guess.
-            // The last derived level stays in force and the evidence is dropped.
+            // A missing or invalid signal is never replaced by a guessed value.
+            // The evidence is dropped and the level follows the configured
+            // signal-loss policy (by default it fails closed to at least HIGH).
             inner.operator_evidence = Value::Null;
+            if self.policy.adaptive.on_signal_loss == policy::SignalLossPolicy::AssumeHigh {
+                inner.adaptive_level = inner.adaptive_level.max(AdaptiveLevel::High);
+            }
         }
         inner.operator_signal = Some(datum.quality);
         if inner.adaptive_level == previous_level && previous_signal.is_some() {

@@ -1,0 +1,5 @@
+# NaN and offset observations, an invalid sensor flag, malformed proposals,
+# duplicate submissions, and clock skew.
+path: ../../../scenarios/corrupted-event.yaml
+seed: 42
+set: { ticks: 40 }

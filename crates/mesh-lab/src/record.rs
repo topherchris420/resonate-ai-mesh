@@ -5,7 +5,6 @@
 //!   manifest.json     resolved RunConfig (the genesis of the event chain)
 //!   events.jsonl      hash-chained event log
 //!   decisions.jsonl   one causal summary per proposal or human resolution
-//!   judgments.jsonl   every judgment envelope, for replay substitution
 //!   intents.jsonl     intents from non-deterministic agents, for replay substitution
 //!   metrics.json      metric values, resonance vector, invariants
 //!   environment.json  world definition and kernel configuration
@@ -33,7 +32,6 @@ pub const HASHED_FILES: &[&str] = &[
     "manifest.json",
     "events.jsonl",
     "decisions.jsonl",
-    "judgments.jsonl",
     "intents.jsonl",
     "metrics.json",
     "environment.json",
@@ -151,6 +149,11 @@ pub struct RecordedIntent {
     pub tick: u64,
     pub agent_id: String,
     pub intent: Option<AgentIntent>,
+    #[serde(default)]
+    pub explanation: Option<String>,
+    /// Protocol problems reported by the agent at this tick.
+    #[serde(default)]
+    pub faults: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -295,11 +298,26 @@ impl Bundle {
                 dir.display()
             )));
         }
+        let events: Vec<ChainedEvent> = read_jsonl(&dir.join("events.jsonl"))?;
+        // Judgment envelopes are read from the event log, which is hash-chained.
+        let judgments = events
+            .iter()
+            .filter(|c| c.event.event_type == "judgment")
+            .map(|c| {
+                serde_json::from_value(c.event.payload.clone()).map_err(|error| {
+                    BundleError::Parse {
+                        path: dir.join("events.jsonl"),
+                        line: c.event.seq as usize + 1,
+                        message: format!("judgment envelope: {error}"),
+                    }
+                })
+            })
+            .collect::<Result<Vec<JudgmentEnvelope>, BundleError>>()?;
         Ok(Self {
             dir: dir.to_path_buf(),
             config: read_json(&dir.join("manifest.json"))?,
-            events: read_jsonl(&dir.join("events.jsonl"))?,
-            judgments: read_jsonl(&dir.join("judgments.jsonl"))?,
+            events,
+            judgments,
             intents: read_jsonl(&dir.join("intents.jsonl"))?,
             replay: read_json(&dir.join("replay.json"))?,
             provenance: read_json(&dir.join("provenance.json"))?,

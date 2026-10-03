@@ -1,0 +1,11 @@
+id: instability-routing-preserves-protection
+claim: >
+  Routing judgment by agent instability keeps judgment's effect on commits
+  made from degraded evidence.
+status: contradicted
+evidence:
+  - experiment: resonance-routing
+    role: supports
+    check: { type: comparison, metric: degraded_evidence_commits, baseline: judge_always, treatment: judge_on_instability, direction: no_change }
+limitations:
+  - 'Observed mechanism: stale evidence came from a historically stable agent whose sensor dropped out, so the instability signal did not route it to judgment. A routing signal that includes evidence age is the obvious next condition.'

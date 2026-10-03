@@ -1,0 +1,31 @@
+{
+  "run_id": "corrupted-event.default.r000.s42",
+  "seed": 42,
+  "genesis_hash": "sha256:53096be49f57e26deb8ef5dce7755714f16a675c2bc93445ea9192cab2260fa2",
+  "head_hash": "sha256:00f41820dd7da3ff4421ba648c5f575aed2551df7454e89816813a67a5d23562",
+  "event_count": 641,
+  "final_state_hash": "sha256:c193e454bbb1172300a207deb771747b4f68c034852194a7b218f63fd614db02",
+  "ticks_run": 40,
+  "termination": "max_ticks",
+  "substituted": [],
+  "counts": {
+    "decisions": 111,
+    "events": 641,
+    "events.adaptive_level": 3,
+    "events.commitment": 111,
+    "events.fault_cleared": 5,
+    "events.fault_injected": 5,
+    "events.human_state": 40,
+    "events.observation": 120,
+    "events.proposal": 111,
+    "events.resonance_sample": 40,
+    "events.run_completed": 1,
+    "events.run_started": 1,
+    "events.state_transition": 93,
+    "events.validation": 111
+  },
+  "policy_versions": [
+    "pordenone.kernel.policy.v2",
+    "pordenone.validator.v2"
+  ]
+}

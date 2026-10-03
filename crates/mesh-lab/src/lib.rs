@@ -6,16 +6,23 @@
 
 pub mod agents;
 pub mod bundle;
+pub mod capabilities;
+pub mod claims;
 pub mod cli;
 pub mod config;
 pub mod counterfactual;
+pub mod demo;
 pub mod experiment;
+pub mod explain;
+pub mod golden;
 pub mod invariants;
 pub mod metrics;
 pub mod record;
 pub mod replay;
 pub mod rng;
 pub mod runner;
+pub mod server;
 pub mod sim;
 pub mod stats;
 pub mod topology;
+pub mod web;
