@@ -1,0 +1,39 @@
+[package]
+name = "mesh-lab"
+description = "Resonate AI Mesh experiment engine: scenarios, simulation, fault injection, recording, replay, counterfactuals, metrics, and the `mesh` CLI"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+name = "mesh_lab"
+
+[[bin]]
+name = "mesh"
+path = "src/bin/mesh.rs"
+
+[dependencies]
+event-bus = { path = "../event-bus" }
+epistemic-validator = { path = "../epistemic-validator" }
+spatial-state = { path = "../spatial-state" }
+kernel-core = { path = "../kernel-core" }
+typed-judgment = { path = "../typed-judgment" }
+telemetry-bridge = { path = "../telemetry-bridge" }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+async-trait = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true }
+axum = { workspace = true }
+tower-http = { workspace = true }
+futures-util = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+event-bus = { path = "../event-bus" }

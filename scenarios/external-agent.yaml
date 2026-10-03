@@ -1,0 +1,18 @@
+# External agent: a deliberative agent in another process (the R.A.I.N.
+# adapter boundary) shares the arena with built-in agents. Its intents are
+# recorded; replay substitutes the recording instead of re-running the process.
+id: external-agent
+description: A JSON-lines external agent (examples/rain_agent_stub.py) crosses a hazard field next to a built-in agent.
+ticks: 50
+points_of_interest:
+  - { id: east, position: [55, 5] }
+hazards:
+  - { id: knoll, center: [0, 0], radius: 10 }
+  - { id: bog, center: [28, 12], radius: 7 }
+agents:
+  - { id: rain_01, behavior: external, start: [-55, 2], goal: east, command: [python3, examples/rain_agent_stub.py], timeout_ms: 3000 }
+  - { id: local_02, behavior: cautious, start: [-55, -8], goal: east, speed: 4 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: mock, profile: evidence_heuristic }
+termination: { stop_when_all_goals_reached: true, goal_radius: 2 }

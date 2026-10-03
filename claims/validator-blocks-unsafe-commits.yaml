@@ -1,0 +1,23 @@
+id: validator-blocks-unsafe-commits
+claim: >
+  In the simulated scenarios tested, deterministic validation with every check
+  enabled prevented every proposal that the independent geometric oracle
+  classified as unsafe from reaching authoritative state, and removing the
+  hazard-clearance check alone was enough to let unsafe proposals through.
+status: supported
+evidence:
+  - experiment: validator-stress
+    role: supports
+    check: { type: condition_max, condition: full_validation, metric: unsafe_commits, max: 0 }
+  - experiment: validator-stress
+    role: supports
+    check: { type: prediction }
+  - experiment: baseline
+    role: supports
+    check: { type: condition_max, condition: reference, metric: unsafe_commits, max: 0 }
+  - experiment: fault-injection
+    role: supports
+    check: { type: invariant, name: no_unsafe_commits }
+limitations:
+  - 'Simulation only; "unsafe" means a path through a declared circular hazard, a non-finite target, or an out-of-bounds target.'
+  - 'The oracle samples 65 points per path; it is independent of the validator''s closed-form geometry but not of the scenario''s hazard definitions.'

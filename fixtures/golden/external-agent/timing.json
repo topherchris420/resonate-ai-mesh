@@ -1,0 +1,8 @@
+{
+  "wall_ms_total": 62.872,
+  "ticks_per_second": 477.2,
+  "pipeline_latency_ms_p50": 0.1446,
+  "pipeline_latency_ms_p95": 0.2305,
+  "pipeline_latency_ms_max": 0.2952,
+  "note": "Wall-clock measurements on the recording machine. Not deterministic; never compared by replay."
+}

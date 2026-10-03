@@ -30,3 +30,7 @@ venv/
 *.log
 /tmp/
 .DS_Store
+
+# Mesh run and experiment artifacts (regenerable from manifests and seeds)
+/artifacts/
+/gen/

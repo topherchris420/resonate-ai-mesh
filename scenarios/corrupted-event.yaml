@@ -1,0 +1,22 @@
+# Corrupted event: invalid data enters the mesh. One sensor reports NaN, one
+# reports a plausible but wrong position, one is flagged invalid, and an
+# adversarial agent submits malformed proposals and duplicates.
+id: corrupted-event
+description: NaN and offset observations, an invalid sensor flag, malformed proposals, and duplicate submissions.
+ticks: 50
+points_of_interest:
+  - { id: goal, position: [50, 30] }
+agents:
+  - { id: k1, behavior: cautious, start: [-50, 30], goal: goal, speed: 4 }
+  - { id: k2, behavior: cautious, start: [-50, 0], goal: goal, speed: 4 }
+  - { id: k3, behavior: malformed, start: [-50, -30], goal: goal, speed: 4, malformed_every: 3 }
+faults:
+  - { kind: corrupt_observation, target: k1, at_tick: 8, duration_ticks: 3, magnitude: 0 }
+  - { kind: corrupt_observation, target: k2, at_tick: 12, duration_ticks: 3, magnitude: 30 }
+  - { kind: invalidate_observation, target: k1, at_tick: 20, duration_ticks: 4 }
+  - { kind: duplicate_proposal, target: k2, at_tick: 25, duration_ticks: 5 }
+  - { kind: clock_skew, target: k1, at_tick: 32, duration_ticks: 4, magnitude: 5000 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: disabled }
+termination: { stop_when_all_goals_reached: false }

@@ -1,0 +1,74 @@
+{
+  "bundle_format": "resonate-ai-mesh.run-bundle.v1",
+  "software_version": "resonate-ai-mesh/0.2.0",
+  "git_commit": "562cd9a30c678f64bf7886689221a644f88fb3c5",
+  "git_dirty": false,
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "os": "linux",
+  "arch": "x86_64",
+  "command": [
+    "mesh",
+    "export-web"
+  ],
+  "started_at_wall": "2026-10-03T19:35:36.694651417+00:00",
+  "finished_at_wall": "2026-10-03T19:35:36.724311938+00:00",
+  "run_config_hash": "sha256:d41a0dffafb64f85ee1d456e3c01e9b8c6556448503412f229d55603e643299d",
+  "validator_version": "pordenone.validator.v2",
+  "validator_config_hash": "sha256:5a88c22808add5b9b336fa555d28c4aea2c3091abfca88e4b5732181eb4b05d3",
+  "kernel_policy_version": "pordenone.kernel.policy.v2",
+  "judgment_policy_version": "pordenone.judgment.policy.v1",
+  "question_set_version": "pordenone.judgment.questions.v1",
+  "judgment_state_schema": "pordenone.judgment.state.v2",
+  "event_schema_version": "1.2.0",
+  "judge": null,
+  "agents": [
+    {
+      "agent_id": "medic_05",
+      "adapter": "builtin:scripted",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "patrol_04",
+      "adapter": "builtin:patrol",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "runner_02",
+      "adapter": "builtin:greedy",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "scout_01",
+      "adapter": "builtin:cautious",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "tuner_03",
+      "adapter": "builtin:oscillating",
+      "deterministic": true,
+      "networked": false
+    }
+  ],
+  "parent": {
+    "run_id": "perturbed-mesh.default.r000.s42",
+    "head_hash": "sha256:77230d4bc4811d6ee223528c5c8307dfd7d64b40244beeeb4e2e082f70300655",
+    "overrides": {
+      "kernel.judgment.provider": "disabled"
+    },
+    "label": "no-judgment"
+  },
+  "file_hashes": {
+    "decisions.jsonl": "sha256:d3367ad03d0eb2a559e7053f8791c3bb20c4f9d32b6595df4739d799cafe1330",
+    "environment.json": "sha256:c5775c781a328bdf00cfe446b96c1dde09bf1f05edff3a141334fb62cbc41602",
+    "events.jsonl": "sha256:f0c0d4aa53bec4444bb82921bcf8624da0242a57aa3aded00753eb8a951f28ff",
+    "intents.jsonl": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest.json": "sha256:8c17f68d452793279f333e0659e149cd64cb82b0a72c96349fb5b3f35e9425ff",
+    "metrics.json": "sha256:5146fdf5f86ffdef47ffad4f9d6450204708b4d6ce21c9b7a5337b5a0ccfbcb8",
+    "replay.json": "sha256:7e49e57b7676c7a86b705ff4f1c95cb0373c2e7637b200e8408124e0cae5575d",
+    "topology.json": "sha256:578bbf15732a45bca4a887de95d792ac50562bb7965720ac92898754bfa57b9b"
+  }
+}

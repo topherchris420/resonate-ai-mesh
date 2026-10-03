@@ -1,0 +1,39 @@
+id: human-state-adaptation
+title: Operator-load gating
+question: >
+  When the simulated operator-load index reaches HIGH or CRITICAL, does
+  deferring background proposals reduce the commits the operator must absorb,
+  and what does it cost in background progress?
+hypothesis:
+  statement: >
+    With gating enabled, fewer proposals are committed while load is high, and
+    the load index itself is coupled to the rate of uncommitted proposals.
+  prediction:
+    metric: committed
+    direction: decrease
+    baseline: gating_off
+    treatment: gating_on
+seed: 5
+repetitions: 50
+scenario: ../../scenarios/human-state-perturbation.yaml
+independent_variables: [kernel.policy.adaptive.enabled]
+dependent_variables:
+  - committed
+  - withheld
+  - ticks_at_high_load
+  - mean_operator_load
+  - human_state_coupling
+  - task_success
+conditions:
+  - id: gating_off
+    set: { kernel.policy.adaptive.enabled: false }
+  - id: gating_on
+    set: { kernel.policy.adaptive.enabled: true }
+invariants:
+  - event_chain_intact
+  - no_commit_without_validation_pass
+  - every_commit_has_provenance
+  - no_unsafe_commits
+  - simulated_data_labeled
+limitations:
+  - The operator-load index is produced by a simulation (operator_load_v1). It is not a measurement of any person and makes no physiological or cognitive claim.

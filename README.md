@@ -1,267 +1,141 @@
-# Pordenone
+# Resonate AI Mesh
 
-A proposal has to pass a hard rule-check before an optional model check, and the session can be recorded and replayed.
+Resonate AI Mesh is an executable research instrument for multi-agent decisions. Agents observe a simulated world and propose actions. The **Pordenone kernel** decides what may happen: deterministic validation first, then optional bounded judgment, then a versioned policy, and only then a commit. Every step is recorded in a hash-chained event log, so any run can be verified, replayed exactly without network access, explained decision by decision, and branched into counterfactuals. Experiments run those runs at scale with paired statistics.
 
-![Research dashboard: simulated human-state telemetry, a 3D agent canvas, and a proposal that passed the hard check](docs/images/dashboard.png)
+Nothing here controls physical hardware. Human-state data is simulated unless a registered live source is connected, and no live source ships with the repository.
 
-The picture is that dashboard (`apps/c2-dashboard`) with no backend connected. Heart rate and cognitive load are labeled `SIMULATED`. Two agents sit on the 3D canvas. The proposal on the right passed the hard check; the model check stayed off. Nothing in this repository moves physical hardware.
+![The research cockpit replaying the Perturbed Mesh: a proposal that a person approved and that deterministic re-validation then rejected](docs/images/cockpit-replay.png)
 
-[![Rust Workspace](https://img.shields.io/badge/Rust-1.80%2B-orange.svg)](https://www.rust-lang.org/)
-[![Node.js & pnpm](https://img.shields.io/badge/Node.js-20%2B%20%7C%20pnpm-blue.svg)](https://pnpm.io/)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-yellow.svg)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+The cockpit above is replaying the canonical run. Judgment routed `prop-00023-runner_02` to a person, and the simulated operator approved it. Re-validation then rejected it, because its observation had grown older than the 1500 ms limit while it waited. Human approval does not override a deterministic check either.
 
-## What this is for
+## One command
 
-Stored state should not change because a model felt confident. Pordenone keeps three steps in that order:
+```bash
+make demo        # or: cargo run --release -p mesh-lab --bin mesh -- demo
+```
 
-1. **Hard check.** A deterministic validator rejects coordinates outside bounds, stale observations, and actions that are not on the allow-list. A failure stops the proposal. No model is called.
-2. **Soft check, off by default.** If the hard check passes and `JUDGMENT_ENABLED=true`, a model answers a fixed set of questions. It cannot override a failed hard check, and it cannot write state.
-3. **Replay.** Record a session and play it back with no network calls. See [`docs/replay.md`](docs/replay.md).
+No API keys and no network. In about a second this:
 
-The code is [MIT licensed](LICENSE). Citation metadata is in [`CITATION.cff`](CITATION.cff).
+1. Records the Perturbed Mesh scenario: five agents, a hazard that appears mid-run, an operator-load spike, a sensor dropout, and a corrupted observation.
+2. Narrates it from the recorded events, covering a deterministic rejection, a judged commit, a human review, and an injected fault.
+3. Walks the causal chain of one decision.
+4. Replays the run and verifies all 1424 events.
+5. Re-runs it with judgment disabled and reports where the timelines diverge.
 
-## Names in the code
+The cockpit runs with `make cockpit`, which serves `mesh serve` and Next.js together. A static export of real recorded runs needs no backend (`pnpm --filter c2-dashboard dev`).
 
-A few labels in the source are shorter than their meaning. They are names in this repository, not packages you have to install:
-
-| Name in the code | What it is here |
-| :--- | :--- |
-| **CIRCLE** | The simulated human-state stream: heart rate, heart-rate variability, cognitive load, and stress. Samples are marked `SIMULATED` unless that process is started in `LIVE` mode. |
-| **NEXUS** | The in-memory event bus. It fans events out to the dashboard. |
-| **DRR** | A small local formula that maps cognitive load onto `NORMAL`, `ELEVATED`, `HIGH`, or `CRITICAL`. |
-
-## How a proposal moves
+## The execution law
 
 ```
-proposal
-   │
-   ▼
-hard check (always on)
-   │
-   ├── fail → reject, publish, stop
-   │
-   └── pass → soft check (optional; off unless JUDGMENT_ENABLED=true)
-                 │
-                 ▼
-              policy commits or withholds
-                 │
-                 ▼
-              event bus (NEXUS) → dashboard
+OBSERVE → PROPOSE → DETERMINISTIC VALIDATION → OPTIONAL BOUNDED JUDGMENT → POLICY → COMMIT / WITHHOLD → OBSERVE RESULT → RECORD + REPLAY
 ```
+
+These hold by construction and are checked on every recorded run (see [`docs/architecture.md`](docs/architecture.md)):
+
+- **No commit without a passing validation.** `AuthoritativeState::apply` needs a `CommitAuthorization`. Only `policy.rs` can create one, and only from a `ValidatedProposal`, which only the validator can create.
+- **Judgment cannot override a failed check.** Judgment is never consulted after a failed validation, and a human approval is re-validated before it commits.
+- **No remote model can mutate state.** A judge returns an envelope and has no handle to state, the bus, the filesystem, or actuators.
+- **Replay makes no external calls.** Networked judges and external agents are replaced by their recordings, and replay reports `network_calls: 0`.
+- **Data is labeled.** Every event carries `SIMULATED`, `LIVE`, or `REPLAY`. Unlabeled data defaults to `SIMULATED`.
+
+## A reproducible experiment
+
+```bash
+mesh experiment run experiments/judgment-ablation/manifest.yaml
+```
+
+The manifest states a question, a hypothesis, and a pre-registered prediction. The run executes every condition at the same seeds (common random numbers) and writes `summary.json`, `runs.csv`, and `report.md`. The report gives means, medians, variances, t and bootstrap 95% intervals on paired differences, effect sizes, and a verdict on the prediction. Current results (SIMULATED, deterministic mock judges, not a language model):
+
+| Experiment | Finding (95% CI on the paired difference) |
+| --- | --- |
+| judgment-ablation | An evidence-based judge removes commits made on degraded evidence: −2.79 per run [−2.94, −2.64], 100 pairs, 0 unsafe commits in every condition. Replaying its recorded judgments reproduces the effect exactly. It does **not** change task success: difference 0. |
+| validator-stress | Removing only the hazard-clearance check lets 9.12 unsafe proposals per run commit [8.90, 9.34]. The check is causal. |
+| fault-injection | Under ten injected faults, every authority invariant held in all 440 runs. A lost human-state signal now fails closed (−3.9 commits). The earlier hold-last behavior silently disabled gating (+12.1). |
+| human-state-adaptation | Operator-load gating withholds 31.9 background commits per run [−32.49, −31.35]. |
+| multi-agent-coordination | A minimum separation of 4 instead of 2 lowers task success by 0.21 [−0.28, −0.15]. |
+| resonance-routing | Consulting judgment only for unstable agents cuts judgment calls by 182 per run, **but** loses its protection (+2.55 degraded commits). The claim that it keeps protection is recorded as contradicted. |
+
+Ten claims in [`claims/`](claims/) are checked against this evidence with `mesh claims check`. The checker never upgrades a claim: a person sets the status, and the tool reports whether the evidence agrees. See [`docs/experiments.md`](docs/experiments.md) and [`docs/research-methodology.md`](docs/research-methodology.md).
+
+## Architecture
 
 ```mermaid
-graph TD
-    A[Proposal] --> F[Hard check]
-    F -->|fail| R[Reject and publish]
-    F -->|pass| TJ[Soft check, off by default]
-    TJ --> P[Policy: commit or withhold]
-    P --> J[Dashboard]
+graph LR
+    S[Scenario + seed] --> W[Simulated world<br/>sensors, hazards, faults]
+    W -->|observations| A[Agents<br/>built-in or mesh-agent/1]
+    H[Human state<br/>SIMULATED or registered LIVE] --> P
+    A -->|proposals| V[Validator<br/>deterministic]
+    V -->|pass| J[Bounded judge<br/>optional]
+    V -->|fail| P[Policy]
+    J --> P
+    O[Person<br/>reviews] --> P
+    P -->|CommitAuthorization| ST[(Authoritative state)]
+    V & J & P & ST --> R[Recorder<br/>hash chain]
+    R --> B[Run bundle] --> RP[Replay · explain · counterfactual · experiments]
 ```
 
----
+| Part | Where | Status |
+| --- | --- | --- |
+| Pordenone kernel: validator, judgment routing, policy, single mutation path | `crates/kernel-core`, `crates/epistemic-validator`, `crates/typed-judgment` | implemented |
+| Event envelope v1.2, hash chain, canonical JSON | `crates/event-bus` | implemented |
+| Mesh Lab: simulator, recorder, replay, counterfactuals, experiments, statistics, claims, `mesh` CLI | `crates/mesh-lab` | implemented |
+| `mesh serve`: cockpit API, live sessions, hardened ingest, health, Prometheus metrics | `crates/mesh-lab/src/server.rs`, `crates/telemetry-bridge` | implemented |
+| Research cockpit | `apps/c2-dashboard` | implemented |
+| Independent bundle verifier (Python standard library only) | `tools/verify_bundle.py` | implemented |
+| Simulated human-state source | `services/biometric-pipeline` | simulated |
+| Resonance vector (coherence, stability, convergence, disagreement, recovery, uncertainty) | `crates/mesh-lab/src/metrics.rs` | experimental |
+| TypeSafe Jev as a bounded judge | `crates/typed-judgment` | optional; off unless a run asks for it |
+| R.A.I.N. and other external agents over `mesh-agent/1` | `examples/rain_agent_stub.py` | interface implemented; R.A.I.N. itself proposed |
+| Live physiological sensing | none | not implemented |
 
-## Monorepo Directory Structure
+Names: **Resonate AI Mesh** is the whole system. The **Pordenone kernel** is its deterministic decision core. **Mesh Lab** is the experiment engine and `mesh` CLI. The older labels CIRCLE, NEXUS, and DRR referred to parts that are now the simulated human-state source, the event bus, and the operator-load gating policy. More in [`docs/architecture.md`](docs/architecture.md) and [`docs/integration-matrix.md`](docs/integration-matrix.md).
 
-```
-pordenone/
-├── apps/
-│   └── c2-dashboard/          # Next.js 14 research dashboard: React Three Fiber spatial canvas and status panels
-├── crates/                    # Rust core kernel workspace crates
-│   ├── epistemic-validator/   # Deterministic epistemic & physical constraint validation
-│   ├── event-bus/             # Asynchronous fan-out event bus with correlation tracking
-│   ├── kernel-core/           # Kernel state machine (Observe -> Propose -> Validate -> Judge -> Commit)
-│   ├── spatial-state/         # 3D Spatial state index & terrain coordinate synchronization
-│   ├── telemetry-bridge/      # WebSocket bridge streaming telemetry & kernel events
-│   └── typed-judgment/        # Remote/mock/replay typed judgment provider & disposition policy
-├── services/                  # Python simulation & telemetry services
-│   ├── biometric-pipeline/    # Simulated human-state stream (named CIRCLE in source)
-│   ├── sim-engine/            # Swarm step and load-to-level formula (named DRR in source)
-│   └── judgment/              # Python replay & judgment recorded session utilities
-├── packages/
-│   └── shared-types/          # Shared TypeScript interfaces & Protobuf type bindings
-├── proto/                     # Protocol Buffer definitions
-│   ├── agent.proto            # Agent lifecycle & proposal messages
-│   ├── events.proto           # Canonical event envelopes
-│   ├── judgment.proto         # Typed judgment questions, scores & envelopes
-│   ├── spatial.proto          # Spatial position & terrain state
-│   └── telemetry.proto        # Operator biometric telemetry & adaptive states
-├── scripts/
-│   ├── generate-proto.sh      # Python & gRPC protobuf generation script
-│   ├── record-session         # CLI tool to record telemetry & judgment sessions
-│   └── replay-session         # CLI tool to verify recorded sessions deterministically
-├── docs/                      # Technical architecture & integration documentation
-└── docker/                    # Dockerfiles for containerized microservices
-```
+## Evidence and replay
 
----
-
-## Conceptual Map
-
-You can skip this table if you only want to run the dashboard. It maps nine other repositories onto code that lives here. None of them are git submodules, path dependencies, or imported packages. The "Reimplemented here" column is local code, not an upstream import. TypeSafe is the exception: an optional remote model, disabled unless `JUDGMENT_ENABLED=true`. The same notes are in [`docs/integration-matrix.md`](docs/integration-matrix.md).
-
-| Conceptual source | Idea | Reimplemented here | Local interface |
-| :--- | :--- | :--- | :--- |
-| **`james_library`** | Agent proposal loop and epistemic checks | `crates/kernel-core` (`KernelEngine`) and `crates/epistemic-validator` (`EpistemicValidator`) | `ActionProposal`, `ValidationResult` |
-| **`dynamic-resonance-rooting`** | Adaptive state from load and stability | `services/sim-engine/drr_adapter.py` (`DynamicResonanceRootingAdapter`) | `AdaptiveState` |
-| **`ions-x-deep-emergence-lab`** | Multi-agent spatial simulation | `services/sim-engine/emergence_sim.py` (`SwarmEmergenceSimulator`) | `sim_engine.step()` |
-| **`waveform-shift-quantum`** | Bounds a proposal must satisfy | Coordinate, freshness, priority, and action checks inside `EpistemicValidator::validate` | `ValidationResult` |
-| **`circle`** | Human-state telemetry | `services/biometric-pipeline/biometric_generator.py` (`BiometricPipeline`). Samples are `SIMULATED` unless the process is started in `LIVE` mode | `OperatorStateTelemetry` |
-| **`embedded-ai-validation-platform`** | Fault and sensor checks before commit | No hardware adapter is included. Proposals are accepted or rejected by `EpistemicValidator` and published on `crates/event-bus` | `CanonicalEventEnvelope` |
-| **`lop-nur-twin`** | 3D spatial scene | `apps/c2-dashboard/src/components/SpatialCanvas.tsx`, a local procedural mesh | `SpatialCanvas` props |
-| **`orpheus-resonance-protocol`** | Status display for human state and validation | `OperatorPanel.tsx` and `ValidationInspector.tsx`. These panels are written in this repository | `OperatorStateTelemetry`, `AdaptiveState`, `JudgmentEnvelope` |
-| **`cognisync-terrain-weaver`** | Spatial index | `crates/spatial-state` (`SpatialIndex`) | `SpatialEntity` |
-| **TypeSafe Jev** | Optional remote typed judgment | `crates/typed-judgment` (`TypeSafeJudgmentProvider`), off by default | `JudgmentEnvelope`, [`typed-judgment.md`](docs/typed-judgment.md) |
-
----
-
-## Quickstart
-
-### Prerequisites
-- **Rust** 1.80+ (`cargo`)
-- **Node.js** 20+ & **pnpm** (`pnpm@10+`)
-- **Python** 3.11+ (`pip`)
-- **Protobuf Compiler** (`protoc`)
-
-### Installation
+Each run is a bundle: `manifest.json` (the resolved configuration, whose hash is the chain's genesis), `events.jsonl`, `decisions.jsonl`, `metrics.json`, `topology.json`, `environment.json`, `provenance.json` (versions, git commit, file hashes), `replay.json`, and `report.md`.
 
 ```bash
-# Clone repository
-git clone https://github.com/topherchris420/resonate-ai-mesh.git
-cd resonate-ai-mesh
-
-# Install Node dependencies across workspace
-pnpm install
-
-# Install Python requirements
-pip install -r services/biometric-pipeline/requirements.txt -r services/sim-engine/requirements.txt
-
-# Generate Protobuf bindings
-pnpm proto:generate
+mesh verify artifacts/runs/<run>         # chain and file hashes, no re-execution
+mesh replay <run>                        # re-execute and compare every event; reports the first divergence
+mesh explain <run> <proposal-id>         # why did this happen?
+mesh counterfactual <run> --set kernel.judgment.provider=disabled
+mesh golden verify                       # committed recordings in fixtures/golden still replay exactly
+python3 tools/verify_bundle.py <bundle>  # independent re-derivation of every hash, no Rust needed
 ```
 
----
+Three implementations compute the canonical hashes: Rust, Python, and the browser's WebCrypto. A shared fixture pins `serde_json`'s float formatting so the three cannot drift apart. See [`docs/replay.md`](docs/replay.md) and [`docs/provenance.md`](docs/provenance.md).
 
-## Developer Workflows & Commands
+## Optional integrations
 
-### Build & Compilation
-```bash
-# Build TypeScript shared types and dashboard
-pnpm build
+- **TypeSafe Jev** ([`docs/jev.md`](docs/jev.md)): a bounded judge answering five typed questions about evidence that has already passed validation. Runs need `TYPESAFE_API_KEY` and `--allow-network`. In a recorded six-tick run, `jev-1.13.0` routed every valid proposal to human review and was never consulted on the one that failed validation. That recording is a golden fixture CI replays with no key and no network.
+- **External agents / R.A.I.N.** ([`docs/rain-adapter.md`](docs/rain-adapter.md)): any process that speaks `mesh-agent/1` (JSON lines on stdin and stdout) can be an agent. Its intents are proposals like any other and carry no authority.
+- **Human-state sources** ([`docs/human-state.md`](docs/human-state.md)): `/ingest` admits labeled `HumanStateDatum` values. LIVE data is accepted only from sources registered in `MESH_LIVE_SOURCES`.
 
-# Build Rust workspace crates
-cargo build --workspace
-```
+## Limitations
 
-### Testing
-```bash
-# Run full workspace test suite (JS/TS, Python, Rust)
-pnpm test
+- Everything measured here is a simulation: geometric agents in a 2D arena, a scripted operator-load curve, and a simulated reviewer in batch runs. The results describe this simulator, not the real world.
+- The mock judges are deterministic rules. They show what a judgment stage does to the pipeline, not how a language model judges. Jev has been recorded on one short run, not yet through the full ablation.
+- The resonance vector is a set of operational measures with stated definitions. It is not evidence of cognition, wellbeing, or "resonance" in any broader sense.
+- The geometric safety oracle is independent of the validator's code but shares its notion of hazards (declared circles).
+- Determinism holds for the same code and dependency versions. `software_version` is normalized in replay comparisons, but a change to the simulator changes recordings by design. `mesh golden verify` detects such changes.
 
-# Run Rust tests only
-cargo test --workspace
+See [`docs/security.md`](docs/security.md) for the threat model.
 
-# Run Python service tests only
-PYTHONPATH=services/biometric-pipeline:services/sim-engine pytest services/ tests/
-```
-
-### Code Quality & Verification
-```bash
-# Run ESLint across packages
-pnpm lint
-
-# Run TypeScript typechecks
-pnpm typecheck
-
-# Run Cargo clippy linter on Rust crates
-cargo clippy --workspace --all-targets -- -D warnings
-```
-
-### Session Recording & Replay Workflow
-Pordenone supports deterministic session recording and replay for debugging and audit verification:
+## Development
 
 ```bash
-# Record a 5-second execution session
-python3 scripts/record-session my_session.json
-
-# Replay and verify recorded session deterministically
-python3 scripts/replay-session my_session.json
+make check       # fmt, clippy, Rust tests, golden replay, Python tests, cockpit lint/typecheck/tests
+make test        # tests only
+make experiments # every manifest at full repetitions
+make export      # regenerate the cockpit's static export from real runs
 ```
 
----
+Requirements: Rust 1.80+, Node 20+ with pnpm, Python 3.11+ (`pip install -r requirements-dev.txt`). Details in [`docs/development.md`](docs/development.md).
 
-## Configuration & Environment Variables
+## Documentation
 
-### Kernel & Typed Judgment
-Remote judgment is **disabled by default**. CI runs cleanly without remote network credentials.
+[architecture](docs/architecture.md) · [experiments](docs/experiments.md) · [replay](docs/replay.md) · [provenance](docs/provenance.md) · [resonance metrics](docs/resonance-metrics.md) · [security](docs/security.md) · [human state](docs/human-state.md) · [mesh protocol](docs/mesh-protocol.md) · [Jev](docs/jev.md) · [R.A.I.N. adapter](docs/rain-adapter.md) · [research methodology](docs/research-methodology.md) · [integration matrix](docs/integration-matrix.md) · [development](docs/development.md)
 
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `JUDGMENT_ENABLED` | `false` | Master toggle for remote typed judgment evaluation |
-| `JUDGMENT_PROVIDER` | `disabled` | Provider implementation (`disabled`, `typesafe`, `mock`, `replay`) |
-| `JUDGMENT_MODEL` | `jev-latest` | Model identifier passed to remote judgment provider |
-| `TYPESAFE_API_KEY` | *(unset)* | API key required when `JUDGMENT_PROVIDER=typesafe` |
-| `JUDGMENT_TIMEOUT_MS` | `10000` | Timeout in milliseconds for remote judgment network calls |
-| `JUDGMENT_MINIMUM_CONFIDENCE` | `0.70` | Confidence gate threshold required for commit approval |
-| `JUDGMENT_POLICY_VERSION` | `pordenone.judgment.policy.v1` | Version identifier for judgment policy rules |
+## License and citation
 
-### Services & Networking
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `BIND_ADDR` | `0.0.0.0:50051` | Kernel gRPC service bind address |
-| `WS_BIND_ADDR` | `0.0.0.0:8080` | Telemetry bridge WebSocket bind address |
-| `KERNEL_ADDR` | `http://kernel:50051` | Telemetry bridge connection target for kernel |
-| `TELEMETRY_BRIDGE_WS` | `ws://telemetry-bridge:8080/ingest` | WebSocket ingestion URL for Python services |
-| `NEXT_PUBLIC_WS_URL` | `ws://localhost:8080/ws` | Frontend WebSocket endpoint for real-time telemetry feed |
-| `NEXT_PUBLIC_SIM_ENGINE_URL` | `http://localhost:8000` | Frontend endpoint for simulation engine HTTP control |
-
----
-
-## Docker Compose Microservices Topology
-
-Launch all 5 containerized microservices with full networking using Docker Compose:
-
-```bash
-docker compose up --build
-```
-
-| Service | Dockerfile | Exposed Port | Role & Responsibility |
-| :--- | :--- | :--- | :--- |
-| **`kernel`** | `docker/Dockerfile.kernel` | `50051` (gRPC) | Rust kernel engine, epistemic validator & typed judgment policy |
-| **`telemetry-bridge`** | `docker/Dockerfile.telemetry-bridge` | `8080` (WebSocket) | Event normalization, fan-out broadcast & client WS streaming |
-| **`biometric-pipeline`** | `docker/Dockerfile.biometric-pipeline` | Internal | Simulated human-state stream (CIRCLE in the source) |
-| **`sim-engine`** | `docker/Dockerfile.sim-engine` | `8000` (HTTP) | Swarm step and the load-to-level formula (DRR in the source) |
-| **`c2-dashboard`** | `docker/Dockerfile.c2-dashboard` | `3000` (HTTP) | Next.js 3D spatial canvas and research dashboard |
-
----
-
-## Security & Safety Boundaries
-
-1. **Simulation Default**: Defaults to **SIMULATION** mode and local execution.
-2. **Deterministic Gate Priority**: Unvalidated agent proposals **CANNOT** mutate authoritative state. Deterministic epistemic checks run prior to judgment.
-3. **Fail-Closed Judgment Boundary**: Remote typed judgment is disabled by default. A remote provider cannot override a failed deterministic validation or mutate authoritative state directly.
-4. **Biosignal Isolation & Privacy**: Simulated physiological telemetry is explicitly labeled as `SIMULATED`. Raw biosignals are never included in remote judgment state payloads or logged externally.
-5. **Replay Integrity**: Recorded replay sessions execute with zero external network side-effects.
-6. **No Irreversible Actuation**: No real-world physical actuation or autonomous weapon engagement is implemented.
-
----
-
-## License and Citation
-
-This project is released under the [MIT License](LICENSE). Copyright (c) 2026 Vers3Dynamics.
-
-If you use this software, cite it with the metadata in [`CITATION.cff`](CITATION.cff).
-
----
-
-## Documentation Directory
-
-For detailed specifications, refer to the guides in [`docs/`](docs/):
-
-- [`docs/architecture.md`](docs/architecture.md) – Detailed architecture breakdown and component interactions
-- [`docs/development.md`](docs/development.md) – Developer setup, testing, and CI configuration
-- [`docs/event-model.md`](docs/event-model.md) – Canonical NEXUS event structure and schema specifications
-- [`docs/integration-matrix.md`](docs/integration-matrix.md) – Conceptual map of nine source ideas and the local code that reimplements them
-- [`docs/protocol.md`](docs/protocol.md) – Communication protocols (gRPC, WebSocket, Protobuf)
-- [`docs/replay.md`](docs/replay.md) – Replay engine and session recording mechanics
-- [`docs/typed-judgment.md`](docs/typed-judgment.md) – Typed judgment fabric, atomic question set, and policy engine
+MIT, copyright (c) 2026 Vers3Dynamics. Cite with [`CITATION.cff`](CITATION.cff).

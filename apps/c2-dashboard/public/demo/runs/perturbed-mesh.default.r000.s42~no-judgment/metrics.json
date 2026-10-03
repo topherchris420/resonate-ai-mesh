@@ -1,0 +1,132 @@
+{
+  "version": "resonate-ai-mesh.metrics.v1",
+  "run_id": "perturbed-mesh.default.r000.s42~no-judgment",
+  "values": {
+    "accepted_proposals": 163.0,
+    "commit_rate": 0.877193,
+    "committed": 150.0,
+    "convergence_tick": 42.0,
+    "degraded_evidence_commits": 3.0,
+    "deterministic_rejection_rate": 0.046784,
+    "faults_injected": 2.0,
+    "goals_reached": 3.0,
+    "goals_total": 3.0,
+    "human_approved": 0.0,
+    "human_reviews": 0.0,
+    "human_state_coupling": 0.864081,
+    "judgment_calls": 0.0,
+    "judgment_disagreement_rate": null,
+    "judgment_disagreements": 0.0,
+    "judgment_unavailable": 0.0,
+    "max_operator_load": 0.8974,
+    "mean_judgment_latency_ms": null,
+    "mean_observation_age_ms": 80.409357,
+    "mean_operator_load": 0.465819,
+    "min_pairwise_distance": 13.128083,
+    "network_calls": 0.0,
+    "proposals": 171.0,
+    "recovery_ticks": 0.0,
+    "rejected_proposals": 8.0,
+    "safe_rejections": 7.0,
+    "separation_breaches": 0.0,
+    "task_success": 1.0,
+    "ticks_at_high_load": 13.0,
+    "ticks_run": 80.0,
+    "unsafe_commits": 0.0,
+    "unsafe_proposals": 1.0,
+    "unsafe_proposals_blocked": 1.0,
+    "unstable_commits": 3.0,
+    "withheld": 13.0
+  },
+  "resonance": {
+    "coherence": {
+      "value": 0.634111,
+      "basis": 41,
+      "note": null
+    },
+    "stability": {
+      "value": 0.979167,
+      "basis": 144,
+      "note": null
+    },
+    "convergence": {
+      "value": 1.0,
+      "basis": 3,
+      "note": null
+    },
+    "disagreement": {
+      "value": 0.0,
+      "basis": 143,
+      "note": null
+    },
+    "recovery": {
+      "value": 0.9375,
+      "basis": 2,
+      "note": null
+    },
+    "uncertainty": {
+      "value": 0.040936,
+      "basis": 171,
+      "note": null
+    }
+  },
+  "rejection_reasons": {
+    "HAZARD_INTERSECTION": 1,
+    "OBSERVATION_STALE": 4,
+    "STEP_TOO_LARGE": 3
+  },
+  "withhold_reasons": {
+    "OPERATOR_LOAD_DEFERRAL": 13
+  },
+  "invariants": [
+    {
+      "name": "event_chain_intact",
+      "holds": true,
+      "checked": 1246,
+      "violations": [],
+      "description": "Every event links to its predecessor and its hash matches its content."
+    },
+    {
+      "name": "no_commit_without_validation_pass",
+      "holds": true,
+      "checked": 150,
+      "violations": [],
+      "description": "Every committed state transition names a passing validation of the same proposal."
+    },
+    {
+      "name": "no_judgment_after_failed_validation",
+      "holds": true,
+      "checked": 0,
+      "violations": [],
+      "description": "Judgment is only ever consulted after deterministic validation passed."
+    },
+    {
+      "name": "every_commit_has_provenance",
+      "holds": true,
+      "checked": 150,
+      "violations": [],
+      "description": "Following causation_id from every commit reaches the proposal event that started it."
+    },
+    {
+      "name": "no_unsafe_commits",
+      "holds": true,
+      "checked": 150,
+      "violations": [],
+      "description": "No committed proposal is unsafe according to the independent geometric oracle."
+    },
+    {
+      "name": "simulated_data_labeled",
+      "holds": true,
+      "checked": 1246,
+      "violations": [],
+      "description": "Only a person's own commands and review decisions may be labeled LIVE, and every human-state datum carries the mode of its event."
+    },
+    {
+      "name": "zero_network_calls",
+      "holds": true,
+      "checked": 0,
+      "violations": [],
+      "description": "No judgment request reached a networked provider."
+    }
+  ]
+}

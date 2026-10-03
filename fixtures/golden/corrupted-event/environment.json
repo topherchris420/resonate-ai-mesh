@@ -1,0 +1,240 @@
+{
+  "agents": [
+    {
+      "behavior": "cautious",
+      "command": [],
+      "gain": 1.8,
+      "goal": "goal",
+      "id": "k1",
+      "malformed_every": 4,
+      "priority": 1,
+      "script": [],
+      "speed": 4.0,
+      "start": [
+        -50.0,
+        30.0
+      ],
+      "timeout_ms": 2000
+    },
+    {
+      "behavior": "cautious",
+      "command": [],
+      "gain": 1.8,
+      "goal": "goal",
+      "id": "k2",
+      "malformed_every": 4,
+      "priority": 1,
+      "script": [],
+      "speed": 4.0,
+      "start": [
+        -50.0,
+        0.0
+      ],
+      "timeout_ms": 2000
+    },
+    {
+      "behavior": "malformed",
+      "command": [],
+      "gain": 1.8,
+      "goal": "goal",
+      "id": "k3",
+      "malformed_every": 3,
+      "priority": 1,
+      "script": [],
+      "speed": 4.0,
+      "start": [
+        -50.0,
+        -30.0
+      ],
+      "timeout_ms": 2000
+    }
+  ],
+  "arena_half_extent": 100.0,
+  "description": "NaN and offset observations, an invalid sensor flag, malformed proposals, and duplicate submissions.",
+  "dt_ms": 250,
+  "faults": [
+    {
+      "at_tick": 8,
+      "duration_ticks": 3,
+      "kind": "corrupt_observation",
+      "magnitude": 0.0,
+      "target": "k1"
+    },
+    {
+      "at_tick": 12,
+      "duration_ticks": 3,
+      "kind": "corrupt_observation",
+      "magnitude": 30.0,
+      "target": "k2"
+    },
+    {
+      "at_tick": 20,
+      "duration_ticks": 4,
+      "kind": "invalidate_observation",
+      "magnitude": 0.0,
+      "target": "k1"
+    },
+    {
+      "at_tick": 25,
+      "duration_ticks": 5,
+      "kind": "duplicate_proposal",
+      "magnitude": 0.0,
+      "target": "k2"
+    },
+    {
+      "at_tick": 32,
+      "duration_ticks": 4,
+      "kind": "clock_skew",
+      "magnitude": 5000.0,
+      "target": "k1"
+    }
+  ],
+  "final_state": {
+    "agents": {
+      "k1": {
+        "agent_id": "k1",
+        "capabilities": [
+          "cautious"
+        ],
+        "confidence": 1.0,
+        "current_task": "MOVE",
+        "last_updated": 1700000007250,
+        "position": {
+          "x": 49.8292,
+          "y": 30.3768,
+          "z": 0.0
+        },
+        "priority": 1,
+        "status": "Executing",
+        "velocity": {
+          "x": 0.39560000000000173,
+          "y": 0.3946000000000005,
+          "z": 0.0
+        }
+      },
+      "k2": {
+        "agent_id": "k2",
+        "capabilities": [
+          "cautious"
+        ],
+        "confidence": 1.0,
+        "current_task": "MOVE",
+        "last_updated": 1700000009750,
+        "position": {
+          "x": 46.8769,
+          "y": 27.9274,
+          "z": 0.0
+        },
+        "priority": 1,
+        "status": "Executing",
+        "velocity": {
+          "x": -3.4857000000000014,
+          "y": 1.6762999999999977,
+          "z": 0.0
+        }
+      },
+      "k3": {
+        "agent_id": "k3",
+        "capabilities": [
+          "malformed"
+        ],
+        "confidence": 1.0,
+        "current_task": "MOVE",
+        "last_updated": 1700000009750,
+        "position": {
+          "x": 42.1353,
+          "y": 25.1971,
+          "z": 0.0
+        },
+        "priority": 1,
+        "status": "Executing",
+        "velocity": {
+          "x": 3.467500000000001,
+          "y": 1.8613,
+          "z": 0.0
+        }
+      }
+    },
+    "hazards": {},
+    "revision": 93
+  },
+  "hazards": [],
+  "human_review": {
+    "approve_below_load": 0.75,
+    "latency_ticks": 3,
+    "mode": "simulated_operator"
+  },
+  "human_state": {
+    "alpha": 0.3,
+    "baseline": 0.25,
+    "enabled": true,
+    "noise": 0.01,
+    "perturbations": [],
+    "trace": null,
+    "w_complexity": 0.15,
+    "w_rejections": 0.6,
+    "w_reviews": 0.3,
+    "window": 6
+  },
+  "kernel": {
+    "judgment": {
+      "profile": "evidence_heuristic",
+      "provider": "disabled",
+      "recorded_from": null,
+      "recorded_from_condition": null,
+      "timeout_ms": 10000
+    },
+    "judgment_policy": {
+      "contradiction_review_threshold": 0.75,
+      "contradiction_revise_threshold": 0.5,
+      "human_review_threshold": 0.5,
+      "minimum_confidence": 0.7,
+      "minimum_evidence_score": 2.0,
+      "scope_violation_threshold": 0.5,
+      "version": "pordenone.judgment.policy.v1"
+    },
+    "policy": {
+      "adaptive": {
+        "background_priority_max": 0,
+        "enabled": true,
+        "on_signal_loss": "assume_high",
+        "thresholds": [
+          0.4,
+          0.65,
+          0.85
+        ]
+      },
+      "routing": {
+        "mode": "always"
+      }
+    },
+    "validator": {
+      "allowed_actions": [
+        "MOVE",
+        "PATROL",
+        "INSPECT",
+        "STANDBY",
+        "HOLD"
+      ],
+      "disabled_checks": [],
+      "max_future_skew_ms": 1000,
+      "max_priority": 10,
+      "max_spatial_bound": 10000.0,
+      "max_stale_ms": 1500,
+      "max_step": 8.0,
+      "min_priority": 0,
+      "min_separation": 3.0
+    }
+  },
+  "points_of_interest": [
+    {
+      "id": "goal",
+      "position": [
+        50.0,
+        30.0
+      ]
+    }
+  ],
+  "scenario": "corrupted-event",
+  "ticks": 40
+}

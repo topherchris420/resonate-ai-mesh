@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc c1376ca83f2479855e12449fb36bd39426596341e5e61b64dae3e8cbda122446 # shrinks to seed = 0, overrides = {"faults": Array [Object {"at_tick": Number(2), "duration_ticks": Number(1), "kind": String("sensor_dropout"), "magnitude": Number(0.9922462320328945), "target": String("all")}], "kernel.judgment.profile": String("evidence_heuristic"), "kernel.judgment.provider": String("disabled"), "kernel.policy.adaptive.enabled": Bool(false), "ticks": Number(16)}

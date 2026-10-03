@@ -1,0 +1,347 @@
+[
+  {
+    "claim": "Under each of ten injected faults (sensor dropout, stale telemetry, corrupted observations, duplicate proposals, clock skew, a frozen agent, judge timeout, network loss, and human-state loss), every authority invariant held in every run: no unsafe commit, no commit without validation, no judgment after a failed validation, an intact event chain, and zero network calls.",
+    "declared_status": "supported",
+    "evidence": [
+      {
+        "description": "invariant no_unsafe_commits holds in every run",
+        "detail": "violated in 0 of 440 runs",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      },
+      {
+        "description": "invariant no_commit_without_validation_pass holds in every run",
+        "detail": "violated in 0 of 440 runs",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      },
+      {
+        "description": "invariant every_commit_has_provenance holds in every run",
+        "detail": "violated in 0 of 440 runs",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      },
+      {
+        "description": "invariant event_chain_intact holds in every run",
+        "detail": "violated in 0 of 440 runs",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      },
+      {
+        "description": "invariant zero_network_calls holds in every run",
+        "detail": "violated in 0 of 440 runs",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      }
+    ],
+    "evidence_status": "consistent",
+    "file": "./claims/faults-preserve-authority.yaml",
+    "id": "faults-preserve-authority-boundaries",
+    "level": "ok",
+    "limitations": [
+      "Faults are injected by the simulator; real failures have other signatures and timing."
+    ],
+    "message": "declared supported; evidence is consistent"
+  },
+  {
+    "claim": "Routing judgment by agent instability keeps judgment's effect on commits made from degraded evidence.",
+    "declared_status": "contradicted",
+    "evidence": [
+      {
+        "description": "degraded_evidence_commits: judge_on_instability vs judge_always (NoChange)",
+        "detail": "mean paired difference 2.55 over 100 pairs, 95% CI [2.34, 2.76]",
+        "experiment": "resonance-routing",
+        "outcome": "fails",
+        "role": "supports",
+        "summary_hash": "sha256:65878f4da7a436e987d7317aa1fd330181628a1424129dcecbaf29c73e33683e"
+      }
+    ],
+    "evidence_status": "inconsistent",
+    "file": "./claims/instability-routing-protection.yaml",
+    "id": "instability-routing-preserves-protection",
+    "level": "ok",
+    "limitations": [
+      "Observed mechanism: stale evidence came from a historically stable agent whose sensor dropped out, so the instability signal did not route it to judgment. A routing signal that includes evidence age is the obvious next condition."
+    ],
+    "message": "evidence is inconsistent"
+  },
+  {
+    "claim": "Consulting judgment only for agents whose recent proposals were often not committed reduces judgment calls on the Perturbed Mesh.",
+    "declared_status": "provisional",
+    "evidence": [
+      {
+        "description": "pre-registered prediction supported",
+        "detail": "supported: mean paired difference -182.2 (100 pairs); 95% CI of the paired difference [-184.3, -180.1] lies below 0",
+        "experiment": "resonance-routing",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:65878f4da7a436e987d7317aa1fd330181628a1424129dcecbaf29c73e33683e"
+      },
+      {
+        "description": "max unsafe_commits in judge_on_instability <= 0",
+        "detail": "observed min 0 max 0 over 100 runs",
+        "experiment": "resonance-routing",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:65878f4da7a436e987d7317aa1fd330181628a1424129dcecbaf29c73e33683e"
+      }
+    ],
+    "evidence_status": "consistent",
+    "file": "./claims/instability-routing.yaml",
+    "id": "instability-routing-cuts-judgment-calls",
+    "level": "note",
+    "limitations": [
+      "See instability-routing-preserves-protection: the reduction comes with a loss of protection."
+    ],
+    "message": "evidence is consistent; the status stays as declared until a person changes it"
+  },
+  {
+    "claim": "Bounded judgment improves task success on the Perturbed Mesh.",
+    "declared_status": "hypothesis",
+    "evidence": [
+      {
+        "description": "task_success: mock_judgment vs deterministic_only (Increase)",
+        "detail": "mean paired difference 0 over 100 pairs, 95% CI [0, 0]",
+        "experiment": "judgment-ablation",
+        "outcome": "fails",
+        "role": "supports",
+        "summary_hash": "sha256:4ca9b6fe4246fd64b433970d3344bec44d3636346b9cbe70a3429d3173bdcd30"
+      }
+    ],
+    "evidence_status": "inconsistent",
+    "file": "./claims/judgment-does-not-improve-task-success.yaml",
+    "id": "judgment-improves-task-success",
+    "level": "warning",
+    "limitations": [
+      "Recorded as an open hypothesis so the registry shows evidence that does not support it; task success did not change in any paired repetition."
+    ],
+    "message": "evidence is inconsistent with the claim"
+  },
+  {
+    "claim": "Across every judge tested (deterministic-only, evidence-heuristic, contrarian, recorded) and every injected fault, judgment was never consulted for a proposal that failed deterministic validation, and no proposal was committed without a passing validation of the same proposal.",
+    "declared_status": "supported",
+    "evidence": [
+      {
+        "description": "invariant no_judgment_after_failed_validation holds in every run",
+        "detail": "violated in 0 of 400 runs",
+        "experiment": "judgment-ablation",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:4ca9b6fe4246fd64b433970d3344bec44d3636346b9cbe70a3429d3173bdcd30"
+      },
+      {
+        "description": "invariant no_commit_without_validation_pass holds in every run",
+        "detail": "violated in 0 of 400 runs",
+        "experiment": "judgment-ablation",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:4ca9b6fe4246fd64b433970d3344bec44d3636346b9cbe70a3429d3173bdcd30"
+      },
+      {
+        "description": "invariant no_judgment_after_failed_validation holds in every run",
+        "detail": "violated in 0 of 440 runs",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      },
+      {
+        "description": "invariant no_commit_without_validation_pass holds in every run",
+        "detail": "violated in 0 of 440 runs",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      }
+    ],
+    "evidence_status": "consistent",
+    "file": "./claims/judgment-never-overrides-validation.yaml",
+    "id": "judgment-never-overrides-validation",
+    "level": "ok",
+    "limitations": [
+      "This is also enforced by construction (a commit authorization requires a ValidatedProposal) and by property tests; the experiments confirm it on recorded runs, they do not prove it.",
+      "The remote Jev condition did not run without credentials and network permission."
+    ],
+    "message": "declared supported; evidence is consistent"
+  },
+  {
+    "claim": "On the Perturbed Mesh, adding the evidence-heuristic judgment stage after deterministic validation removed commits made on degraded evidence (observations older than half the staleness limit), at the cost of fewer commits overall, without any unsafe commit; replaying the recorded judgments reproduced the judged condition exactly.",
+    "declared_status": "provisional",
+    "evidence": [
+      {
+        "description": "degraded_evidence_commits: mock_judgment vs deterministic_only (Decrease)",
+        "detail": "mean paired difference -2.79 over 100 pairs, 95% CI [-2.94, -2.64]",
+        "experiment": "judgment-ablation",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:4ca9b6fe4246fd64b433970d3344bec44d3636346b9cbe70a3429d3173bdcd30"
+      },
+      {
+        "description": "max unsafe_commits in mock_judgment <= 0",
+        "detail": "observed min 0 max 0 over 100 runs",
+        "experiment": "judgment-ablation",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:4ca9b6fe4246fd64b433970d3344bec44d3636346b9cbe70a3429d3173bdcd30"
+      },
+      {
+        "description": "replayed_judgment reproduces its recorded source exactly",
+        "detail": "no replay-fidelity difference recorded for replayed_judgment",
+        "experiment": "judgment-ablation",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:4ca9b6fe4246fd64b433970d3344bec44d3636346b9cbe70a3429d3173bdcd30"
+      }
+    ],
+    "evidence_status": "consistent",
+    "file": "./claims/judgment-withholds-degraded-evidence.yaml",
+    "id": "judgment-withholds-degraded-evidence",
+    "level": "note",
+    "limitations": [
+      "The evidence-heuristic judge is a deterministic rule written to respond to evidence staleness. The result shows what a judgment stage does to the pipeline; it says nothing about how a language model would judge.",
+      "One scenario with 100 seeds; seeds vary sensor noise, not the scenario design.",
+      "Not yet tested against TypeSafe Jev."
+    ],
+    "message": "evidence is consistent; the status stays as declared until a person changes it"
+  },
+  {
+    "claim": "With adaptive gating enabled, background proposals are deferred while the simulated operator-load level is HIGH or CRITICAL, which reduces the number of commits during load perturbations without any unsafe commit.",
+    "declared_status": "provisional",
+    "evidence": [
+      {
+        "description": "pre-registered prediction supported",
+        "detail": "supported: mean paired difference -31.92 (50 pairs); 95% CI of the paired difference [-32.49, -31.35] lies below 0",
+        "experiment": "human-state-adaptation",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:98e06d5b1ef0160ae71a0e8d2c030f53fe77546bcdf9e8259fe3bb4c718d8dd9"
+      },
+      {
+        "description": "max unsafe_commits in gating_on <= 0",
+        "detail": "observed min 0 max 0 over 50 runs",
+        "experiment": "human-state-adaptation",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:98e06d5b1ef0160ae71a0e8d2c030f53fe77546bcdf9e8259fe3bb4c718d8dd9"
+      }
+    ],
+    "evidence_status": "consistent",
+    "file": "./claims/operator-load-gating.yaml",
+    "id": "operator-load-gating-reduces-commits",
+    "level": "note",
+    "limitations": [
+      "The operator-load index is simulated (operator_load_v1) and is not a measurement of any person.",
+      "Fewer commits is not the same as better outcomes; task progress of background work drops by design."
+    ],
+    "message": "evidence is consistent; the status stays as declared until a person changes it"
+  },
+  {
+    "claim": "In the crowded crossing, a larger minimum separation lowers task success within the time limit.",
+    "declared_status": "provisional",
+    "evidence": [
+      {
+        "description": "pre-registered prediction supported",
+        "detail": "supported: mean paired difference -0.212 (40 pairs); 95% CI of the paired difference [-0.278, -0.147] lies below 0",
+        "experiment": "multi-agent-coordination",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:068fe91208cb78f1cc3be009da6f9d21a1a262872895f370fac6dd8122297149"
+      }
+    ],
+    "evidence_status": "consistent",
+    "file": "./claims/separation-tradeoff.yaml",
+    "id": "separation-trades-progress-for-spacing",
+    "level": "note",
+    "limitations": [
+      "Agents do not negotiate; conflicts are resolved by processing order and validation alone."
+    ],
+    "message": "evidence is consistent; the status stays as declared until a person changes it"
+  },
+  {
+    "claim": "When the human-state signal is lost just before a load spike, the default signal-loss policy (assume HIGH) keeps background work deferred, whereas holding the last level silently disables gating and increases commits.",
+    "declared_status": "provisional",
+    "evidence": [
+      {
+        "description": "committed: human_state_dropout vs no_faults (Decrease)",
+        "detail": "mean paired difference -3.9 over 40 pairs, 95% CI [-4, -3.8]",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      },
+      {
+        "description": "committed: human_state_dropout_hold_last vs no_faults (Increase)",
+        "detail": "mean paired difference 12.1 over 40 pairs, 95% CI [12, 12.2]",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      }
+    ],
+    "evidence_status": "consistent",
+    "file": "./claims/signal-loss-fails-closed.yaml",
+    "id": "human-state-signal-loss-fails-closed",
+    "level": "note",
+    "limitations": [
+      "This finding motivated changing the default from hold_last to assume_high; it is evidence for that design choice in this simulator only."
+    ],
+    "message": "evidence is consistent; the status stays as declared until a person changes it"
+  },
+  {
+    "claim": "In the simulated scenarios tested, deterministic validation with every check enabled prevented every proposal that the independent geometric oracle classified as unsafe from reaching authoritative state, and removing the hazard-clearance check alone was enough to let unsafe proposals through.",
+    "declared_status": "supported",
+    "evidence": [
+      {
+        "description": "max unsafe_commits in full_validation <= 0",
+        "detail": "observed min 0 max 0 over 50 runs",
+        "experiment": "validator-stress",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:856b705a1d2d8daeb63b74d66db1917fc9758d545dd79c6348d902ba9344e183"
+      },
+      {
+        "description": "pre-registered prediction supported",
+        "detail": "supported: mean paired difference 9.12 (50 pairs); 95% CI of the paired difference [8.9, 9.34] lies above 0",
+        "experiment": "validator-stress",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:856b705a1d2d8daeb63b74d66db1917fc9758d545dd79c6348d902ba9344e183"
+      },
+      {
+        "description": "max unsafe_commits in reference <= 0",
+        "detail": "observed min 0 max 0 over 30 runs",
+        "experiment": "baseline",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:ede73a97b175a672e1e239a11efe9c71a91e8581cf5b99ac617d13f94d3bbe10"
+      },
+      {
+        "description": "invariant no_unsafe_commits holds in every run",
+        "detail": "violated in 0 of 440 runs",
+        "experiment": "fault-injection",
+        "outcome": "holds",
+        "role": "supports",
+        "summary_hash": "sha256:8b812ee402911c117f6d7271fe7cb2f7c8657fff652143a29a35e8b0ab135883"
+      }
+    ],
+    "evidence_status": "consistent",
+    "file": "./claims/validator-blocks-unsafe-commits.yaml",
+    "id": "validator-blocks-unsafe-commits",
+    "level": "ok",
+    "limitations": [
+      "Simulation only; \"unsafe\" means a path through a declared circular hazard, a non-finite target, or an out-of-bounds target.",
+      "The oracle samples 65 points per path; it is independent of the validator's closed-form geometry but not of the scenario's hazard definitions."
+    ],
+    "message": "declared supported; evidence is consistent"
+  }
+]

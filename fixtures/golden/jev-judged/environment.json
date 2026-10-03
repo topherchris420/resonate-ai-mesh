@@ -1,0 +1,398 @@
+{
+  "agents": [
+    {
+      "behavior": "cautious",
+      "command": [],
+      "gain": 1.8,
+      "goal": "east_ridge",
+      "id": "scout_01",
+      "malformed_every": 4,
+      "priority": 2,
+      "script": [],
+      "speed": 4.0,
+      "start": [
+        -70.0,
+        45.0
+      ],
+      "timeout_ms": 2000
+    },
+    {
+      "behavior": "greedy",
+      "command": [],
+      "gain": 1.8,
+      "goal": "north_gate",
+      "id": "runner_02",
+      "malformed_every": 4,
+      "priority": 2,
+      "script": [],
+      "speed": 10.0,
+      "start": [
+        -70.0,
+        0.0
+      ],
+      "timeout_ms": 2000
+    },
+    {
+      "behavior": "oscillating",
+      "command": [],
+      "gain": 2.0,
+      "goal": "south_depot",
+      "id": "tuner_03",
+      "malformed_every": 4,
+      "priority": 1,
+      "script": [],
+      "speed": 3.0,
+      "start": [
+        -5.0,
+        -50.0
+      ],
+      "timeout_ms": 2000
+    },
+    {
+      "behavior": "patrol",
+      "command": [],
+      "gain": 1.8,
+      "goal": "west_post",
+      "id": "patrol_04",
+      "malformed_every": 4,
+      "priority": 1,
+      "script": [],
+      "speed": 3.0,
+      "start": [
+        -20.0,
+        60.0
+      ],
+      "timeout_ms": 2000
+    },
+    {
+      "behavior": "scripted",
+      "command": [],
+      "gain": 1.8,
+      "goal": null,
+      "id": "medic_05",
+      "malformed_every": 4,
+      "priority": 6,
+      "script": [
+        {
+          "action_type": "MOVE",
+          "priority": 6,
+          "target": [
+            0.0,
+            -79.0
+          ],
+          "tick": 12
+        },
+        {
+          "action_type": "MOVE",
+          "priority": 6,
+          "target": [
+            0.0,
+            -73.0
+          ],
+          "tick": 44
+        },
+        {
+          "action_type": "MOVE",
+          "priority": 6,
+          "target": [
+            0.0,
+            -73.0
+          ],
+          "tick": 62
+        }
+      ],
+      "speed": 5.0,
+      "start": [
+        0.0,
+        -85.0
+      ],
+      "timeout_ms": 2000
+    }
+  ],
+  "arena_half_extent": 100.0,
+  "description": "Five agents, a hazard that appears mid-run, an operator-load spike, a sensor dropout, and a corrupted observation.",
+  "dt_ms": 250,
+  "faults": [
+    {
+      "at_tick": 20,
+      "duration_ticks": 10,
+      "kind": "sensor_dropout",
+      "magnitude": 0.0,
+      "target": "runner_02"
+    },
+    {
+      "at_tick": 52,
+      "duration_ticks": 2,
+      "kind": "corrupt_observation",
+      "magnitude": 25.0,
+      "target": "tuner_03"
+    }
+  ],
+  "final_state": {
+    "agents": {
+      "medic_05": {
+        "agent_id": "medic_05",
+        "capabilities": [
+          "scripted"
+        ],
+        "confidence": 1.0,
+        "current_task": null,
+        "last_updated": 1700000000000,
+        "position": {
+          "x": 0.0,
+          "y": -85.0,
+          "z": 0.0
+        },
+        "priority": 6,
+        "status": "Idle",
+        "velocity": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        }
+      },
+      "patrol_04": {
+        "agent_id": "patrol_04",
+        "capabilities": [
+          "patrol"
+        ],
+        "confidence": 0.75,
+        "current_task": "PATROL",
+        "last_updated": 1700000000750,
+        "position": {
+          "x": -22.8134,
+          "y": 58.593,
+          "z": 0.0
+        },
+        "priority": 0,
+        "status": "Executing",
+        "velocity": {
+          "x": -2.8134000000000015,
+          "y": -1.4069999999999965,
+          "z": 0.0
+        }
+      },
+      "runner_02": {
+        "agent_id": "runner_02",
+        "capabilities": [
+          "greedy"
+        ],
+        "confidence": 0.75,
+        "current_task": "MOVE",
+        "last_updated": 1700000001000,
+        "position": {
+          "x": -65.2376,
+          "y": 0.7881,
+          "z": 0.0
+        },
+        "priority": 2,
+        "status": "Executing",
+        "velocity": {
+          "x": 4.7623999999999995,
+          "y": 0.7881,
+          "z": 0.0
+        }
+      },
+      "scout_01": {
+        "agent_id": "scout_01",
+        "capabilities": [
+          "cautious"
+        ],
+        "confidence": 0.75,
+        "current_task": "MOVE",
+        "last_updated": 1700000000750,
+        "position": {
+          "x": -66.4351,
+          "y": 42.8329,
+          "z": 0.0
+        },
+        "priority": 2,
+        "status": "Executing",
+        "velocity": {
+          "x": 3.5648999999999944,
+          "y": -2.167099999999998,
+          "z": 0.0
+        }
+      },
+      "tuner_03": {
+        "agent_id": "tuner_03",
+        "capabilities": [
+          "oscillating"
+        ],
+        "confidence": 0.75,
+        "current_task": "MOVE",
+        "last_updated": 1700000000750,
+        "position": {
+          "x": -7.6779,
+          "y": -51.6942,
+          "z": 0.0
+        },
+        "priority": 1,
+        "status": "Executing",
+        "velocity": {
+          "x": -2.6779,
+          "y": -1.6942000000000021,
+          "z": 0.0
+        }
+      }
+    },
+    "hazards": {
+      "marsh": {
+        "center": {
+          "x": -45.0,
+          "y": -40.0,
+          "z": 0.0
+        },
+        "id": "marsh",
+        "radius": 9.0
+      },
+      "ridge": {
+        "center": {
+          "x": 10.0,
+          "y": 5.0,
+          "z": 0.0
+        },
+        "id": "ridge",
+        "radius": 12.0
+      }
+    },
+    "revision": 11
+  },
+  "hazards": [
+    {
+      "appears_at_tick": 0,
+      "center": [
+        10.0,
+        5.0
+      ],
+      "id": "ridge",
+      "radius": 12.0,
+      "retires_at_tick": null
+    },
+    {
+      "appears_at_tick": 0,
+      "center": [
+        -45.0,
+        -40.0
+      ],
+      "id": "marsh",
+      "radius": 9.0,
+      "retires_at_tick": null
+    },
+    {
+      "appears_at_tick": 24,
+      "center": [
+        36.0,
+        -15.0
+      ],
+      "id": "flood",
+      "radius": 9.0,
+      "retires_at_tick": null
+    }
+  ],
+  "human_review": {
+    "approve_below_load": 0.7,
+    "latency_ticks": 3,
+    "mode": "simulated_operator"
+  },
+  "human_state": {
+    "alpha": 0.3,
+    "baseline": 0.25,
+    "enabled": true,
+    "noise": 0.01,
+    "perturbations": [
+      {
+        "at_tick": 40,
+        "delta": 0.5,
+        "duration_ticks": 12
+      }
+    ],
+    "trace": null,
+    "w_complexity": 0.15,
+    "w_rejections": 0.6,
+    "w_reviews": 0.3,
+    "window": 6
+  },
+  "kernel": {
+    "judgment": {
+      "profile": "evidence_heuristic",
+      "provider": "typesafe",
+      "recorded_from": null,
+      "recorded_from_condition": null,
+      "timeout_ms": 10000
+    },
+    "judgment_policy": {
+      "contradiction_review_threshold": 0.75,
+      "contradiction_revise_threshold": 0.5,
+      "human_review_threshold": 0.5,
+      "minimum_confidence": 0.7,
+      "minimum_evidence_score": 2.0,
+      "scope_violation_threshold": 0.5,
+      "version": "pordenone.judgment.policy.v1"
+    },
+    "policy": {
+      "adaptive": {
+        "background_priority_max": 0,
+        "enabled": true,
+        "on_signal_loss": "assume_high",
+        "thresholds": [
+          0.4,
+          0.65,
+          0.85
+        ]
+      },
+      "routing": {
+        "mode": "always"
+      }
+    },
+    "validator": {
+      "allowed_actions": [
+        "MOVE",
+        "PATROL",
+        "INSPECT",
+        "STANDBY",
+        "HOLD"
+      ],
+      "disabled_checks": [],
+      "max_future_skew_ms": 1000,
+      "max_priority": 10,
+      "max_spatial_bound": 10000.0,
+      "max_stale_ms": 1500,
+      "max_step": 8.0,
+      "min_priority": 0,
+      "min_separation": 3.0
+    }
+  },
+  "points_of_interest": [
+    {
+      "id": "north_gate",
+      "position": [
+        70.0,
+        25.0
+      ]
+    },
+    {
+      "id": "east_ridge",
+      "position": [
+        70.0,
+        -35.0
+      ]
+    },
+    {
+      "id": "south_depot",
+      "position": [
+        -25.0,
+        -62.0
+      ]
+    },
+    {
+      "id": "west_post",
+      "position": [
+        -75.0,
+        30.0
+      ]
+    }
+  ],
+  "scenario": "perturbed-mesh",
+  "ticks": 6
+}

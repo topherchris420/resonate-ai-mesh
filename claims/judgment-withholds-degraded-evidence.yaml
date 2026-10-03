@@ -1,0 +1,22 @@
+id: judgment-withholds-degraded-evidence
+claim: >
+  On the Perturbed Mesh, adding the evidence-heuristic judgment stage after
+  deterministic validation removed commits made on degraded evidence
+  (observations older than half the staleness limit), at the cost of fewer
+  commits overall, without any unsafe commit; replaying the recorded judgments
+  reproduced the judged condition exactly.
+status: provisional
+evidence:
+  - experiment: judgment-ablation
+    role: supports
+    check: { type: comparison, metric: degraded_evidence_commits, baseline: deterministic_only, treatment: mock_judgment, direction: decrease }
+  - experiment: judgment-ablation
+    role: supports
+    check: { type: condition_max, condition: mock_judgment, metric: unsafe_commits, max: 0 }
+  - experiment: judgment-ablation
+    role: supports
+    check: { type: replay_fidelity, condition: replayed_judgment }
+limitations:
+  - 'The evidence-heuristic judge is a deterministic rule written to respond to evidence staleness. The result shows what a judgment stage does to the pipeline; it says nothing about how a language model would judge.'
+  - 'One scenario with 100 seeds; seeds vary sensor noise, not the scenario design.'
+  - 'Not yet tested against TypeSafe Jev.'

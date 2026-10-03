@@ -28,9 +28,11 @@ pub use envelope::{
 };
 pub use policy::{JudgmentPolicy, POLICY_VERSION};
 pub use provider::{
-    commit_allowed, draft_envelope, local_failure_envelope, scripted_answers,
-    DeterministicMockJudgmentProvider, DisabledJudgmentProvider, JudgmentProvider, JudgmentRequest,
-    MockScenario, RecordedJudgmentProvider, StaticStatusProvider,
+    commit_allowed, draft_envelope, evidence_heuristic_answers, local_failure_envelope,
+    scripted_answers, stable_bucket, ContrarianJudge, DeterministicMockJudgmentProvider,
+    DisabledJudgmentProvider, EvidenceHeuristicJudge, JudgmentProvider, JudgmentRequest,
+    MockScenario, ProviderDescriptor, ProviderKind, RecordedJudgmentProvider, StaticStatusProvider,
+    CONTRARIAN_MODEL, EVIDENCE_HEURISTIC_MODEL,
 };
 pub use questions::{
     proposal_question_set, typesafe_questions_wire, AtomicQuestion, QuestionSet,

@@ -1,0 +1,8 @@
+# Python tooling for tests and the independent verifier. The verifier
+# (tools/verify_bundle.py) itself needs only the standard library.
+pytest>=8
+jsonschema>=4.18
+referencing>=0.30
+grpcio-tools>=1.60
+protobuf>=4.25
+websockets>=12

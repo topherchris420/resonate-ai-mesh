@@ -4,9 +4,10 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
-pub const STATE_SCHEMA_VERSION: &str = "pordenone.judgment.state.v1";
+pub const STATE_SCHEMA_VERSION: &str = "pordenone.judgment.state.v2";
 
 const OPERATOR_ALLOWLIST: &[&str] = &[
+    "operator_load_index",
     "cognitive_load",
     "signal_quality",
     "baseline_delta",
@@ -141,6 +142,8 @@ pub struct AdaptiveEvidence {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct OperatorEvidence {
     pub present: bool,
+    /// Simulated or derived workload index in [0, 1]. Not a measurement of cognition.
+    pub operator_load_index: Option<f64>,
     pub cognitive_load: Option<f64>,
     pub signal_quality: Option<f64>,
     pub baseline_delta: Option<f64>,
@@ -413,6 +416,9 @@ fn project_operator(
             continue;
         }
         match key.as_str() {
+            "operator_load_index" => {
+                assign_number(&mut evidence.operator_load_index, key, value, &mut excluded)?
+            }
             "cognitive_load" => {
                 assign_number(&mut evidence.cognitive_load, key, value, &mut excluded)?
             }
@@ -449,7 +455,8 @@ fn project_operator(
             _ => excluded.push(key.clone()),
         }
     }
-    let any_value = evidence.cognitive_load.is_some()
+    let any_value = evidence.operator_load_index.is_some()
+        || evidence.cognitive_load.is_some()
         || evidence.signal_quality.is_some()
         || evidence.baseline_delta.is_some()
         || evidence.cross_signal_coherence.is_some()
@@ -462,6 +469,7 @@ fn project_operator(
 fn empty_operator() -> OperatorEvidence {
     OperatorEvidence {
         present: false,
+        operator_load_index: None,
         cognitive_load: None,
         signal_quality: None,
         baseline_delta: None,

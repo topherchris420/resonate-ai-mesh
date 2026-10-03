@@ -21,11 +21,55 @@ pub struct JudgmentRequest {
     pub causation_id: String,
 }
 
+/// How a provider produces its answers. Recorded in provenance and used to
+/// decide whether a model was involved and whether replay must substitute it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProviderKind {
+    /// A pure function of the evidence package, defined in this repository.
+    Deterministic,
+    /// Returns envelopes captured in an earlier run.
+    Recorded,
+    /// A probabilistic model reached over the network.
+    RemoteModel,
+    /// No judgment is produced.
+    Disabled,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct ProviderDescriptor {
+    pub name: String,
+    pub model: String,
+    pub kind: ProviderKind,
+    /// True when evaluating may open a network connection.
+    pub networked: bool,
+}
+
+impl ProviderDescriptor {
+    pub fn deterministic(name: &str, model: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            model: model.to_string(),
+            kind: ProviderKind::Deterministic,
+            networked: false,
+        }
+    }
+
+    /// True when a probabilistic model produced the answers.
+    pub fn model_involved(&self) -> bool {
+        matches!(self.kind, ProviderKind::RemoteModel)
+    }
+}
+
 /// A judgment provider evaluates an immutable evidence package and returns data.
 /// It has no write handle to authoritative state, the event bus, or actuators.
 #[async_trait]
 pub trait JudgmentProvider: Send + Sync {
     async fn evaluate(&self, request: &JudgmentRequest) -> JudgmentEnvelope;
+
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderDescriptor::deterministic("unnamed", "unknown")
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -70,6 +114,10 @@ impl JudgmentProvider for DeterministicMockJudgmentProvider {
             answers,
         )
     }
+
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderDescriptor::deterministic("deterministic_mock", "deterministic-mock")
+    }
 }
 
 pub struct DisabledJudgmentProvider;
@@ -87,6 +135,15 @@ impl JudgmentProvider for DisabledJudgmentProvider {
         envelope.evaluation_mode = EvaluationMode::Disabled;
         envelope.provider_model_version = "none".to_string();
         envelope
+    }
+
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderDescriptor {
+            name: "disabled".to_string(),
+            model: "none".to_string(),
+            kind: ProviderKind::Disabled,
+            networked: false,
+        }
     }
 }
 
@@ -114,6 +171,10 @@ impl JudgmentProvider for StaticStatusProvider {
             self.status,
             Vec::new(),
         )
+    }
+
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderDescriptor::deterministic(&self.provider_name, "none")
     }
 }
 
@@ -146,7 +207,25 @@ impl RecordedJudgmentProvider {
 #[async_trait]
 impl JudgmentProvider for RecordedJudgmentProvider {
     async fn evaluate(&self, request: &JudgmentRequest) -> JudgmentEnvelope {
+        let missing = |reason: &str| {
+            let mut envelope = draft_envelope(
+                request,
+                "recorded",
+                "none",
+                ProviderStatus::MissingFields,
+                Vec::new(),
+            );
+            envelope.evaluation_mode = EvaluationMode::RecordedJudgment;
+            envelope.disposition = Disposition::Unavailable;
+            envelope.reason_codes = vec![reason.to_string()];
+            envelope
+        };
         match self.by_proposal.get(&request.proposal_id) {
+            // A recording answers the evidence it was given. Different evidence
+            // (a different state hash) gets no recorded answer.
+            Some(recorded) if recorded.state_hash != request.prepared.state_hash => {
+                missing("RECORDED_JUDGMENT_STATE_MISMATCH")
+            }
             Some(recorded) => {
                 let mut copy = recorded.clone();
                 copy.evaluation_mode = EvaluationMode::RecordedJudgment;
@@ -155,21 +234,148 @@ impl JudgmentProvider for RecordedJudgmentProvider {
                 copy.proposal_id = request.proposal_id.clone();
                 copy
             }
-            None => {
-                let mut envelope = draft_envelope(
-                    request,
-                    "recorded",
-                    "none",
-                    ProviderStatus::MissingFields,
-                    Vec::new(),
-                );
-                envelope.evaluation_mode = EvaluationMode::RecordedJudgment;
-                envelope.disposition = Disposition::Unavailable;
-                envelope.reason_codes = vec!["RECORDED_JUDGMENT_MISSING".to_string()];
-                envelope
-            }
+            None => missing("RECORDED_JUDGMENT_MISSING"),
         }
     }
+
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderDescriptor {
+            name: "recorded".to_string(),
+            model: "recorded".to_string(),
+            kind: ProviderKind::Recorded,
+            networked: false,
+        }
+    }
+}
+
+/// Deterministic stand-in for a judge that responds to evidence quality.
+///
+/// This is not a model and makes no claim to approximate one. It exists so
+/// experiments can measure what a bounded judgment stage does to a run (extra
+/// withholds, human reviews, disagreement with deterministic validation)
+/// without network access. Rules (`evidence-heuristic-v1`):
+///
+/// * staleness `s = clamp((1 - deterministic_confidence) / 0.5, 0, 1)`
+/// * signal quality `q` = operator `signal_quality`, or 1.0 when absent
+/// * evidence score `= clamp(3 - 2s - (1 - q), 0, 3)`
+/// * support: `supported` if score >= 2, `mixed` if score >= 1, else `insufficient_evidence`
+/// * Choice/Score confidence `= 0.95 - 0.5s`
+/// * contradiction noul `= 0.9` if deterministic contradictions exist, else `0.05`
+/// * scope noul `= 0.1 + 0.6s`
+/// * human-review noul `= 0.1 + 0.5·[priority >= 5] + 0.3s`
+pub struct EvidenceHeuristicJudge;
+
+pub const EVIDENCE_HEURISTIC_MODEL: &str = "evidence-heuristic-v1";
+
+#[async_trait]
+impl JudgmentProvider for EvidenceHeuristicJudge {
+    async fn evaluate(&self, request: &JudgmentRequest) -> JudgmentEnvelope {
+        draft_envelope(
+            request,
+            "deterministic_mock",
+            EVIDENCE_HEURISTIC_MODEL,
+            ProviderStatus::Ok,
+            evidence_heuristic_answers(&request.prepared),
+        )
+    }
+
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderDescriptor::deterministic("deterministic_mock", EVIDENCE_HEURISTIC_MODEL)
+    }
+}
+
+pub fn evidence_heuristic_answers(prepared: &PreparedJudgment) -> Vec<JudgmentAnswer> {
+    let state = &prepared.state;
+    let staleness = ((1.0 - state.validation.deterministic_confidence) / 0.5).clamp(0.0, 1.0);
+    let quality = state.operator.signal_quality.unwrap_or(1.0).clamp(0.0, 1.0);
+    let score = round2((3.0 - 2.0 * staleness - (1.0 - quality)).clamp(0.0, 3.0));
+    let selected = if score >= 2.0 {
+        SUPPORT_SUPPORTED
+    } else if score >= 1.0 {
+        SUPPORT_MIXED
+    } else {
+        SUPPORT_INSUFFICIENT
+    };
+    let confidence = round2(0.95 - 0.5 * staleness);
+    let contradiction = if state.validation.contradictions.is_empty() {
+        0.05
+    } else {
+        0.9
+    };
+    let scope = round2(0.1 + 0.6 * staleness);
+    let high_priority = if state.proposal.priority >= 5 {
+        0.5
+    } else {
+        0.0
+    };
+    let human = round2(0.1 + high_priority + 0.3 * staleness);
+    let top = round2(0.7 + 0.2 * (1.0 - staleness));
+    let rest = round2((1.0 - top) / 3.0);
+    answers_with(
+        selected,
+        top,
+        rest,
+        Some(confidence),
+        contradiction,
+        scope,
+        human,
+        score,
+        Some(confidence),
+    )
+}
+
+/// Deterministic judge that disagrees with every third proposal (by a stable
+/// hash of its id) with high confidence. Used to measure how the kernel
+/// handles judgment that contradicts deterministic validation.
+pub struct ContrarianJudge;
+
+pub const CONTRARIAN_MODEL: &str = "contrarian-v1";
+
+#[async_trait]
+impl JudgmentProvider for ContrarianJudge {
+    async fn evaluate(&self, request: &JudgmentRequest) -> JudgmentEnvelope {
+        let disagree = stable_bucket(&request.proposal_id, 3) == 0;
+        let answers = if disagree {
+            answers_with(
+                SUPPORT_UNSUPPORTED,
+                0.9,
+                0.03,
+                Some(0.9),
+                0.2,
+                0.2,
+                0.2,
+                2.5,
+                Some(0.9),
+            )
+        } else {
+            supported_answers(0.88, 0.86)
+        };
+        draft_envelope(
+            request,
+            "deterministic_mock",
+            CONTRARIAN_MODEL,
+            ProviderStatus::Ok,
+            answers,
+        )
+    }
+
+    fn descriptor(&self) -> ProviderDescriptor {
+        ProviderDescriptor::deterministic("deterministic_mock", CONTRARIAN_MODEL)
+    }
+}
+
+/// FNV-1a over the id, reduced modulo `buckets`. Stable across platforms and releases.
+pub fn stable_bucket(id: &str, buckets: u64) -> u64 {
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for byte in id.as_bytes() {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x0100_0000_01b3);
+    }
+    hash % buckets.max(1)
+}
+
+fn round2(value: f64) -> f64 {
+    (value * 100.0).round() / 100.0
 }
 
 pub fn scripted_answers(scenario: MockScenario) -> (ProviderStatus, Vec<JudgmentAnswer>) {
@@ -295,6 +501,31 @@ fn with_support(
     evidence_score: f64,
     evidence_confidence: Option<f64>,
 ) -> Vec<JudgmentAnswer> {
+    answers_with(
+        selected,
+        0.82,
+        0.06,
+        choice_confidence,
+        contradiction,
+        scope,
+        human,
+        evidence_score,
+        evidence_confidence,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn answers_with(
+    selected: &str,
+    selected_probability: f64,
+    other_probability: f64,
+    choice_confidence: Option<f64>,
+    contradiction: f64,
+    scope: f64,
+    human: f64,
+    evidence_score: f64,
+    evidence_confidence: Option<f64>,
+) -> Vec<JudgmentAnswer> {
     let mut probabilities = BTreeMap::new();
     for option in [
         SUPPORT_SUPPORTED,
@@ -304,7 +535,11 @@ fn with_support(
     ] {
         probabilities.insert(
             option.to_string(),
-            if option == selected { 0.82 } else { 0.06 },
+            if option == selected {
+                selected_probability
+            } else {
+                other_probability
+            },
         );
     }
     let mut legend = BTreeMap::new();
@@ -480,6 +715,95 @@ mod tests {
         assert_eq!(stored.evaluation_mode, EvaluationMode::Live);
         assert_eq!(stored.causation_id, "val_original");
         assert_eq!(stored.disposition, Disposition::Pass);
+    }
+
+    #[tokio::test]
+    async fn recorded_judgment_for_different_evidence_is_not_reused() {
+        let mut recorded = draft_envelope(
+            &request(),
+            "typesafe",
+            "jev-latest",
+            ProviderStatus::Ok,
+            scripted_answers(MockScenario::Supported).1,
+        );
+        recorded.state_hash = "sha256:other-evidence".into();
+        let provider = RecordedJudgmentProvider::new(vec![recorded]);
+        let replayed = provider.evaluate(&request()).await;
+        assert_eq!(replayed.disposition, Disposition::Unavailable);
+        assert_eq!(
+            replayed.reason_codes,
+            vec!["RECORDED_JUDGMENT_STATE_MISMATCH"]
+        );
+        assert!(replayed.answers.is_empty());
+    }
+
+    fn request_with_confidence(confidence: f64, priority: i32) -> JudgmentRequest {
+        let mut req = request();
+        let case = JudgmentCase {
+            proposal_id: "prop_heuristic".into(),
+            agent_id: "agent_alpha".into(),
+            action_type: "MOVE".into(),
+            target: [1.0, 2.0, 0.0],
+            priority,
+            source_observation: "obs_001".into(),
+            observation_simulated: true,
+            validation_feasibility: 1.0,
+            validation_accepted: true,
+            constraints_checked: vec!["coordinate_bounds".into()],
+            contradictions: vec![],
+            deterministic_confidence: confidence,
+            validation_provenance: "pordenone.validator.v2:obs_001".into(),
+            adaptive: None,
+            operator_raw: serde_json::json!({"is_simulated": true, "operator_load_index": 0.2}),
+            spatial_coordinate_system: "local_sim".into(),
+            within_declared_bounds: true,
+            correlation_id: "corr".into(),
+            causation_id: "val".into(),
+            simulation_status: "SIMULATED".into(),
+            source_event_ids: vec![],
+        };
+        req.prepared = prepare_case(&case, &StateLimits::default()).unwrap();
+        req.proposal_id = "prop_heuristic".into();
+        req
+    }
+
+    #[tokio::test]
+    async fn evidence_heuristic_passes_fresh_evidence_and_revises_stale_evidence() {
+        let policy = JudgmentPolicy::default();
+        let judge = EvidenceHeuristicJudge;
+        let fresh = judge.evaluate(&request_with_confidence(1.0, 1)).await;
+        assert_eq!(policy.evaluate(&fresh).0, Disposition::Pass);
+        let stale = judge.evaluate(&request_with_confidence(0.6, 1)).await;
+        assert_ne!(policy.evaluate(&stale).0, Disposition::Pass);
+        let urgent = judge.evaluate(&request_with_confidence(1.0, 6)).await;
+        assert_eq!(policy.evaluate(&urgent).0, Disposition::HumanReview);
+        assert_eq!(judge.descriptor().kind, ProviderKind::Deterministic);
+        assert!(!judge.descriptor().networked);
+        for answer in &fresh.answers {
+            if !answer.probabilities.is_empty() {
+                let sum: f64 = answer.probabilities.values().sum();
+                assert!((0.95..=1.05).contains(&sum), "{sum}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn contrarian_disagrees_with_a_stable_subset() {
+        let judge = ContrarianJudge;
+        let policy = JudgmentPolicy::default();
+        let mut disagreements = 0;
+        for index in 0..30 {
+            let mut req = request();
+            req.proposal_id = format!("prop-{index:04}");
+            let envelope = judge.evaluate(&req).await;
+            let again = judge.evaluate(&req).await;
+            assert_eq!(envelope.answers, again.answers);
+            if policy.evaluate(&envelope).0 != Disposition::Pass {
+                disagreements += 1;
+            }
+        }
+        assert!(disagreements > 0 && disagreements < 30);
+        assert_eq!(stable_bucket("abc", 7), stable_bucket("abc", 7));
     }
 
     #[tokio::test]

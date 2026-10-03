@@ -1,0 +1,17 @@
+# Network unavailable: the judgment provider cannot be reached. Proposals that
+# pass validation are withheld as UNAVAILABLE; nothing commits without the
+# judgment stage the policy requires, and nothing is silently accepted.
+id: network-unavailable
+description: The judge is unreachable for 15 ticks; validated proposals are withheld, not silently accepted.
+ticks: 50
+points_of_interest:
+  - { id: goal, position: [50, 0] }
+agents:
+  - { id: n1, behavior: cautious, start: [-50, 10], goal: goal, speed: 3 }
+  - { id: n2, behavior: cautious, start: [-50, -10], goal: goal, speed: 3 }
+faults:
+  - { kind: network_unavailable, at_tick: 10, duration_ticks: 15 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: mock, profile: evidence_heuristic }
+termination: { stop_when_all_goals_reached: false }

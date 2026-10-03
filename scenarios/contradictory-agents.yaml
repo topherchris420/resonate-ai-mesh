@@ -1,0 +1,16 @@
+# Contradictory agents: four agents converge on the same point from different
+# directions and propose incompatible targets in the same ticks.
+id: contradictory-agents
+description: Four agents head for one point; separation decides which proposals can be committed.
+ticks: 50
+points_of_interest:
+  - { id: hub, position: [0, 0] }
+agents:
+  - { id: c1, behavior: cautious, start: [-40, 0], goal: hub, speed: 4 }
+  - { id: c2, behavior: cautious, start: [40, 0], goal: hub, speed: 4 }
+  - { id: c3, behavior: greedy, start: [0, 40], goal: hub, speed: 5 }
+  - { id: c4, behavior: greedy, start: [0, -40], goal: hub, speed: 5 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: disabled }
+termination: { stop_when_all_goals_reached: false, goal_radius: 6 }

@@ -1,0 +1,56 @@
+{
+  "bundle_format": "resonate-ai-mesh.run-bundle.v1",
+  "software_version": "resonate-ai-mesh/0.2.0",
+  "git_commit": "82444c49ec6953793083a5f21fc80742d9575f36",
+  "git_dirty": true,
+  "rustc": "rustc 1.97.0 (2d8144b78 2026-07-07)",
+  "os": "linux",
+  "arch": "x86_64",
+  "command": [
+    "mesh",
+    "golden",
+    "update"
+  ],
+  "started_at_wall": "2026-10-03T18:02:54.002168831+00:00",
+  "finished_at_wall": "2026-10-03T18:02:54.061508293+00:00",
+  "run_config_hash": "sha256:53096be49f57e26deb8ef5dce7755714f16a675c2bc93445ea9192cab2260fa2",
+  "validator_version": "pordenone.validator.v2",
+  "validator_config_hash": "sha256:5a88c22808add5b9b336fa555d28c4aea2c3091abfca88e4b5732181eb4b05d3",
+  "kernel_policy_version": "pordenone.kernel.policy.v2",
+  "judgment_policy_version": "pordenone.judgment.policy.v1",
+  "question_set_version": "pordenone.judgment.questions.v1",
+  "judgment_state_schema": "pordenone.judgment.state.v2",
+  "event_schema_version": "1.2.0",
+  "judge": null,
+  "agents": [
+    {
+      "agent_id": "k1",
+      "adapter": "builtin:cautious",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "k2",
+      "adapter": "builtin:cautious",
+      "deterministic": true,
+      "networked": false
+    },
+    {
+      "agent_id": "k3",
+      "adapter": "builtin:malformed",
+      "deterministic": true,
+      "networked": false
+    }
+  ],
+  "parent": null,
+  "file_hashes": {
+    "decisions.jsonl": "sha256:3ac3eda96157978ba9b88847d776b2f080d34f362a8f2bdb32e7d305c37ffd93",
+    "environment.json": "sha256:ca76739f3dec0a5968bdb4ed8ddf237c277cbc4d346676bfc8abc791115f68be",
+    "events.jsonl": "sha256:c4955984a6693e2ec20d8962bbd954c0be3cfb4046b9f6c47364c930435e9345",
+    "intents.jsonl": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest.json": "sha256:ab8d58101e33d668e76d86a9d38b4150d9b7c6b951b6662c2496f963eb695e6d",
+    "metrics.json": "sha256:e8f08ed7e54215539194a6a850a58a13b2ccf47f394c5f0b21b2a07e0bce463e",
+    "replay.json": "sha256:18324a6e1e9e8df4ca7fa1488cfba06ede22e6e2ee0596bb381342a732e858c1",
+    "topology.json": "sha256:1adcd474627610c1caf3547f6c3c1fcdc81d8e4ac4aef20e19125ce97e0cd8e7"
+  }
+}

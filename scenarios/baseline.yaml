@@ -1,0 +1,22 @@
+# Baseline: normal operation. Static hazards, no faults, no operator-load
+# perturbation. Reference values for every metric.
+id: baseline
+description: Four cooperative agents cross a static arena with two hazards; no faults or perturbations.
+ticks: 60
+points_of_interest:
+  - { id: ne, position: [60, 50] }
+  - { id: se, position: [60, -50] }
+  - { id: sw, position: [-60, -50] }
+  - { id: nw, position: [-60, 50] }
+hazards:
+  - { id: center, center: [0, 0], radius: 15 }
+  - { id: pond, center: [-30, 25], radius: 8 }
+agents:
+  - { id: a1, behavior: cautious, start: [-60, -50], goal: ne, speed: 4 }
+  - { id: a2, behavior: cautious, start: [60, -50], goal: nw, speed: 4 }
+  - { id: a3, behavior: cautious, start: [60, 50], goal: sw, speed: 4 }
+  - { id: a4, behavior: patrol, start: [-60, 50], goal: se, speed: 3 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: disabled }
+termination: { stop_when_all_goals_reached: false }

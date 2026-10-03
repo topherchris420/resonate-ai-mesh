@@ -1,0 +1,26 @@
+id: faults-preserve-authority-boundaries
+claim: >
+  Under each of ten injected faults (sensor dropout, stale telemetry, corrupted
+  observations, duplicate proposals, clock skew, a frozen agent, judge timeout,
+  network loss, and human-state loss), every authority invariant held in every
+  run: no unsafe commit, no commit without validation, no judgment after a
+  failed validation, an intact event chain, and zero network calls.
+status: supported
+evidence:
+  - experiment: fault-injection
+    role: supports
+    check: { type: invariant, name: no_unsafe_commits }
+  - experiment: fault-injection
+    role: supports
+    check: { type: invariant, name: no_commit_without_validation_pass }
+  - experiment: fault-injection
+    role: supports
+    check: { type: invariant, name: every_commit_has_provenance }
+  - experiment: fault-injection
+    role: supports
+    check: { type: invariant, name: event_chain_intact }
+  - experiment: fault-injection
+    role: supports
+    check: { type: invariant, name: zero_network_calls }
+limitations:
+  - 'Faults are injected by the simulator; real failures have other signatures and timing.'

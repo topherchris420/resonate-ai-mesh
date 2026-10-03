@@ -1,68 +1,42 @@
-version: '3.8'
-
+# The mesh server, the research cockpit, and a simulated human-state source.
+#
+#   MESH_API_TOKEN=$(openssl rand -hex 24) docker compose up --build
+#   open http://localhost:3000   (enter the same token when the cockpit asks)
+#
+# The server binds 0.0.0.0 inside its container, so a token is required. Ports
+# are published on 127.0.0.1 only. Nothing here needs judgment credentials.
 services:
-  kernel:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.kernel
-    ports:
-      - "50051:50051"
+  mesh:
+    build: { context: ., dockerfile: docker/Dockerfile.mesh }
+    command: ["mesh", "serve", "--bind", "0.0.0.0:7878", "--allow-origin", "http://localhost:3000", "--allow-origin", "http://127.0.0.1:3000"]
     environment:
-      - RUST_LOG=info
-      - BIND_ADDR=0.0.0.0:50051
-      - JUDGMENT_ENABLED=false
-      - JUDGMENT_PROVIDER=disabled
-      - JUDGMENT_MODEL=jev-latest
-      - JUDGMENT_TIMEOUT_MS=10000
-      - JUDGMENT_MINIMUM_CONFIDENCE=0.70
-      - JUDGMENT_POLICY_VERSION=pordenone.judgment.policy.v1
+      MESH_API_TOKEN: ${MESH_API_TOKEN:?set MESH_API_TOKEN}
+      MESH_LOG: info
+    ports: ["127.0.0.1:7878:7878"]
+    volumes: ["mesh-artifacts:/mesh/artifacts"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7878/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
-  telemetry-bridge:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.telemetry-bridge
-    ports:
-      - "8080:8080"
-    environment:
-      - RUST_LOG=info
-      - WS_BIND_ADDR=0.0.0.0:8080
-      - KERNEL_ADDR=http://kernel:50051
-    depends_on:
-      - kernel
-
-  biometric-pipeline:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.biometric-pipeline
-    environment:
-      - TELEMETRY_BRIDGE_WS=ws://telemetry-bridge:8080/ingest
-      - MODE=SIMULATED
-      - SAMPLE_RATE_HZ=10
-    depends_on:
-      - telemetry-bridge
-
-  sim-engine:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.sim-engine
-    ports:
-      - "8000:8000"
-    environment:
-      - PORT=8000
-      - SEED=42
-      - TELEMETRY_BRIDGE_WS=ws://telemetry-bridge:8080/ingest
-    depends_on:
-      - telemetry-bridge
-
-  c2-dashboard:
+  cockpit:
     build:
       context: .
       dockerfile: docker/Dockerfile.c2-dashboard
-    ports:
-      - "3000:3000"
+      args: { NEXT_PUBLIC_MESH_URL: "http://localhost:7878" }
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on: { mesh: { condition: service_healthy } }
+
+  biometric-pipeline:
+    build: { context: ., dockerfile: docker/Dockerfile.biometric-pipeline }
     environment:
-      - NEXT_PUBLIC_WS_URL=ws://localhost:8080/ws
-      - NEXT_PUBLIC_SIM_ENGINE_URL=http://localhost:8000
-    depends_on:
-      - telemetry-bridge
-      - sim-engine
+      MESH_INGEST_URL: ws://mesh:7878/ingest
+      MESH_API_TOKEN: ${MESH_API_TOKEN:?set MESH_API_TOKEN}
+      MODE: SIMULATED
+      SAMPLE_RATE_HZ: "4"
+    depends_on: { mesh: { condition: service_healthy } }
+    restart: on-failure
+
+volumes:
+  mesh-artifacts:

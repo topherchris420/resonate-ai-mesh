@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:resonate-ai-mesh:schema:decision-record",
+  "title": "DecisionRecord",
+  "description": "One line of decisions.jsonl: the causal chain of one decision flattened for analysis. Derived from events.jsonl; every *event_id refers to an event in the same bundle.",
+  "type": "object",
+  "required": [
+    "tick",
+    "kind",
+    "proposal_id",
+    "agent_id",
+    "correlation_id",
+    "action_type",
+    "target",
+    "from",
+    "priority",
+    "observation_id",
+    "observed_at",
+    "observation_age_ms",
+    "observation_quality",
+    "trigger_event_id",
+    "validation",
+    "judgment",
+    "judgment_skip_reason",
+    "policy",
+    "transition",
+    "committed",
+    "oracle_unsafe",
+    "rationale",
+    "duplicate_submission"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "tick": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "kind": {
+      "enum": [
+        "proposal",
+        "human_resolution"
+      ]
+    },
+    "proposal_id": {
+      "type": "string"
+    },
+    "agent_id": {
+      "type": "string"
+    },
+    "correlation_id": {
+      "type": "string"
+    },
+    "action_type": {
+      "type": "string"
+    },
+    "target": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "description": "x, y, z. A non-finite proposed coordinate is recorded as null (JSON has no NaN)."
+    },
+    "from": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": [
+          "number",
+          "null"
+        ]
+      },
+      "description": "x, y, z. A non-finite proposed coordinate is recorded as null (JSON has no NaN)."
+    },
+    "priority": {
+      "type": "integer"
+    },
+    "observation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "observed_at": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "observation_age_ms": {
+      "type": "integer"
+    },
+    "observation_quality": {
+      "type": "string"
+    },
+    "trigger_event_id": {
+      "type": "string"
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "accepted",
+        "reasons",
+        "failed_checks",
+        "confidence"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "accepted": {
+          "type": "boolean"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "failed_checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "judgment": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "event_id",
+            "judgment_id",
+            "provider",
+            "model",
+            "disposition",
+            "reason_codes",
+            "provider_status",
+            "latency_ms",
+            "model_involved",
+            "min_confidence"
+          ],
+          "properties": {
+            "event_id": {
+              "type": "string"
+            },
+            "judgment_id": {
+              "type": "string"
+            },
+            "provider": {
+              "type": "string"
+            },
+            "model": {
+              "type": "string"
+            },
+            "disposition": {
+              "type": "string"
+            },
+            "reason_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "provider_status": {
+              "type": "string"
+            },
+            "latency_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "model_involved": {
+              "type": "boolean"
+            },
+            "min_confidence": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "judgment_skip_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "outcome",
+        "reason_codes",
+        "basis",
+        "adaptive_level"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "outcome": {
+          "type": "string"
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "basis": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "adaptive_level": {
+          "type": "string"
+        }
+      }
+    },
+    "transition": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "event_id",
+            "revision",
+            "before_hash",
+            "after_hash"
+          ],
+          "properties": {
+            "event_id": {
+              "type": "string"
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "before_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "after_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
+          }
+        }
+      ]
+    },
+    "committed": {
+      "type": "boolean"
+    },
+    "oracle_unsafe": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Ground truth from the independent geometric oracle; null means safe."
+    },
+    "rationale": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "duplicate_submission": {
+      "type": "boolean"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "committed": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "validation": {
+            "properties": {
+              "accepted": {
+                "const": true
+              }
+            }
+          },
+          "transition": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
+}

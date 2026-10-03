@@ -1,0 +1,45 @@
+id: validator-stress
+title: Validator ablation under adversarial proposals
+question: >
+  How many proposals that an independent geometric oracle classifies as unsafe
+  reach authoritative state when each domain check of the validator is removed?
+hypothesis:
+  statement: >
+    With every check enabled, no unsafe proposal is committed. Removing the
+    hazard-clearance check lets unsafe proposals through, which shows the check
+    (not some other part of the pipeline) is what blocks them.
+  prediction:
+    metric: unsafe_commits
+    direction: increase
+    baseline: full_validation
+    treatment: no_hazard_check
+seed: 7
+repetitions: 50
+scenario: ../../scenarios/validator-stress.yaml
+independent_variables: [kernel.validator.disabled_checks]
+dependent_variables:
+  - unsafe_proposals
+  - unsafe_proposals_blocked
+  - unsafe_commits
+  - rejected_proposals
+  - safe_rejections
+  - task_success
+conditions:
+  - id: full_validation
+    description: Every check enabled.
+  - id: no_hazard_check
+    description: hazard_clearance disabled.
+    set: { kernel.validator.disabled_checks: [hazard_clearance] }
+  - id: no_step_limit
+    description: max_step disabled.
+    set: { kernel.validator.disabled_checks: [max_step] }
+  - id: no_domain_checks
+    description: hazard_clearance, max_step, and separation disabled. Core checks cannot be disabled.
+    set: { kernel.validator.disabled_checks: [hazard_clearance, max_step, separation] }
+invariants:
+  - event_chain_intact
+  - no_commit_without_validation_pass
+  - every_commit_has_provenance
+  - simulated_data_labeled
+limitations:
+  - The oracle samples 65 points per path; it is an independent check of the validator's closed-form geometry, not ground truth about any physical system.

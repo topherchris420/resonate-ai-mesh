@@ -1,0 +1,4 @@
+# The canonical scenario, seed 42, all 80 ticks. The cockpit's static demo
+# exports the same run (`mesh export-web`).
+path: ../../../scenarios/perturbed-mesh.yaml
+seed: 42

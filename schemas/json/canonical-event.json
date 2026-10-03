@@ -1,6 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:resonate-ai-mesh:schema:canonical-event",
   "title": "CanonicalEventEnvelope",
+  "description": "Event envelope v1.2.0 as recorded in a run bundle's events.jsonl. Recorded lines add prev_hash and hash (the event hash chain). Ingest also accepts v1.0 envelopes whose payload is a JSON string in payload_json; those are converted on receipt and never recorded in that form.",
   "type": "object",
   "required": [
     "event_id",
@@ -11,19 +13,99 @@
     "subject_id",
     "correlation_id",
     "causation_id",
-    "payload",
-    "provenance"
+    "provenance",
+    "run_id",
+    "experiment_id",
+    "seq",
+    "tick",
+    "mode",
+    "policy_version",
+    "software_version",
+    "ai_involved",
+    "payload"
   ],
+  "additionalProperties": false,
   "properties": {
-    "event_id": { "type": "string" },
-    "event_type": { "type": "string" },
-    "schema_version": { "type": "string" },
-    "timestamp": { "type": "integer" },
-    "source": { "type": "string" },
-    "subject_id": { "type": "string" },
-    "correlation_id": { "type": "string" },
-    "causation_id": { "type": "string" },
-    "provenance": { "type": "string" },
-    "payload": { "type": "object" }
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+\\.[0-9]+$"
+    },
+    "timestamp": {
+      "type": "integer",
+      "description": "Milliseconds. Logical simulation time in experiments; wall time is in provenance.json."
+    },
+    "source": {
+      "type": "string",
+      "description": "Producing component, e.g. pordenone.kernel or mesh.lab."
+    },
+    "subject_id": {
+      "type": "string"
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Groups every event of one decision."
+    },
+    "causation_id": {
+      "type": "string",
+      "description": "event_id of the direct cause, or the run config hash for the first event."
+    },
+    "provenance": {
+      "type": "string",
+      "description": "Component version and, where applicable, the evidence the event was derived from."
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "experiment_id": {
+      "type": "string"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tick": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "mode": {
+      "enum": [
+        "SIMULATED",
+        "LIVE",
+        "REPLAY"
+      ],
+      "description": "SIMULATED, LIVE, or REPLAY. Unlabeled data defaults to SIMULATED."
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "software_version": {
+      "type": "string"
+    },
+    "ai_involved": {
+      "type": "boolean",
+      "description": "True when a probabilistic or remote model produced or influenced the event."
+    },
+    "payload": {
+      "description": "Event-type specific body."
+    },
+    "prev_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
   }
 }

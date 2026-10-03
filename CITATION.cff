@@ -1,15 +1,26 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using this metadata."
-title: "Pordenone: a deterministic validation kernel, simulated telemetry, and a 3D research dashboard"
+title: "Resonate AI Mesh: a deterministic, replayable research instrument for multi-agent decisions under the Pordenone kernel"
 type: software
 authors:
   - name: Vers3Dynamics
 repository-code: "https://github.com/topherchris420/resonate-ai-mesh"
 license: MIT
-version: 0.1.0
-date-released: "2026-09-21"
+version: 0.2.0
+date-released: "2026-10-03"
+keywords:
+  - multi-agent systems
+  - deterministic replay
+  - bounded judgment
+  - human oversight
+  - reproducible experiments
 abstract: >-
-  Research software that validates agent proposals with a deterministic
-  epistemic kernel, publishes simulated telemetry, and renders the result on a
-  3D dashboard. Typed judgment is optional and off by default. The stack does
-  not actuate physical systems.
+  Research software in which simulated agents propose actions and a
+  deterministic kernel decides: validation first, optional bounded judgment,
+  versioned policy, then a single authorized mutation path. Every run is a
+  hash-chained event log that can be verified independently, replayed
+  without network access, explained decision by decision, and branched into
+  counterfactuals. Experiments use paired repetitions, pre-registered
+  predictions, interval estimates, and effect sizes; claims are checked
+  against recorded evidence. All human-state data is simulated. The software
+  does not control physical systems.

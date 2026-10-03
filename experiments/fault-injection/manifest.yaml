@@ -1,0 +1,68 @@
+id: fault-injection
+title: Authority boundaries under injected faults
+question: >
+  Under each injected fault, does the kernel keep every authority invariant,
+  and how much throughput and task progress does the fault cost compared with
+  the same seed and no fault?
+hypothesis:
+  statement: >
+    No fault produces an unsafe commit or a commit without a passing
+    validation. Faults reduce throughput while active and the run recovers
+    after they clear.
+  prediction:
+    metric: unsafe_commits
+    direction: no_change
+    baseline: no_faults
+    treatment: corrupt_observation
+seed: 11
+repetitions: 40
+scenario: ../../scenarios/perturbed-mesh.yaml
+set: { faults: [] }
+independent_variables: [faults]
+dependent_variables:
+  - committed
+  - rejected_proposals
+  - withheld
+  - unsafe_commits
+  - task_success
+  - recovery_ticks
+  - resonance.recovery
+  - resonance.uncertainty
+conditions:
+  - id: no_faults
+    description: Perturbed mesh with its faults removed.
+  - id: sensor_dropout
+    set: { faults: [{ kind: sensor_dropout, target: all, at_tick: 20, duration_ticks: 8 }] }
+  - id: stale_telemetry
+    set: { faults: [{ kind: stale_telemetry, target: all, at_tick: 20, duration_ticks: 8 }] }
+  - id: corrupt_observation
+    set: { faults: [{ kind: corrupt_observation, target: all, at_tick: 20, duration_ticks: 4, magnitude: 25 }] }
+  - id: duplicate_proposal
+    set: { faults: [{ kind: duplicate_proposal, target: all, at_tick: 20, duration_ticks: 8 }] }
+  - id: clock_skew
+    set: { faults: [{ kind: clock_skew, target: all, at_tick: 20, duration_ticks: 8, magnitude: 3000 }] }
+  - id: freeze_agent
+    set: { faults: [{ kind: freeze_agent, target: runner_02, at_tick: 20, duration_ticks: 12 }] }
+  - id: judge_timeout
+    set: { faults: [{ kind: judge_timeout, at_tick: 20, duration_ticks: 8 }] }
+  - id: network_unavailable
+    set: { faults: [{ kind: network_unavailable, at_tick: 20, duration_ticks: 8 }] }
+  - id: human_state_dropout
+    description: The operator-load signal is lost just before the load spike; the level fails closed to HIGH (default).
+    set: { faults: [{ kind: human_state_dropout, at_tick: 38, duration_ticks: 16 }] }
+  - id: human_state_dropout_hold_last
+    description: Same fault with the earlier behavior, keeping the last level. This silently disables gating.
+    set:
+      faults: [{ kind: human_state_dropout, at_tick: 38, duration_ticks: 16 }]
+      kernel.policy.adaptive.on_signal_loss: hold_last
+invariants:
+  - event_chain_intact
+  - no_commit_without_validation_pass
+  - no_judgment_after_failed_validation
+  - every_commit_has_provenance
+  - no_unsafe_commits
+  - simulated_data_labeled
+  - zero_network_calls
+limitations:
+  - Faults are injected by the simulator; real sensor and network failures have other signatures.
+  - Throughput falls as agents reach their goals, so recovery is compared against the no-fault condition with the same seed.

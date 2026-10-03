@@ -1,0 +1,471 @@
+{
+  "version": "resonate-ai-mesh.topology.v1",
+  "run_id": "corrupted-event.default.r000.s42",
+  "nodes": [
+    {
+      "id": "experiment.corrupted-event",
+      "kind": "EXPERIMENT",
+      "label": "corrupted-event / default",
+      "capabilities": [
+        "configure run",
+        "inject faults",
+        "record events",
+        "compute metrics"
+      ],
+      "inputs": [
+        "manifest",
+        "scenario"
+      ],
+      "outputs": [
+        "events.jsonl",
+        "metrics.json"
+      ],
+      "schemas": [
+        "RunConfig",
+        "CanonicalEventEnvelope 1.2.0"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "mesh-lab runner",
+      "health": "OK",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": null
+    },
+    {
+      "id": "environment.corrupted-event",
+      "kind": "ENVIRONMENT",
+      "label": "corrupted-event arena",
+      "capabilities": [
+        "hazard schedule",
+        "points of interest"
+      ],
+      "inputs": [],
+      "outputs": [
+        "environment_change"
+      ],
+      "schemas": [],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "scenario:corrupted-event",
+      "health": "SIMULATED",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": "SIMULATED"
+    },
+    {
+      "id": "sensor.positions",
+      "kind": "SENSOR",
+      "label": "Position sensors",
+      "capabilities": [
+        "noisy position readings",
+        "neighbour readings",
+        "fault effects"
+      ],
+      "inputs": [
+        "authoritative positions",
+        "declared hazards"
+      ],
+      "outputs": [
+        "observation"
+      ],
+      "schemas": [
+        "AgentObservation"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "mesh.lab.sensors.v1",
+      "health": "SIMULATED",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": "SIMULATED"
+    },
+    {
+      "id": "sensor.operator_load",
+      "kind": "SENSOR",
+      "label": "Operator load index",
+      "capabilities": [
+        "operator_load_index"
+      ],
+      "inputs": [
+        "rejections",
+        "pending reviews",
+        "environment complexity"
+      ],
+      "outputs": [
+        "human_state"
+      ],
+      "schemas": [
+        "HumanStateDatum"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "sim.operator_load.v1",
+      "health": "SIMULATED",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": "SIMULATED"
+    },
+    {
+      "id": "human.operator",
+      "kind": "HUMAN",
+      "label": "Operator (simulated)",
+      "capabilities": [
+        "approve or reject proposals awaiting review",
+        "issue commands (live sessions)"
+      ],
+      "inputs": [
+        "commitment awaiting_human_review"
+      ],
+      "outputs": [
+        "human_resolution"
+      ],
+      "schemas": [],
+      "trust_boundary": "HUMAN",
+      "latency_ms": null,
+      "provenance": "simulated operator rule",
+      "health": "SIMULATED",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": null
+    },
+    {
+      "id": "pordenone.validator",
+      "kind": "VALIDATOR",
+      "label": "Deterministic validator",
+      "capabilities": [
+        "unique_proposal",
+        "finite_values",
+        "action_allowlist",
+        "agent_registered",
+        "priority_range",
+        "observation_freshness",
+        "clock_skew",
+        "coordinate_bounds",
+        "max_step",
+        "hazard_clearance",
+        "separation"
+      ],
+      "inputs": [
+        "proposal",
+        "authoritative state snapshot"
+      ],
+      "outputs": [
+        "validation"
+      ],
+      "schemas": [
+        "ActionProposal",
+        "ValidationResult"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": 0.0661,
+      "provenance": "pordenone.validator.v2",
+      "health": "OK",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": null
+    },
+    {
+      "id": "pordenone.judge",
+      "kind": "JUDGE",
+      "label": "Judgment (off)",
+      "capabilities": [
+        "proposal_support",
+        "evidence_quality",
+        "contradiction_present",
+        "scope_violation",
+        "human_review"
+      ],
+      "inputs": [
+        "privacy-minimized evidence package"
+      ],
+      "outputs": [
+        "judgment"
+      ],
+      "schemas": [
+        "JudgmentEnvelope"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "pordenone.judgment.questions.v1",
+      "health": "DISABLED",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": null
+    },
+    {
+      "id": "pordenone.policy",
+      "kind": "POLICY",
+      "label": "Pordenone policy and commit gate",
+      "capabilities": [
+        "interpret judgment",
+        "operator-load gating",
+        "judgment routing",
+        "authorize commits"
+      ],
+      "inputs": [
+        "validation",
+        "judgment",
+        "operator level",
+        "human_resolution"
+      ],
+      "outputs": [
+        "commitment",
+        "state_transition"
+      ],
+      "schemas": [
+        "PolicyDecision",
+        "StateTransition"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "pordenone.kernel.policy.v2",
+      "health": "OK",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": true,
+      "data_mode": null
+    },
+    {
+      "id": "pordenone.state",
+      "kind": "STATE_STORE",
+      "label": "Authoritative state",
+      "capabilities": [
+        "agents",
+        "positions",
+        "declared hazards",
+        "state hash"
+      ],
+      "inputs": [
+        "commit authorization"
+      ],
+      "outputs": [
+        "snapshot"
+      ],
+      "schemas": [
+        "StateSnapshot"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "kernel-core state",
+      "health": "OK",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": null
+    },
+    {
+      "id": "agent.k1",
+      "kind": "AGENT",
+      "label": "k1",
+      "capabilities": [
+        "observe",
+        "propose",
+        "explain",
+        "receive outcome"
+      ],
+      "inputs": [
+        "observation",
+        "outcome"
+      ],
+      "outputs": [
+        "proposal"
+      ],
+      "schemas": [
+        "MeshAgentAdapter",
+        "AgentIntent"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "builtin:cautious",
+      "health": "OK",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": null
+    },
+    {
+      "id": "agent.k2",
+      "kind": "AGENT",
+      "label": "k2",
+      "capabilities": [
+        "observe",
+        "propose",
+        "explain",
+        "receive outcome"
+      ],
+      "inputs": [
+        "observation",
+        "outcome"
+      ],
+      "outputs": [
+        "proposal"
+      ],
+      "schemas": [
+        "MeshAgentAdapter",
+        "AgentIntent"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "builtin:cautious",
+      "health": "OK",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": null
+    },
+    {
+      "id": "agent.k3",
+      "kind": "AGENT",
+      "label": "k3",
+      "capabilities": [
+        "observe",
+        "propose",
+        "explain",
+        "receive outcome"
+      ],
+      "inputs": [
+        "observation",
+        "outcome"
+      ],
+      "outputs": [
+        "proposal"
+      ],
+      "schemas": [
+        "MeshAgentAdapter",
+        "AgentIntent"
+      ],
+      "trust_boundary": "LOCAL_DETERMINISTIC",
+      "latency_ms": null,
+      "provenance": "builtin:malformed",
+      "health": "OK",
+      "deterministic": true,
+      "networked": false,
+      "may_mutate_state": false,
+      "data_mode": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "sensor.positions",
+      "to": "agent.k1",
+      "kind": "senses",
+      "schema": "AgentObservation"
+    },
+    {
+      "from": "agent.k1",
+      "to": "pordenone.validator",
+      "kind": "proposes",
+      "schema": "ActionProposal"
+    },
+    {
+      "from": "pordenone.policy",
+      "to": "agent.k1",
+      "kind": "decides",
+      "schema": "ProposalOutcome"
+    },
+    {
+      "from": "sensor.positions",
+      "to": "agent.k2",
+      "kind": "senses",
+      "schema": "AgentObservation"
+    },
+    {
+      "from": "agent.k2",
+      "to": "pordenone.validator",
+      "kind": "proposes",
+      "schema": "ActionProposal"
+    },
+    {
+      "from": "pordenone.policy",
+      "to": "agent.k2",
+      "kind": "decides",
+      "schema": "ProposalOutcome"
+    },
+    {
+      "from": "sensor.positions",
+      "to": "agent.k3",
+      "kind": "senses",
+      "schema": "AgentObservation"
+    },
+    {
+      "from": "agent.k3",
+      "to": "pordenone.validator",
+      "kind": "proposes",
+      "schema": "ActionProposal"
+    },
+    {
+      "from": "pordenone.policy",
+      "to": "agent.k3",
+      "kind": "decides",
+      "schema": "ProposalOutcome"
+    },
+    {
+      "from": "environment.corrupted-event",
+      "to": "sensor.positions",
+      "kind": "observes",
+      "schema": "hazards"
+    },
+    {
+      "from": "pordenone.state",
+      "to": "sensor.positions",
+      "kind": "observes",
+      "schema": "positions"
+    },
+    {
+      "from": "environment.corrupted-event",
+      "to": "pordenone.policy",
+      "kind": "configures",
+      "schema": "hazard declarations"
+    },
+    {
+      "from": "sensor.operator_load",
+      "to": "pordenone.policy",
+      "kind": "senses",
+      "schema": "HumanStateDatum"
+    },
+    {
+      "from": "pordenone.validator",
+      "to": "pordenone.policy",
+      "kind": "validates",
+      "schema": "ValidationResult"
+    },
+    {
+      "from": "human.operator",
+      "to": "pordenone.policy",
+      "kind": "reviews",
+      "schema": "HumanReviewDecision"
+    },
+    {
+      "from": "pordenone.policy",
+      "to": "pordenone.state",
+      "kind": "commits",
+      "schema": "CommitAuthorization"
+    },
+    {
+      "from": "experiment.corrupted-event",
+      "to": "environment.corrupted-event",
+      "kind": "configures",
+      "schema": "Scenario"
+    },
+    {
+      "from": "experiment.corrupted-event",
+      "to": "pordenone.policy",
+      "kind": "configures",
+      "schema": "KernelSpec, agent registration"
+    },
+    {
+      "from": "pordenone.state",
+      "to": "experiment.corrupted-event",
+      "kind": "records",
+      "schema": "events"
+    }
+  ]
+}

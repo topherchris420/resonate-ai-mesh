@@ -1,0 +1,85 @@
+# The Perturbed Mesh: the canonical demonstration scenario.
+#
+# Five agents cross an arena toward points of interest. The environment grows
+# more complex, the simulated operator-load index spikes, a position sensor
+# drops out, and one observation is corrupted. Every input is simulated; the
+# operator-load index is a modeling device, not a measurement of a person.
+#
+# Expected story (seed 42; see docs/experiments.md for the recorded numbers):
+#   t0+   runner_02 asks for steps larger than max_step, then cuts straight
+#         across the ridge hazard; validation rejects both and it adapts.
+#   t12   medic_05 submits a high-priority move; the judge asks for human
+#         review; the simulated operator approves while load is low.
+#   t24   a flood zone appears across scout_01's path; it detours.
+#   t20   runner_02's position sensor drops out. Its last observation ages:
+#         the judge withholds on stale evidence, then validation rejects it.
+#   t40   the operator-load index spikes. Background patrol work is deferred
+#         and the simulated operator rejects medic_05's review.
+#   t52   tuner_03 receives a corrupted position. It proposes a move that is
+#         plausible from its belief but too large from its true position;
+#         validation, which checks authoritative state, rejects it.
+id: perturbed-mesh
+description: Five agents, a hazard that appears mid-run, an operator-load spike, a sensor dropout, and a corrupted observation.
+ticks: 80
+dt_ms: 250
+arena_half_extent: 100
+
+points_of_interest:
+  - { id: north_gate, position: [70, 25] }
+  - { id: east_ridge, position: [70, -35] }
+  - { id: south_depot, position: [-25, -62] }
+  - { id: west_post, position: [-75, 30] }
+
+hazards:
+  - { id: ridge, center: [10, 5], radius: 12 }
+  - { id: marsh, center: [-45, -40], radius: 9 }
+  # Environmental complexity increases at tick 24.
+  - { id: flood, center: [36, -15], radius: 9, appears_at_tick: 24 }
+
+agents:
+  - { id: scout_01, behavior: cautious, start: [-70, 45], goal: east_ridge, speed: 4, priority: 2 }
+  # Asks for steps larger than max_step and ignores hazards until rejections teach it otherwise.
+  - { id: runner_02, behavior: greedy, start: [-70, 0], goal: north_gate, speed: 10, priority: 2 }
+  # Corrects toward its goal with gain 2.0, which keeps it reversing around the goal.
+  - { id: tuner_03, behavior: oscillating, start: [-5, -50], goal: south_depot, speed: 3, gain: 2.0, priority: 1 }
+  # Background patrol (priority 0): deferred while the operator-load level is HIGH or CRITICAL.
+  - { id: patrol_04, behavior: patrol, start: [-20, 60], goal: west_post, speed: 3 }
+  # High-priority scripted moves that the judge routes to human review.
+  - id: medic_05
+    behavior: scripted
+    start: [0, -85]
+    priority: 6
+    script:
+      - { tick: 12, action_type: MOVE, target: [0, -79], priority: 6 }
+      - { tick: 44, action_type: MOVE, target: [0, -73], priority: 6 }
+      - { tick: 62, action_type: MOVE, target: [0, -73], priority: 6 }
+
+sensors:
+  position_noise: 0.25
+
+human_state:
+  baseline: 0.25
+  perturbations:
+    - { at_tick: 40, duration_ticks: 12, delta: 0.5 }
+
+human_review:
+  mode: simulated_operator
+  latency_ticks: 3
+  approve_below_load: 0.7
+
+faults:
+  - { kind: sensor_dropout, target: runner_02, at_tick: 20, duration_ticks: 10 }
+  - { kind: corrupt_observation, target: tuner_03, at_tick: 52, duration_ticks: 2, magnitude: 25 }
+
+kernel:
+  validator:
+    max_step: 8
+    min_separation: 3
+    max_stale_ms: 1500
+  judgment:
+    provider: mock
+    profile: evidence_heuristic
+
+termination:
+  stop_when_all_goals_reached: false
+  goal_radius: 1.5

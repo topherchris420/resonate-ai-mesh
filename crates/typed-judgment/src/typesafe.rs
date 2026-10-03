@@ -101,6 +101,15 @@ impl<T: TypeSafeTransport + Send + Sync> crate::provider::JudgmentProvider
             started,
         )
     }
+
+    fn descriptor(&self) -> crate::provider::ProviderDescriptor {
+        crate::provider::ProviderDescriptor {
+            name: "typesafe".to_string(),
+            model: self.model.clone(),
+            kind: crate::provider::ProviderKind::RemoteModel,
+            networked: true,
+        }
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

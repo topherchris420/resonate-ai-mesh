@@ -1,24 +1,37 @@
 {
-  "name": "pordenone-monorepo",
-  "version": "0.1.0",
+  "name": "resonate-ai-mesh",
+  "version": "0.2.0",
   "private": true,
-  "description": "Deterministic validation kernel, simulated telemetry, and a 3D research dashboard",
+  "description": "Resonate AI Mesh: a deterministic multi-agent research instrument built around the Pordenone kernel",
   "license": "MIT",
   "scripts": {
-    "dev": "turbo run dev",
+    "mesh": "cargo run --quiet --release -p mesh-lab --bin mesh --",
+    "demo": "cargo run --quiet --release -p mesh-lab --bin mesh -- demo",
+    "experiment": "cargo run --quiet --release -p mesh-lab --bin mesh -- experiment",
+    "replay": "cargo run --quiet --release -p mesh-lab --bin mesh -- replay",
+    "counterfactual": "cargo run --quiet --release -p mesh-lab --bin mesh -- counterfactual",
+    "explain": "cargo run --quiet --release -p mesh-lab --bin mesh -- explain",
+    "serve": "cargo run --quiet --release -p mesh-lab --bin mesh -- serve",
+    "export": "cargo run --quiet --release -p mesh-lab --bin mesh -- export-web",
+    "dev": "pnpm --filter c2-dashboard dev",
     "build": "turbo run build",
-    "test": "turbo run test && pytest services/ tests/ && cargo test --workspace",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "test": "turbo run test && python3 -m pytest -q && cargo test --workspace --all-targets",
     "proto:generate": "bash scripts/generate-proto.sh"
   },
   "devDependencies": {
-    "next": "^14.2.35",
+    "next": "^15.5.27",
     "turbo": "^2.0.0",
     "typescript": "^5.5.3"
   },
   "packageManager": "pnpm@10.30.3",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.28"
+    }
   }
 }

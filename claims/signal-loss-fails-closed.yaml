@@ -1,0 +1,15 @@
+id: human-state-signal-loss-fails-closed
+claim: >
+  When the human-state signal is lost just before a load spike, the default
+  signal-loss policy (assume HIGH) keeps background work deferred, whereas
+  holding the last level silently disables gating and increases commits.
+status: provisional
+evidence:
+  - experiment: fault-injection
+    role: supports
+    check: { type: comparison, metric: committed, baseline: no_faults, treatment: human_state_dropout, direction: decrease }
+  - experiment: fault-injection
+    role: supports
+    check: { type: comparison, metric: committed, baseline: no_faults, treatment: human_state_dropout_hold_last, direction: increase }
+limitations:
+  - 'This finding motivated changing the default from hold_last to assume_high; it is evidence for that design choice in this simulator only.'

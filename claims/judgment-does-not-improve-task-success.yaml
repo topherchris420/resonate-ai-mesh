@@ -1,0 +1,10 @@
+id: judgment-improves-task-success
+claim: >
+  Bounded judgment improves task success on the Perturbed Mesh.
+status: hypothesis
+evidence:
+  - experiment: judgment-ablation
+    role: supports
+    check: { type: comparison, metric: task_success, baseline: deterministic_only, treatment: mock_judgment, direction: increase }
+limitations:
+  - 'Recorded as an open hypothesis so the registry shows evidence that does not support it; task success did not change in any paired repetition.'

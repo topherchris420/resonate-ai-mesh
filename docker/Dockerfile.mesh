@@ -1,0 +1,26 @@
+# The mesh: kernel, simulator, recorder, experiments, and `mesh serve`.
+FROM rust:1.97-slim-bookworm AS builder
+WORKDIR /src
+COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
+RUN cargo build --release --locked -p mesh-lab --bin mesh
+
+FROM debian:bookworm-slim
+# python3 runs the reference external agent (examples/rain_agent_stub.py).
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --create-home --uid 10001 mesh
+WORKDIR /mesh
+COPY --from=builder /src/target/release/mesh /usr/local/bin/mesh
+COPY scenarios ./scenarios
+COPY experiments ./experiments
+COPY claims ./claims
+COPY examples ./examples
+COPY fixtures ./fixtures
+RUN mkdir artifacts && chown mesh:mesh artifacts
+USER mesh
+ENV MESH_ROOT=/mesh MESH_ARTIFACTS=/mesh/artifacts
+EXPOSE 7878
+# A non-loopback bind requires MESH_API_TOKEN; without it the server refuses to start.
+CMD ["mesh", "serve", "--bind", "0.0.0.0:7878"]

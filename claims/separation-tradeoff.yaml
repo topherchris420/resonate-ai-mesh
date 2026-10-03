@@ -1,0 +1,11 @@
+id: separation-trades-progress-for-spacing
+claim: >
+  In the crowded crossing, a larger minimum separation lowers task success
+  within the time limit.
+status: provisional
+evidence:
+  - experiment: multi-agent-coordination
+    role: supports
+    check: { type: prediction }
+limitations:
+  - 'Agents do not negotiate; conflicts are resolved by processing order and validation alone.'

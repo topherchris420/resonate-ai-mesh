@@ -1,0 +1,24 @@
+# Validator stress: hazards everywhere, an agent that ignores them, an agent
+# that asks for oversized steps, and an agent that submits malformed proposals.
+id: validator-stress
+description: Dense hazards, a hazard-blind agent, oversized steps, and malformed proposals.
+ticks: 60
+points_of_interest:
+  - { id: far_east, position: [80, 0] }
+  - { id: far_north, position: [0, 80] }
+  - { id: far_south, position: [10, -80] }
+hazards:
+  - { id: h1, center: [-30, 0], radius: 8 }
+  - { id: h2, center: [0, 5], radius: 10 }
+  - { id: h3, center: [30, -5], radius: 9 }
+  - { id: h4, center: [55, 5], radius: 7 }
+  - { id: h5, center: [0, 40], radius: 9 }
+  - { id: h6, center: [5, -40], radius: 9 }
+agents:
+  - { id: v_greedy, behavior: greedy, start: [-70, 0], goal: far_east, speed: 12 }
+  - { id: v_malformed, behavior: malformed, start: [0, -70], goal: far_north, speed: 5, malformed_every: 3 }
+  - { id: v_cautious, behavior: cautious, start: [0, 75], goal: far_south, speed: 5 }
+kernel:
+  validator: { max_step: 8, min_separation: 3, max_stale_ms: 1500 }
+  judgment: { provider: disabled }
+termination: { stop_when_all_goals_reached: false }

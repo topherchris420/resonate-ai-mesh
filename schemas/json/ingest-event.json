@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:resonate-ai-mesh:schema:ingest-event",
+  "title": "IngestEvent",
+  "description": "What `mesh serve` admits on /ingest. Missing optional fields take defaults (mode defaults to SIMULATED). The server assigns run_id, seq, and tick when it records the event, and rejects messages over 64 KiB or above the per-connection rate limit.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "schema_version",
+    "timestamp",
+    "source",
+    "subject_id",
+    "correlation_id",
+    "causation_id"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "event_type": {
+      "enum": [
+        "human_state",
+        "observation"
+      ],
+      "description": "The only event types accepted from outside the kernel. Proposals, validations, judgments, and commitments cannot be injected."
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+\\.[0-9]+$"
+    },
+    "timestamp": {
+      "type": "integer",
+      "description": "Milliseconds. Logical simulation time in experiments; wall time is in provenance.json."
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "For LIVE data this must be a source registered in MESH_LIVE_SOURCES."
+    },
+    "subject_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Groups every event of one decision."
+    },
+    "causation_id": {
+      "type": "string",
+      "description": "event_id of the direct cause, or the run config hash for the first event."
+    },
+    "provenance": {
+      "type": "string",
+      "description": "Component version and, where applicable, the evidence the event was derived from."
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "experiment_id": {
+      "type": "string"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tick": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "mode": {
+      "enum": [
+        "SIMULATED",
+        "LIVE",
+        "REPLAY"
+      ],
+      "description": "SIMULATED, LIVE, or REPLAY. Unlabeled data defaults to SIMULATED."
+    },
+    "policy_version": {
+      "type": "string"
+    },
+    "software_version": {
+      "type": "string"
+    },
+    "ai_involved": {
+      "type": "boolean",
+      "description": "True when a probabilistic or remote model produced or influenced the event."
+    },
+    "payload": {
+      "type": "object",
+      "description": "For human_state: {\"datum\": HumanStateDatum}, with datum.mode equal to the envelope mode."
+    },
+    "payload_json": {
+      "type": "string",
+      "description": "Legacy v1.0 form: the payload as a JSON string."
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "payload"
+      ]
+    },
+    {
+      "required": [
+        "payload_json"
+      ]
+    }
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "human_state"
+          }
+        },
+        "required": [
+          "payload"
+        ]
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "required": [
+              "datum"
+            ],
+            "properties": {
+              "datum": {
+                "$ref": "urn:resonate-ai-mesh:schema:human-state-datum"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

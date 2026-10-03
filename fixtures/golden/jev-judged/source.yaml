@@ -1,0 +1,9 @@
+# A real recording of TypeSafe Jev (jev-1.13.0) judging the first six ticks of
+# the canonical scenario. Every judgment here is genuine remote-model output.
+# `mesh golden verify` replays it from the recorded envelopes with no
+# credentials and no network; remaking it needs TYPESAFE_API_KEY and
+# --allow-network, so `mesh golden update` leaves it alone.
+path: ../../../scenarios/perturbed-mesh.yaml
+seed: 42
+set: { ticks: 6, kernel.judgment.provider: typesafe }
+regenerate: false

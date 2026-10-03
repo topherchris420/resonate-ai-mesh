@@ -1,0 +1,9 @@
+target
+**/node_modules
+**/.next
+**/.turbo
+artifacts
+gen
+.git
+**/__pycache__
+*.log
