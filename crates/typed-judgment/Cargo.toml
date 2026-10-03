@@ -1,8 +1,9 @@
 [package]
 name = "typed-judgment"
-version = "0.1.0"
-edition = "2021"
-description = "Provider-neutral typed judgment fabric for Pordenone"
+description = "Provider-neutral typed judgment fabric for the Pordenone kernel"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [dependencies]
 tokio = { workspace = true }

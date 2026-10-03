@@ -1,7 +1,9 @@
 [package]
 name = "event-bus"
-version = "0.1.0"
-edition = "2021"
+description = "Canonical event model, provenance, hash chain, and in-process fan-out bus for Resonate AI Mesh"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [dependencies]
 tokio = { workspace = true }
@@ -10,5 +12,8 @@ serde_json = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
-async-trait = { workspace = true }
 thiserror = { workspace = true }
+sha2 = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

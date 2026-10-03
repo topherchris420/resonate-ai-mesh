@@ -1,9 +1,10 @@
 [package]
 name = "spatial-state"
-version = "0.1.0"
-edition = "2021"
+description = "Deterministic spatial index of committed entity positions"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
 
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
-chrono = { workspace = true }
