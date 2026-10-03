@@ -76,6 +76,8 @@ pub struct Substitutions {
     pub commands: BTreeMap<u64, Vec<ControlCommand>>,
     /// Human-state data that arrived from an external source, keyed by tick.
     pub human_state: BTreeMap<u64, HumanStateDatum>,
+    /// A live session that a person stopped early: the tick at which it stopped.
+    pub stopped_at_tick: Option<u64>,
 }
 
 /// Commands an interactive session may issue between ticks. Each one is
@@ -634,11 +636,11 @@ pub async fn run(config: &RunConfig, mut options: RunOptions) -> Result<RunResul
     let mut last_level = None;
 
     for tick in 0..scenario.ticks {
-        if options
+        let stop_requested = options
             .control
             .as_ref()
-            .is_some_and(|control| control.should_stop())
-        {
+            .is_some_and(|control| control.should_stop());
+        if stop_requested || options.substitutions.stopped_at_tick == Some(tick) {
             termination = "stopped_by_operator".to_string();
             break;
         }

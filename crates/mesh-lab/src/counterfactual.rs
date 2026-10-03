@@ -454,7 +454,7 @@ pub fn render(comparison: &TimelineComparison) -> String {
             crate::bundle::fmt_value(delta.right),
             delta
                 .delta
-                .map(|d| format!("{d:+}"))
+                .map(crate::bundle::fmt_delta)
                 .unwrap_or_else(|| "n/a".into())
         );
     }

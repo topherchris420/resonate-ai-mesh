@@ -13,8 +13,6 @@ use std::path::Path;
 
 pub const EXPORT_FORMAT: &str = "resonate-ai-mesh.web-export.v1";
 pub const CANONICAL_SCENARIO: &str = "scenarios/perturbed-mesh.yaml";
-pub const EXPORT_EXPERIMENTS: &[&str] =
-    &["judgment-ablation", "validator-stress", "fault-injection"];
 
 pub async fn export(root: &Path, out: &Path, repetitions: Option<u32>) -> Result<(), String> {
     let runs_dir = out.join("runs");
@@ -73,11 +71,12 @@ pub async fn export(root: &Path, out: &Path, repetitions: Option<u32>) -> Result
     // Experiments are run into a scratch artifacts root, then only their
     // summaries and reports are exported.
     let scratch = out.join(".scratch");
+    // Every manifest is exported, so claim evidence in the export is complete.
     let mut experiments = Vec::new();
-    for id in EXPORT_EXPERIMENTS {
-        let manifest_path = root.join("experiments").join(id).join("manifest.yaml");
+    for manifest_path in crate::capabilities::manifest_files(root) {
         let (manifest, scenario) =
             crate::config::load_manifest(&manifest_path).map_err(|e| e.to_string())?;
+        let id = &manifest.id;
         let exp_out = scratch.join("experiments").join(id);
         let outcome = crate::experiment::run_experiment(
             &manifest,
@@ -119,7 +118,10 @@ pub async fn export(root: &Path, out: &Path, repetitions: Option<u32>) -> Result
             root: root.to_path_buf(),
             artifacts: out.to_path_buf(),
         },
-        &crate::capabilities::LiveFacts::default(),
+        &crate::capabilities::LiveFacts {
+            static_export: true,
+            ..Default::default()
+        },
     );
     write_json(&out.join("capabilities.json"), &capabilities).map_err(|e| e.to_string())?;
 
@@ -181,6 +183,7 @@ pub async fn export(root: &Path, out: &Path, repetitions: Option<u32>) -> Result
             "manifests": manifests,
             "capabilities": "capabilities.json",
             "claims": "claims.json",
+            "metric_definitions": crate::metrics::definitions_json(),
         }),
     )
     .map_err(|e| e.to_string())?;

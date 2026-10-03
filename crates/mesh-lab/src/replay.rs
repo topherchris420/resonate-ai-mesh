@@ -112,6 +112,12 @@ pub fn substitutions_for(bundle: &Bundle) -> Substitutions {
         }
     }
     for chained in &bundle.events {
+        // A person stopping a live session is an input like any other command.
+        if chained.event.event_type == "run_completed"
+            && chained.event.payload["termination"] == "stopped_by_operator"
+        {
+            substitutions.stopped_at_tick = chained.event.payload["ticks_run"].as_u64();
+        }
         if chained.event.event_type == "human_state"
             && chained.event.payload["datum"]["source"] != crate::sim::OPERATOR_LOAD_SOURCE
         {
@@ -365,6 +371,9 @@ pub async fn replay_bundle(bundle: &Bundle) -> ReplayReport {
     }
     if !substitutions.human_state.is_empty() {
         substituted.push("external human-state input (recorded)".to_string());
+    }
+    if let Some(tick) = substitutions.stopped_at_tick {
+        substituted.push(format!("operator stop before tick {tick} (recorded)"));
     }
     let rules = Normalization {
         ignore_run_identity: false,

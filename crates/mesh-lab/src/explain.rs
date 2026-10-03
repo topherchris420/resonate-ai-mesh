@@ -120,6 +120,43 @@ fn summarize(event: &event_bus::EventEnvelope) -> String {
             p["datum"]["mode"].as_str().unwrap_or("?"),
             p["datum"]["quality"].as_str().unwrap_or("?")
         ),
+        "adaptive_level" => format!(
+            "operator level {} -> {} (load {}, signal {})",
+            p["previous_level"].as_str().unwrap_or("?"),
+            p["level"].as_str().unwrap_or("?"),
+            p["operator_load_index"],
+            p["signal_quality"].as_str().unwrap_or("none")
+        ),
+        "resonance_sample" => format!(
+            "last {} ticks: commit rate {}, rejection rate {}, level {}",
+            p["sample"]["window_ticks"],
+            p["sample"]["commit_rate"],
+            p["sample"]["rejection_rate"],
+            p["adaptive_level"].as_str().unwrap_or("?")
+        ),
+        "fault_injected" => format!("fault injected: {}", p["label"].as_str().unwrap_or("?")),
+        "fault_cleared" => format!("fault cleared: {}", p["label"].as_str().unwrap_or("?")),
+        "fault_effect" => format!(
+            "{} affected {}",
+            p["effect"].as_str().unwrap_or("?"),
+            p["agent_id"].as_str().unwrap_or("?")
+        ),
+        "environment_change" => format!(
+            "{}: {}",
+            p["change"].as_str().unwrap_or("?"),
+            p["hazard"]["id"].as_str().unwrap_or("?")
+        ),
+        "operator_command" => format!("operator command: {}", p["command"].as_str().unwrap_or("?")),
+        "run_started" => format!(
+            "run started: scenario {}, seed {}",
+            p["scenario"].as_str().unwrap_or("?"),
+            p["seed"]
+        ),
+        "run_completed" => format!(
+            "run completed: {} after {} ticks",
+            p["termination"].as_str().unwrap_or("?"),
+            p["ticks_run"]
+        ),
         other => format!("{other} event"),
     }
 }

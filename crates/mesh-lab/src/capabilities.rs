@@ -27,6 +27,8 @@ pub struct SystemStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CapabilityReport {
+    /// `cli`, `server`, or `static-export`: whose capabilities these are.
+    pub context: String,
     pub orientation: Vec<String>,
     pub status: SystemStatus,
     pub capabilities: Vec<Capability>,
@@ -41,6 +43,11 @@ pub struct LiveFacts {
     pub server: bool,
     pub live_sources_connected: Vec<String>,
     pub live_session_running: bool,
+    /// Describe a static cockpit export rather than the machine producing it:
+    /// nothing about the exporter's credentials or tools is published, and
+    /// environment-dependent capabilities are reported as needing a local
+    /// installation.
+    pub static_export: bool,
 }
 
 pub struct Probe {
@@ -159,12 +166,27 @@ pub fn discover(probe: &Probe, live: &LiveFacts) -> CapabilityReport {
     let scenarios = scenario_files(&probe.root);
     let manifests = manifest_files(&probe.root);
     let runs = recorded_runs(&probe.artifacts);
-    let latest = runs.first().map(|(dir, _)| dir.clone());
+    // Suggest the newest original recording; a counterfactual branch is a
+    // derivative of one.
+    let is_branch = |dir: &PathBuf| {
+        dir.file_name()
+            .is_some_and(|name| name.to_string_lossy().contains('~'))
+    };
+    let latest = runs
+        .iter()
+        .find(|(dir, _)| !is_branch(dir))
+        .or(runs.first())
+        .map(|(dir, _)| dir.clone());
     let latest_id = latest
         .as_ref()
         .and_then(|dir| dir.file_name())
         .map(|name| name.to_string_lossy().to_string());
-    let (typesafe_ok, typesafe_text) = typesafe_status();
+    const LOCAL: &str = "depends on the local installation; not part of a static export";
+    let (typesafe_ok, typesafe_text) = if live.static_export {
+        (false, "OFF in this static export (every judgment shown was made by a deterministic local judge)".to_string())
+    } else {
+        typesafe_status()
+    };
     let comparable: Vec<String> = manifests
         .iter()
         .filter_map(|p| crate::config::load_manifest(p).ok())
@@ -281,7 +303,13 @@ pub fn discover(probe: &Probe, live: &LiveFacts) -> CapabilityReport {
         "jev",
         "test TypeSafe Jev against deterministic-only execution".to_string(),
         typesafe_ok,
-        (!typesafe_ok).then(|| format!("{} is not set", typed_judgment::API_KEY_ENV)),
+        (!typesafe_ok).then(|| {
+            if live.static_export {
+                LOCAL.to_string()
+            } else {
+                format!("{} is not set", typed_judgment::API_KEY_ENV)
+            }
+        }),
         typesafe_ok.then(|| {
             "mesh experiment run experiments/judgment-ablation/manifest.yaml --allow-network"
                 .to_string()
@@ -296,10 +324,10 @@ pub fn discover(probe: &Probe, live: &LiveFacts) -> CapabilityReport {
             .then(|| "no run has been recorded yet".to_string()),
         latest
             .as_ref()
-            .map(|dir| format!("mesh verify {}", dir.display())),
+            .map(|dir| format!("mesh verify {}", rel(dir))),
     ));
     let rain_example = probe.root.join("examples/rain_agent_stub.py");
-    let python = python_available();
+    let python = !live.static_export && python_available();
     capabilities.push(cap(
         "external_agent",
         "attach an external deliberative agent (R.A.I.N. adapter protocol mesh-agent/1)"
@@ -307,6 +335,8 @@ pub fn discover(probe: &Probe, live: &LiveFacts) -> CapabilityReport {
         python && rain_example.is_file(),
         if !rain_example.is_file() {
             Some("examples/rain_agent_stub.py not found".to_string())
+        } else if live.static_export {
+            Some(LOCAL.to_string())
         } else if !python {
             Some("python3 is not available".to_string())
         } else {
@@ -357,6 +387,13 @@ pub fn discover(probe: &Probe, live: &LiveFacts) -> CapabilityReport {
         None,
     ));
 
+    let context = if live.static_export {
+        "static-export"
+    } else if live.server {
+        "server"
+    } else {
+        "cli"
+    };
     let human = if live.live_sources_connected.is_empty() {
         "SIMULATED".to_string()
     } else {
@@ -366,12 +403,20 @@ pub fn discover(probe: &Probe, live: &LiveFacts) -> CapabilityReport {
         )
     };
     CapabilityReport {
+        context: context.to_string(),
         orientation: vec![
             "This is a deterministic multi-agent research environment.".into(),
             "You can run an experiment, inspect why a decision occurred, inject a failure, compare policies, or replay a previous run.".into(),
             "Nothing here controls physical hardware.".into(),
             format!("Human-state data is currently {human}."),
-            format!("Remote judgment is currently {}.", if typesafe_ok { "available but not used unless a run asks for it" } else { "OFF" }),
+            format!(
+                "Remote judgment is currently {}.",
+                if typesafe_ok {
+                    "available but not used unless a run asks for it"
+                } else {
+                    "OFF"
+                }
+            ),
         ],
         status: SystemStatus {
             human_state_input: human,

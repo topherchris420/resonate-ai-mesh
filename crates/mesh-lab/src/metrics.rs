@@ -667,6 +667,16 @@ pub fn definition(id: &str) -> Option<&'static MetricDef> {
     DEFINITIONS.iter().find(|def| def.id == id)
 }
 
+/// Every metric definition as JSON, for the cockpit and exports.
+pub fn definitions_json() -> serde_json::Value {
+    serde_json::Value::Array(
+        DEFINITIONS
+            .iter()
+            .map(|def| serde_json::json!({ "id": def.id, "unit": def.unit, "definition": def.definition }))
+            .collect(),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

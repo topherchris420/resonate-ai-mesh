@@ -140,12 +140,27 @@ pub fn save_run(
     Ok(())
 }
 
+/// A signed difference with the same precision rules as [`fmt_value`].
+pub fn fmt_delta(delta: f64) -> String {
+    let text = fmt_value(Some(delta));
+    if delta > 0.0 {
+        format!("+{text}")
+    } else {
+        text
+    }
+}
+
 pub fn fmt_value(value: Option<f64>) -> String {
     match value {
         None => "—".to_string(),
         Some(v) if v.fract() == 0.0 && v.abs() < 1e15 => format!("{}", v as i64),
         Some(v) => {
             // Precision follows magnitude: no more digits than the data supports.
+            if v.abs() < 0.0005 {
+                // Would round to zero at three decimals; do not print a
+                // non-zero quantity as 0.
+                return format!("{v:.1e}");
+            }
             let text = if v.abs() >= 100.0 {
                 format!("{v:.1}")
             } else if v.abs() >= 1.0 {
@@ -420,4 +435,28 @@ fn run_report(
 pub fn short(hash: &str) -> String {
     let trimmed = hash.trim_start_matches("sha256:");
     trimmed.chars().take(12).collect()
+}
+
+#[cfg(test)]
+mod format_tests {
+    use super::{fmt_delta, fmt_value};
+
+    #[test]
+    fn values_keep_sign_and_magnitude() {
+        assert_eq!(fmt_value(None), "—");
+        assert_eq!(fmt_value(Some(3.0)), "3");
+        assert_eq!(fmt_value(Some(-0.0)), "0");
+        assert_eq!(fmt_value(Some(182.24)), "182.2");
+        assert_eq!(fmt_value(Some(-2.789)), "-2.79");
+        assert_eq!(fmt_value(Some(0.2125)), "0.212");
+        assert_eq!(fmt_value(Some(0.00012)), "1.2e-4");
+        assert_eq!(fmt_value(Some(-0.00012)), "-1.2e-4");
+    }
+
+    #[test]
+    fn deltas_are_signed() {
+        assert_eq!(fmt_delta(12.06), "+12.06");
+        assert_eq!(fmt_delta(-3.9), "-3.9");
+        assert_eq!(fmt_delta(0.0), "0");
+    }
 }

@@ -48,6 +48,8 @@ pub struct ServeArgs {
     pub tick_ms: u64,
 }
 
+const EXPERIMENT_FILES: &[&str] = &["summary.json", "report.md", "runs.csv"];
+
 const SERVED_FILES: &[&str] = &[
     "manifest.json",
     "events.jsonl",
@@ -77,6 +79,9 @@ struct Counters {
 
 struct LiveSession {
     run_id: String,
+    /// The resolved scenario, so a client can draw the arena before the
+    /// bundle is written.
+    scenario: Value,
     commands: mpsc::UnboundedSender<ControlCommand>,
     stop: Arc<AtomicBool>,
     tick: Arc<AtomicU64>,
@@ -179,6 +184,8 @@ pub async fn serve(cli: &Cli, args: &ServeArgs) -> Result<i32, String> {
         .route("/api/experiments", get(api_experiments))
         .route("/api/experiments/:id/summary", get(api_experiment_summary))
         .route("/api/experiments/:id/run", post(api_experiment_run))
+        .route("/api/experiments/:id/files/:file", get(api_experiment_file))
+        .route("/api/metrics/definitions", get(api_metric_definitions))
         .route("/api/topology", get(api_topology))
         .route("/api/claims", get(api_claims))
         .route("/api/runs", get(api_runs).post(api_create_run))
@@ -351,6 +358,7 @@ fn live_facts(state: &AppState, running: bool) -> LiveFacts {
         server: true,
         live_sources_connected: recent,
         live_session_running: running,
+        static_export: false,
     }
 }
 
@@ -467,6 +475,42 @@ async fn api_experiment_summary(
             format!("experiment `{id}` has not been run"),
         ),
     }
+}
+
+async fn api_experiment_file(
+    State(state): State<Shared>,
+    headers: HeaderMap,
+    Query(q): Query<BTreeMap<String, String>>,
+    UrlPath((id, file)): UrlPath<(String, String)>,
+) -> Response {
+    guard!(state, headers, q);
+    if !config::valid_id(&id) || !EXPERIMENT_FILES.contains(&file.as_str()) {
+        return error(StatusCode::NOT_FOUND, "not an experiment file");
+    }
+    let path = state.artifacts.join("experiments").join(&id).join(&file);
+    match crate::record::read_text(&path) {
+        Ok(text) => {
+            let kind = match file.rsplit('.').next() {
+                Some("md") => "text/markdown; charset=utf-8",
+                Some("csv") => "text/csv; charset=utf-8",
+                _ => "application/json",
+            };
+            ([(header::CONTENT_TYPE, kind)], text).into_response()
+        }
+        Err(_) => error(
+            StatusCode::NOT_FOUND,
+            format!("experiment `{id}` has not been run"),
+        ),
+    }
+}
+
+async fn api_metric_definitions(
+    State(state): State<Shared>,
+    headers: HeaderMap,
+    Query(q): Query<BTreeMap<String, String>>,
+) -> Response {
+    guard!(state, headers, q);
+    Json(crate::metrics::definitions_json()).into_response()
 }
 
 #[derive(Deserialize)]
@@ -872,6 +916,7 @@ async fn api_live_status(
             "running": !session.finished.load(Ordering::Relaxed),
             "elapsed_s": session.started.elapsed().as_secs(),
             "human_state_source": session.human_state_source,
+            "scenario": session.scenario,
         }),
         None => json!({ "running": false }),
     })
@@ -983,8 +1028,10 @@ async fn api_live_start(
         done.run_id = run_config.run_id.clone();
         worker_state.bus.publish(done);
     });
+    let scenario = serde_json::to_value(&config.scenario).unwrap_or(Value::Null);
     *live = Some(LiveSession {
         run_id: config.run_id.clone(),
+        scenario: scenario.clone(),
         commands: tx,
         stop,
         tick,
@@ -996,7 +1043,8 @@ async fn api_live_start(
             "simulated".into()
         },
     });
-    Json(json!({ "run_id": config.run_id, "tick_ms": delay.as_millis() as u64 })).into_response()
+    Json(json!({ "run_id": config.run_id, "tick_ms": delay.as_millis() as u64, "scenario": scenario }))
+        .into_response()
 }
 
 async fn api_live_stop(

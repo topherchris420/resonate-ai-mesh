@@ -339,3 +339,87 @@ proptest! {
         std::fs::remove_dir_all(dir).ok();
     }
 }
+
+/// A scripted stand-in for a person at the live console: commands at fixed
+/// ticks, then a stop before the scenario ends.
+struct ScriptedConsole {
+    commands: BTreeMap<u64, Vec<mesh_lab::runner::ControlCommand>>,
+    last_tick: Option<u64>,
+    stop_before: u64,
+}
+
+impl mesh_lab::runner::RunControl for ScriptedConsole {
+    fn commands(&mut self, tick: u64) -> Vec<mesh_lab::runner::ControlCommand> {
+        self.last_tick = Some(tick);
+        self.commands.remove(&tick).unwrap_or_default()
+    }
+
+    fn should_stop(&self) -> bool {
+        self.last_tick.is_some_and(|t| t + 1 >= self.stop_before)
+    }
+}
+
+#[test]
+fn a_live_session_stopped_early_replays_exactly() {
+    let command = |value: Value| serde_json::from_value(value).expect("command parses");
+    let mut commands = BTreeMap::new();
+    commands.insert(
+        5,
+        vec![command(json!({"command": "inject_fault", "fault": {"kind": "sensor_dropout", "target": "all", "at_tick": 6, "duration_ticks": 4, "magnitude": 0.0}}))],
+    );
+    commands.insert(
+        8,
+        vec![command(json!({"command": "operator_proposal", "agent_id": "medic_05", "intent": {"action_type": "MOVE", "target": {"x": 0.0, "y": 0.0, "z": 0.0}, "priority": 5, "rationale": "operator console"}}))],
+    );
+    let mut overrides = BTreeMap::new();
+    overrides.insert("human_review.mode".to_string(), json!("manual"));
+    let config = scenario_config("perturbed-mesh", overrides, 42);
+    let console = ScriptedConsole {
+        commands,
+        last_tick: None,
+        stop_before: 21,
+    };
+    let result = runtime()
+        .block_on(run(
+            &config,
+            RunOptions {
+                control: Some(Box::new(console)),
+                ..RunOptions::default()
+            },
+        ))
+        .expect("live run");
+    assert_eq!(result.ticks_run, 21);
+    let operator_proposal = result
+        .events
+        .iter()
+        .find(|c| c.event.event_type == "proposal" && c.event.source.contains("operator"))
+        .expect("operator proposal recorded");
+    let validation = result
+        .events
+        .iter()
+        .find(|c| {
+            c.event.event_type == "validation"
+                && c.event.correlation_id == operator_proposal.event.correlation_id
+        })
+        .expect("operator proposal validated");
+    assert_eq!(
+        validation.event.payload["accepted"], false,
+        "a too-long operator step is rejected like any other"
+    );
+
+    let dir = scratch("live-stop");
+    save(&result, &dir);
+    let bundle = Bundle::load(&dir).expect("bundle loads");
+    let report = runtime().block_on(mesh_lab::replay::replay_bundle(&bundle));
+    assert!(report.verified, "{}", mesh_lab::replay::render(&report));
+    assert!(report.head_exact_match);
+    assert!(report
+        .substituted
+        .iter()
+        .any(|s| s.contains("operator stop before tick 21")));
+    assert!(report
+        .substituted
+        .iter()
+        .any(|s| s.contains("operator commands")));
+    let _ = std::fs::remove_dir_all(dir);
+}
