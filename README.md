@@ -27,6 +27,10 @@ The interesting artifact is not an agent's plan. It is the point where that plan
 
 This tests the authority boundary under **simulated** hazards and operator actions. It does not demonstrate that a deployed assistant would be reliable on a customer's workflows.
 
+### Mathematical research question (experimental)
+
+**Do authorization invariants survive stale observations and competing agent proposals?** This is a proposed experiment, **not a new verified capability**. [Read the assumptions, negative control and protocol](docs/MATH_RESEARCH.md) or use [R.A.I.N.'s shared mathematics scout](https://github.com/topherchris420/lop-nur-twin/blob/main/docs/MATH_PORTFOLIO.md) to inspect candidate `openai/math` references at its pinned revision. No OpenAI mathematics code or proof has been installed in this runtime.
+
 ## One command
 
 ```bash
