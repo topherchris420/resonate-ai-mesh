@@ -1,5 +1,9 @@
 # Resonate AI Mesh
 
+**The agent may propose a future. It does not get to authorize it.**
+
+[**Run the instrument →**](#one-command) · [**Examine a blocked decision →**](#one-decision-under-a-microscope) · [**Replay the evidence →**](#evidence-and-replay) · [**Inspect the rules →**](#the-execution-law) · [**Read the limits →**](#limitations)
+
 Resonate AI Mesh is an executable research instrument for multi-agent decisions. Agents observe a simulated world and propose actions. The **Pordenone kernel** decides what may happen: deterministic validation first, then optional bounded judgment, then a versioned policy, and only then a commit. Every step is recorded in a hash-chained event log, so any run can be verified, replayed exactly without network access, explained decision by decision, and branched into counterfactuals. Experiments run those runs at scale with paired statistics.
 
 Nothing here controls physical hardware. Human-state data is simulated unless a registered live source is connected, and no live source ships with the repository.
@@ -7,6 +11,21 @@ Nothing here controls physical hardware. Human-state data is simulated unless a 
 ![The research cockpit replaying the Perturbed Mesh: a proposal that a person approved and that deterministic re-validation then rejected](docs/images/cockpit-replay.png)
 
 The cockpit above is replaying the canonical run. Judgment routed `prop-00023-runner_02` to a person, and the simulated operator approved it. Re-validation then rejected it, because its observation had grown older than the 1500 ms limit while it waited. Human approval does not override a deterministic check either.
+
+## One decision under a microscope
+
+The interesting artifact is not an agent's plan. It is the point where that plan **fails to become an action**.
+
+| The agent wants | The system requires | The evidence retains |
+| --- | --- | --- |
+| To act on an observation | A deterministic check against the current state | What the agent observed, when, and whether it was still fresh |
+| To ask a model for judgment | A proposal that already passed non-negotiable checks | The judge's bounded response, not a mutation of state |
+| To proceed after human review | Re-validation before commit | An approval that can still be rejected |
+| To explain why it acted | A policy-authorized state transition | Hash-linked events that can be replayed without calling the judge again |
+
+**Try it:** run `make demo`, find the human-approved but stale proposal in the narration, and compare the recorded decision with the [cockpit screenshot](docs/images/cockpit-replay.png). Then read the [execution law](#the-execution-law), not just the outcome.
+
+This tests the authority boundary under **simulated** hazards and operator actions. It does not demonstrate that a deployed assistant would be reliable on a customer's workflows.
 
 ## One command
 
