@@ -1,6 +1,6 @@
 # Resonate AI Mesh
 
-**The agent may propose a future. It does not get to authorize it.**
+**Replay a simulated agent decision and see why the proposed action went through or stopped.**
 
 [**Run the instrument →**](#one-command) · [**Examine a blocked decision →**](#one-decision-under-a-microscope) · [**Replay the evidence →**](#evidence-and-replay) · [**Inspect the rules →**](#the-execution-law) · [**Read the limits →**](#limitations)
 
